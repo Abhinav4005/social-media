@@ -53,6 +53,18 @@ export const updateUserProfile = async (userData) => {
     return response.data;
 }
 
+export const getUserProfile = async () => {
+    const response = await axios.get(`${API_BASE_URL}/user/profile`, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+    });
+    if(response.status !== 200){
+        throw new Error("Failed to fetch user profile");
+    }
+    return response.data.user;
+}
+
 export const getUserPosts = async () => {
     const response = await axios.get(`${API_BASE_URL}/post/postByUser`, {
         headers: {

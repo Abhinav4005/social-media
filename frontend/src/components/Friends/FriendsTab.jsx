@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserFollowers, getUserFollowing } from "../../api";
 import Button from "../UI/Button";
 
-const FriendsTab = ({setCurrentFollowers, setCurrentFollowing}) => {
+const FriendsTab = ({ activeTab }) => {
   const [tab, setTab] = useState("followers");
 
   const { data: followers, isLoading: loadingFollowers, isError: errorFollowers } = useQuery({
@@ -17,11 +17,6 @@ const FriendsTab = ({setCurrentFollowers, setCurrentFollowing}) => {
     queryFn: getUserFollowing,
     enabled: tab === "following",
   });
-
-  useEffect(() => {
-    setCurrentFollowers(followers?.length || 0);
-    setCurrentFollowing(following?.length || 0);
-  }, [followers, following]);
 
   const renderList = (list, loading, error, label) => {
     if (loading) return <p className="text-gray-500 text-center py-4">⏳ Loading {label}...</p>;

@@ -10,6 +10,7 @@ import FeedPage from './pages/FeedPage';
 import PostDetail from './components/Posts/PostDetail';
 import Settings from './pages/Setting';
 import UpdateProfile from './components/Users/UpdateProfile';
+import ChatPage from './pages/ChatPage';
 
 const App = () => {
   return (
@@ -25,6 +26,7 @@ const App = () => {
         <Route path="/posts/:postId" element={<PostDetail />} />
         <Route path='/settings' element={<Settings/> }/>
         <Route path='/update-profile' element={<UpdateProfile />} />
+        <Route path='/chat' element={<ChatPage/>}/>
       </Routes>
     </Router>
   )

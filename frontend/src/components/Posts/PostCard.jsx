@@ -58,7 +58,7 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
           className="w-10 h-10 rounded-full border border-gray-200"
         />
         <div>
-          <h4 className="font-semibold text-gray-800">{props?.name}</h4>
+          <h4 className="font-semibold text-gray-800 capitalize">{props?.user?.name}</h4>
           <p className="text-xs text-gray-500">{formatTime(props?.createdAt)}</p>
         </div>
       </div>

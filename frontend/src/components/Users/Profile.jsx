@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getUserPosts } from "../../api";
+import { getUserPosts, getUserProfile } from "../../api";
 import FriendsTab from "../Friends/FriendsTab";
 import PostTab from "../Posts/PostTab";
 import Navbar from "../../pages/Navbar";
@@ -21,11 +21,11 @@ export default function Profile({ user }) {
 
   const [activeTab, setActiveTab] = useState("posts");
 
-  const { data: posts, isLoading, isError } = useQuery({
-    queryKey: ["postByUser", user?.id],
-    queryFn: getUserPosts,
-    enabled: !!user,
-  });
+  const { data: userProfile, isLoading, isError } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: getUserProfile,
+    enabled: !!user
+  })
 
   const getInitials = (name = "") =>
     name
@@ -68,8 +68,8 @@ export default function Profile({ user }) {
 
         {/* Content */}
         <div className="pt-20 text-center px-6">
-          <h2 className="text-3xl font-extrabold text-gray-800">{user?.name || "Guest User"}</h2>
-          <p className="text-gray-500 text-sm mt-1">{user?.email || "No email available"}</p>
+          <h2 className="text-3xl font-extrabold text-gray-800 capitalize">{user?.name || "Guest User"}</h2>
+          {/* <p className="text-gray-500 text-sm mt-1">{user?.email || "No email available"}</p> */}
 
           {/* Bio / tagline */}
           <p className="mt-4 text-gray-600 italic">{user?.bio || "This is your space — express yourself!"}</p>
@@ -77,15 +77,15 @@ export default function Profile({ user }) {
           {/* Stats Section */}
           <div className="mt-6 flex justify-center gap-10 text-center">
             <motion.div whileHover={{ scale: 1.05 }} className="cursor-pointer">
-              <p className="text-xl font-bold text-gray-800">{posts?.length || 0}</p>
+              <p className="text-xl font-bold text-gray-800">{userProfile?.posts?.length || 0}</p>
               <p className="text-sm text-gray-500">Posts</p>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} className="cursor-pointer">
-              <p className="text-xl font-bold text-gray-800">{currentFollowers}</p>
+              <p className="text-xl font-bold text-gray-800">{userProfile?.followers?.length}</p>
               <p className="text-sm text-gray-500">Followers</p>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} className="cursor-pointer">
-              <p className="text-xl font-bold text-gray-800">{currentFollowing}</p>
+              <p className="text-xl font-bold text-gray-800">{userProfile?.following?.length || 0}</p>
               <p className="text-sm text-gray-500">Following</p>
             </motion.div>
           </div>
@@ -140,13 +140,15 @@ export default function Profile({ user }) {
           </div>
 
           <div className="p-6 text-center text-gray-600">
-            {activeTab === "posts" && <PostTab posts={posts} isLoading={isLoading} isError={isError} />}
+            {activeTab === "posts" && <PostTab posts={userProfile?.posts} isLoading={isLoading} isError={isError} />}
             {activeTab === "about" && <p>ℹ️ User details and bio info...</p>}
             {activeTab === "friends" && (
               <FriendsTab
                 activeTab={activeTab}
-                setCurrentFollowers={setCurrentFollowers}
-                setCurrentFollowing={setCurrentFollowing}
+                followers={userProfile?.followers}
+                following={userProfile?.following}
+                isLoading={isLoading}
+                isError={isError}
               />
             )}
             {activeTab === "photos" && <p>🖼️ User photo gallery...</p>}
