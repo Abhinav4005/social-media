@@ -65,6 +65,18 @@ export const getUserProfile = async () => {
     return response.data.user;
 }
 
+export const getUserById = async ({userId}) => {
+    const response = await axios.get(`${API_BASE_URL}/user/profile/${userId}`, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+    });
+    if(response.status !== 200){
+        throw new Error("Failed to fetch user profile by ID");
+    }
+    return response.data.user;
+}
+
 export const getUserPosts = async () => {
     const response = await axios.get(`${API_BASE_URL}/post/postByUser`, {
         headers: {
@@ -240,4 +252,16 @@ export const getPostFeed = async (page) => {
         throw new Error("Failed to fetch post feed");
     }
     return response.data || [];
+}
+
+export const getRooms = async () => {
+    const response = await axios.get(`${API_BASE_URL}/chat/rooms`, {
+        headers:{
+            Authorization: getAuthToken(),
+        }
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch chat rooms");
+    }
+    return response.data.rooms || [];
 }

@@ -2,9 +2,15 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserFollowers, getUserFollowing } from "../../api";
 import Button from "../UI/Button";
+import { useNavigate } from "react-router-dom";
 
 const FriendsTab = ({ activeTab }) => {
   const [tab, setTab] = useState("followers");
+  const navigate = useNavigate();
+
+  const handleOpenDetail = (userId) => {
+    navigate(`/friends/${userId}`);
+  }
 
   const { data: followers, isLoading: loadingFollowers, isError: errorFollowers } = useQuery({
     queryKey: ["userFollowers"],
@@ -29,6 +35,7 @@ const FriendsTab = ({ activeTab }) => {
           <div
             key={user.id}
             className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow hover:shadow-lg transition-all duration-300"
+            onClick={() => handleOpenDetail(user?.id)}
           >
             <div className="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
               {user.name

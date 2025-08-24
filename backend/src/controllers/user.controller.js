@@ -4,8 +4,6 @@ import prisma from "../config/db.js"
 export const getUserProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log("req user", req.user);
-        console.log("User ID from token:", userId);
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
@@ -34,6 +32,34 @@ export const getUserProfile = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "An error occurred while fetching user profile." });
+    }
+}
+
+export const getUserById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if(!userId) {
+            return res.status(400).json({ message: "Missing userId" });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(userId, 10) },
+            include: {
+                followers: true,
+                following: true,
+                posts: true,
+                postLikes: true,
+            },
+        })
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        const { password, ...userWithoutPassword } = user;
+        res.status(200).json({ message: "User Details fetched successfully", user: userWithoutPassword });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "An error occurred while fetching user by ID." });
     }
 }
 

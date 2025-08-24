@@ -11,6 +11,7 @@ import PostDetail from './components/Posts/PostDetail';
 import Settings from './pages/Setting';
 import UpdateProfile from './components/Users/UpdateProfile';
 import ChatPage from './pages/ChatPage';
+import FriendsDetail from './components/Friends/FriendsDetail';
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
         <Route path='/settings' element={<Settings/> }/>
         <Route path='/update-profile' element={<UpdateProfile />} />
         <Route path='/chat' element={<ChatPage/>}/>
+        <Route path='/friends/:userId' element={<FriendsDetail />} />
       </Routes>
     </Router>
   )

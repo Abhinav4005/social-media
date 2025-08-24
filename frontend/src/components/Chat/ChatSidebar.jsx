@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Search, Pin } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getRooms } from "../../api";
 
 const ChatSidebar = () => {
   const pinnedChats = ["Team Group"];
@@ -16,6 +18,22 @@ const ChatSidebar = () => {
   const filteredChats = chats.filter((chat) =>
     chat.toLowerCase().includes(search.toLowerCase())
   );
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['rooms'],
+    queryFn: getRooms,
+    enabled: true
+  });
+
+  if (isLoading) {
+    return <div>Loading rooms...</div>;
+  }
+
+  if (isError) {
+    return <div>Error fetching rooms</div>;
+  }
+
+  const rooms = data || [];
 
   // Reusable chat card
   const ChatItem = ({ chat, isPinned = false }) => (
@@ -120,8 +138,9 @@ const ChatSidebar = () => {
         All Chats
       </h2>
       <div className="space-y-3 overflow-y-auto scrollbar-hide">
-        {filteredChats.length > 0 ? (
-          filteredChats.map((chat, i) => <ChatItem key={i} chat={chat} />)
+        {data.length > 0 ? (
+          console.log("data", data),
+          data.map((chat, i) => <ChatItem key={i} chat={chat} />)
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
             No chats found
