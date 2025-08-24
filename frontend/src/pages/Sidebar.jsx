@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 export default function Sidebar() {
   const menuItems = [
     { icon: <User size={20} />, label: "Profile", path: "/profile" },
+    // { icon: <Settings size={20} />, label: "Settings", path: "/" },
     { icon: <Settings size={20} />, label: "Settings", path: "/settings" },
   ];
 

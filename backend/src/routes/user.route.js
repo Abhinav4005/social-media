@@ -1,6 +1,6 @@
 import express from "express";
 import authenticateToken from "../middleware/authenticateToken.js";
-import { followUser, getFollowers, getFollowing, getUserFeed, getUserProfile, searchUsersByQuery, updateUserProfile } from "../controllers/user.controller.js";
+import { followUser, getFollowers, getFollowing, getUserById, getUserFeed, getUserProfile, searchUsersByQuery, updateUserProfile } from "../controllers/user.controller.js";
 import multer from "multer";
 
 const storage = multer.diskStorage({
@@ -27,6 +27,8 @@ const upload = multer({
 const router = express.Router();
 
 router.get("/profile", authenticateToken, getUserProfile);
+
+router.get("/profile/:userId", authenticateToken, getUserById);
 
 router.put("/profile/update", upload.fields([{ name: 'profileImage' }]), authenticateToken, updateUserProfile);
 
