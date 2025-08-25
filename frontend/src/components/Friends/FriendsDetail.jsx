@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Button from "../UI/Button";
 import Navbar from "../../pages/Navbar";
-import { getUserById } from "../../api";
+import { createOrGetRoom, getUserById } from "../../api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const FriendsDetail = () => {
     const { userId } = useParams();
     console.log("FriendsDetail - userId:", userId);
+    const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const { data: user, isLoading, isError } = useQuery({
         queryKey: ["userDetail", userId],
@@ -18,7 +22,19 @@ const FriendsDetail = () => {
         enabled: !!userId,
     });
 
-    console.log("FriendsDetail - user:", user);
+    const mutation = useMutation({
+        mutationFn: () => createOrGetRoom(null, "DM", [userId]),
+        onSuccess:(room) => {
+            navigate(`/chat`)
+        },
+        onError: (err) => {
+            console.error("Room creation failed:", err)
+        }
+    })
+
+    const handleMessage = () => {
+        mutation.mutate(null, "DM", [userId]);
+    }
 
     if (isLoading) return <p className="text-center py-20">⏳ Loading user...</p>;
     if (isError || !user) return <p className="text-center py-20 text-red-500">⚠️ Failed to load user</p>;
@@ -45,7 +61,7 @@ const FriendsDetail = () => {
                     <Button className="bg-indigo-500 text-white px-6 py-2 rounded-xl" onClick={() => { }}>
                         Follow
                     </Button>
-                    <Button className="bg-green-500 text-white px-6 py-2 rounded-xl" onClick={() => { }}>
+                    <Button className="bg-green-500 text-white px-6 py-2 rounded-xl" onClick={handleMessage}>
                         Message
                     </Button>
                 </div>

@@ -35,6 +35,8 @@ const ChatSidebar = () => {
 
   const rooms = data || [];
 
+  console.log("rooms---->", rooms)
+
   // Reusable chat card
   const ChatItem = ({ chat, isPinned = false }) => (
     <motion.div
@@ -57,7 +59,7 @@ const ChatSidebar = () => {
               : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
           }`}
       >
-        {chat.charAt(0)}
+        {chat?.charAt(0)}
       </motion.div>
       <div className="flex-1">
         <p

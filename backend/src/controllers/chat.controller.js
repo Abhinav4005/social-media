@@ -5,7 +5,7 @@ export const createRoom = async (req, res) => {
         const { name, type, memberIds } = req.body;
         const userId = req.user.id;
 
-        if(!name || !type || !memberIds || !Array.isArray(memberIds) || memberIds.length === 0) {
+        if(!type || !memberIds || !Array.isArray(memberIds) || memberIds.length === 0) {
             return res.status(400).json({ message: "Missing required fields" });
         }
         if(type === "DM"){
@@ -20,13 +20,16 @@ export const createRoom = async (req, res) => {
                 where: {
                     dmKey: dmKey,
                     type: "DM"
+                },
+                include: {
+                    members: true,
                 }
             })
             if(existingRoom) {
                 return res.status(200).json({ message: "DM Room already exists", room: existingRoom });
             }
 
-            room = await prisma.room.create({
+            const room = await prisma.room.create({
                 data: {
                     name,
                     type,
@@ -34,7 +37,7 @@ export const createRoom = async (req, res) => {
                     members: {
                         create: [
                             { userId: userId },
-                            { userId: otherId }
+                            { userId: parseInt(otherId, 10) }
                         ]
                     }
                 }

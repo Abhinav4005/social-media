@@ -11,7 +11,7 @@ export const signUp = async (userData) => {
     const response = await axios.post(`${API_BASE_URL}/auth/signup`, userData);
     console.log("Sign Up Response:", response);
     console.log("Sign Up Response Data:", response.data);
-    if(!response.data.user) {
+    if (!response.data.user) {
         throw new Error(response.data.message || "Sign Up failed");
     }
     return response.data;
@@ -23,7 +23,7 @@ export const signIn = async (data) => {
     if (response.data.token) {
         localStorage.setItem('token', response.data.token);
     }
-    if(!response.data.user) {
+    if (!response.data.user) {
         throw new Error(response.data.message || "Sign In failed");
     }
     return response.data;
@@ -43,9 +43,9 @@ export const updateUserProfile = async (userData) => {
     const response = await axios.put(`${API_BASE_URL}/user/profile/update`, userData, {
         headers: {
             Authorization: getAuthToken(),
-            'Content-Type': 'multipart/form-data',       
+            'Content-Type': 'multipart/form-data',
         }
-    });  
+    });
     if (response.status !== 200) {
         throw new Error("Failed to update user profile");
     }
@@ -59,19 +59,19 @@ export const getUserProfile = async () => {
             Authorization: getAuthToken(),
         },
     });
-    if(response.status !== 200){
+    if (response.status !== 200) {
         throw new Error("Failed to fetch user profile");
     }
     return response.data.user;
 }
 
-export const getUserById = async ({userId}) => {
+export const getUserById = async ({ userId }) => {
     const response = await axios.get(`${API_BASE_URL}/user/profile/${userId}`, {
         headers: {
             Authorization: getAuthToken(),
         },
     });
-    if(response.status !== 200){
+    if (response.status !== 200) {
         throw new Error("Failed to fetch user profile by ID");
     }
     return response.data.user;
@@ -91,7 +91,7 @@ export const getUserPosts = async () => {
 
 export const createPost = async (postData) => {
     console.log("Creating Post with Data:", postData);
-    const response = await axios.post(`${API_BASE_URL}/post/create`, postData,{ 
+    const response = await axios.post(`${API_BASE_URL}/post/create`, postData, {
         headers: {
             Authorization: getAuthToken(),
             'Content-Type': 'multipart/form-data',
@@ -169,9 +169,9 @@ export const getPostById = async (postId) => {
     return response.data.post || {};
 }
 
-export const likePost = async(postId) => {
+export const likePost = async (postId) => {
     console.log("Liking Post with ID:", postId);
-    const response = await axios.post(`${API_BASE_URL}/post/like`,{ status: "LIKE" }, {
+    const response = await axios.post(`${API_BASE_URL}/post/like`, { status: "LIKE" }, {
         headers: {
             Authorization: getAuthToken(),
         },
@@ -183,7 +183,7 @@ export const likePost = async(postId) => {
     return response.data;
 }
 
-export const commentOnPost = async(postId, commentData ) => {
+export const commentOnPost = async (postId, commentData) => {
     console.log("Commenting on Post with ID:", postId, "Comment Data:", commentData);
     const response = await axios.post(`${API_BASE_URL}/post/comment`, {
         content: commentData.content,
@@ -256,7 +256,7 @@ export const getPostFeed = async (page) => {
 
 export const getRooms = async () => {
     const response = await axios.get(`${API_BASE_URL}/chat/rooms`, {
-        headers:{
+        headers: {
             Authorization: getAuthToken(),
         }
     });
@@ -264,4 +264,20 @@ export const getRooms = async () => {
         throw new Error("Failed to fetch chat rooms");
     }
     return response.data.rooms || [];
+}
+
+export const createOrGetRoom = async (name = null, type, memberIds = []) => {
+    const response = await axios.post(`${API_BASE_URL}/chat/create/room`, {
+        name,
+        type,
+        memberIds
+    }, {
+        headers: {
+            Authorization: getAuthToken(),
+        }
+    });
+    if (response.status !== 201) {
+        throw new Error("Failed to create or get chat room");
+    }
+    return response.data.room || {};
 }
