@@ -17,7 +17,7 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(cors({
-    origin: ["http://localhost:5173", 'https://dc95f8256a79.ngrok-free.app'],
+    origin: ["http://localhost:5173", "https://social-media-frontend-sable-three.vercel.app"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
     allowedHeaders: ["Content-Type", "Authorization"],
