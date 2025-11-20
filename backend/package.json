@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
+    "dev": "node index.js",
+    "build":"npm run build",
     "seed": "node prisma/seed.js"
   },
   "author": "",
