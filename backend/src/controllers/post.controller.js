@@ -1,13 +1,19 @@
 import prisma from "../config/db.js";
 import { nestComments } from "../helper/formatComment.js";
-import { LIKESTATUS } from "../lib/type.js";
+import { FRIENDSHIPSTATUS, LIKESTATUS, POSTVISIBLITYSTATUS } from "../lib/type.js";
+import uploadImageToImageKit from "../utils/uploadImage.js";
 
 export const createPost = async (req, res) => {
     try {
-        const { title, description, comments } = req.body;
-        const image = req.files.image ? req.files.image[0] : null;
-        const video = req.files.video ? req.files.video[0] : null;
+        const { title, description, comments, status } = req.body;
+        console.log("req.body", req.body);
+        const image = req?.files?.image ? req.files.image[0] : null;
+        console.log("image", image);
+        const video = req?.files?.video ? req.files.video[0] : null;
         const userId = req.user.id;
+
+        const imageUrl = image ? await uploadImageToImageKit(image, "social-hub/images").catch(() => null) : null;
+        const videoUrl = video ? await uploadImageToImageKit(video, "social-hub/videos").catch(() => null) : null;
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
@@ -20,9 +26,8 @@ export const createPost = async (req, res) => {
             data: {
                 title,
                 description,
-                image: image ? image.originalname : null,
-                video: video ? video.originalname : null,
-                video,
+                image: imageUrl,
+                video: videoUrl,
                 userId,
                 ...(comments?.length ?
                     { comments: { create: comments.map(content => ({ content, userId })) } }
@@ -36,6 +41,26 @@ export const createPost = async (req, res) => {
         if (!newPost) {
             return res.status(500).json({ error: "Failed to create post" });
         }
+        let postStatus;
+        if(status === POSTVISIBLITYSTATUS.CUSTOM) {
+            postStatus = POSTVISIBLITYSTATUS.CUSTOM
+        }
+        else if(status === POSTVISIBLITYSTATUS.PRIVATE){
+            postStatus = POSTVISIBLITYSTATUS.PRIVATE
+        }
+        else if(status === POSTVISIBLITYSTATUS.FRIENDS) {
+            postStatus = POSTVISIBLITYSTATUS.FRIENDS;
+        }
+        else {
+            postStatus = POSTVISIBLITYSTATUS.PUBLIC;
+        }
+
+        await prisma.postPrivacy.create({
+            data:{
+                postId: newPost.id,
+                visibility: postStatus,
+            }
+        })
         return res.status(201).json({ message: "Post created successfully", post: newPost });
     } catch (error) {
         console.error(error);
@@ -666,8 +691,28 @@ export const getPostFeed = async (req, res) => {
 
         const followingIds = following.map(f => f.followingId);
 
+        const friends = await prisma.friendShip.findMany({
+            where: {
+                OR: [
+                    { requesterId: userId, status: FRIENDSHIPSTATUS.ACCEPTED},
+                    { addresseeId: userId, status: FRIENDSHIPSTATUS.ACCEPTED},
+                ]
+            },
+            include: {
+                requester: true,
+                addressee: true,
+            }
+        })
+
+        const friendIds = friends.map(f => (f.requesterId === userId ? f.addresseeId : f.requesterId ));
+
+        // console.log("Following IDs:", followingIds);
+        console.log("Friend IDs:", friendIds);
+
+        const uniqueIds = Array.from(new Set([...followingIds, ...friendIds]));
+
         const posts = await prisma.post.findMany({
-           where: { userId: { in: followingIds } },
+           where: { userId: { in: uniqueIds } },
             take: followingLimit,
             skip: (page - 1) * followingLimit,
             
@@ -729,5 +774,50 @@ export const getPostFeed = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: "An error occurred while retrieving posts" });
+    }
+}
+
+export const changePostStatus = async (req, res) => {
+    try {
+        const { postId, status} = req.body;
+
+        if(!postId || !status) {
+            return res.status(400).json({ error: "Post ID and status are required" });
+        }
+
+        const userId = req.user.id;
+        if(!userId) {
+            return res.status(401).json({ error:"Unauthorized access"});
+        }
+
+        let postStatus;
+        if(status === POSTVISIBLITYSTATUS.CUSTOM) {
+            postStatus = POSTVISIBLITYSTATUS.CUSTOM
+        }
+        else if(status === POSTVISIBLITYSTATUS.PRIVATE){
+            postStatus = POSTVISIBLITYSTATUS.PRIVATE
+        }
+        else if(status === POSTVISIBLITYSTATUS.FRIENDS) {
+            postStatus = POSTVISIBLITYSTATUS.FRIENDS;
+        }
+        else {
+            postStatus = POSTVISIBLITYSTATUS.PUBLIC;
+        }
+
+        const updatePostStatus = await prisma.postPrivacy.update({
+            where: { postId: parseInt(postId, 10)},
+            data: {
+                postId: parseInt(postId, 10),
+                visibility: postStatus
+            }
+        })
+
+        return res.status(200).json({
+            message: "Post status changes successfully",
+            status: updatePostStatus
+        })
+    } catch (error) {
+        console.error("Error in changing post status", error);
+        return res.status(500).json({ error: "Error in changing post status"})
     }
 }

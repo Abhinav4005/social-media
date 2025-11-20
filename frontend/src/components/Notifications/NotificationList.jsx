@@ -4,15 +4,16 @@ import Navbar from "../../pages/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function NotificationList({ notifications, isLoading, isError }) {
+  console.log("Notifications:", notifications);
   const location = useLocation();
 
   const getIcon = (type) => {
     switch (type) {
-      case "like":
+      case "LIKE":
         return <ThumbsUp className="w-5 h-5 text-blue-500" />;
-      case "comment":
+      case "COMMENT":
         return <MessageCircle className="w-5 h-5 text-green-500" />;
-      case "follow":
+      case "FOLLOW":
         return <UserPlus className="w-5 h-5 text-purple-500" />;
       default:
         return <Bell className="w-5 h-5 text-gray-400" />;
@@ -28,13 +29,13 @@ export default function NotificationList({ notifications, isLoading, isError }) 
   return (
     <>
       {location.pathname !== "/" && <Navbar />}
-      <div className="space-y-3">
+      <div className="space-y-3 mt-4">
         <AnimatePresence>
           {notifications?.length > 0 ? (
             notifications.map((n) => (
               <motion.div
                 key={n.id}
-                className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 cursor-pointer"
+                className="w-md flex m-auto items-center mb-4 gap-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 cursor-pointer"
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"
@@ -49,11 +50,11 @@ export default function NotificationList({ notifications, isLoading, isError }) 
                     {n.sender?.name || "Someone"}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {n.type === "like"
+                    {n.type === "LIKE"
                       ? "reacted to your post"
-                      : n.type === "comment"
+                      : n.type === "COMMENT"
                       ? "commented on your post"
-                      : n.type === "follow"
+                      : n.type === "FOLLOW"
                       ? "started following you"
                       : `sent a ${n.type}`}
                   </p>

@@ -4,7 +4,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+enum FriendShipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
 }
 
 enum LikeStatus {
@@ -26,9 +31,10 @@ enum NotificationType {
 
 enum MessageType {
   TEXT
-  IMAGE 
+  IMAGE
   VIDEO
   FILE
+  MIXED
 }
 
 enum RoomType {
@@ -41,220 +47,290 @@ enum MemberRole {
   MEMBER
 }
 
-model User {
-  id                      Int               @id @default(autoincrement())
-  name                    String
-  email                   String            @unique
-  password                String
-  bio                     String?
-  profileImage            String?
-  location                String?
-  dateOfBirth             DateTime?
-  isVerified              Boolean           @default(false)
-  isDeleted               Boolean           @default(false)
+enum PostVisibility {
+  FRIENDS
+  FOLLOWERS
+  PUBLIC
+  PRIVATE
+  CUSTOM
+}
 
-  posts                   Post[]
-  comments                Comment[]
-  postLikes               PostLike[]
-  commentLikes            CommentLike[]
+enum MessagePrivacy {
+  PUBLIC
+  FRIENDS
+  FOLLOWERS
+  PRIVATE
+  CUSTOM
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String    @unique
+  password       String
+  bio            String?
+  about          String?
+  profileImage   String?
+  profileImageId String?
+  coverImage     String?
+  coverImageId   String?
+  location       String?
+  dateOfBirth    DateTime?
+  isVerified     Boolean   @default(false)
+  isDeleted      Boolean   @default(false)
+
+  posts        Post[]
+  comments     Comment[]
+  postLikes    PostLike[]
+  commentLikes CommentLike[]
 
   // Self-relation for following/followers
 
-  followers               Follower[]        @relation("FollowedUser")
-  following               Follower[]        @relation("FollowingUser")
+  followers Follower[] @relation("FollowedUser")
+  following Follower[] @relation("FollowingUser")
 
-  sentNotifications       Notification[]    @relation("NotificationSender")
-  receivedNotifications   Notification[]    @relation("NotificationReceiver")
+  requestedFriendShips FriendShip[] @relation("RequestedFriendShips")
+  receivedFriendShips  FriendShip[] @relation("ReceivedFriendShips")
 
-  sentMessage             Message[]         @relation("SenderMessages")
-  MessageReaction         Reaction[]
-  roomMemberShip          RoomMember[]
-  messageReceipt          MessageReceipt[]
-  createdReactionType     ReactionType[]    @relation("UserReactionTypes")
+  sentNotifications     Notification[] @relation("NotificationSender")
+  receivedNotifications Notification[] @relation("NotificationReceiver")
 
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  sentMessage         Message[]        @relation("SenderMessages")
+  MessageReaction     Reaction[]
+  roomMemberShip      RoomMember[]
+  messageReceipt      MessageReceipt[]
+  createdReactionType ReactionType[]   @relation("UserReactionTypes")
+
+  passwordReset PasswordReset[]
+
+  blockedUser       UserBlock[]          @relation("Blockers")
+  blockingUser      UserBlock[]          @relation("Blocked")
+  privacySettings   UserPrivacySetting[]
+  privacyList       PrivacyList[]
+  privacyListMember PrivacyListMember[]
+
+  stories    Story[]
+  storyViews StoryView[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PasswordReset {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  token     String    @unique
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  usedAt    DateTime?
+  requestIp String?
+
+  @@index([token])
+  @@index([userId])
+}
+
+model FriendShip {
+  id          Int              @id @default(autoincrement())
+  requester   User             @relation("RequestedFriendShips", fields: [requesterId], references: [id])
+  requesterId Int
+  addressee   User             @relation("ReceivedFriendShips", fields: [addresseeId], references: [id])
+  addresseeId Int
+  status      FriendShipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([requesterId, addresseeId])
 }
 
 model Follower {
-  id             Int @id @default(autoincrement())
-  follower       User @relation("FollowingUser", fields:[followerId], references:[id])
-  followerId     Int
+  id         Int  @id @default(autoincrement())
+  follower   User @relation("FollowingUser", fields: [followerId], references: [id])
+  followerId Int
 
-  following      User @relation("FollowedUser", fields:[followingId], references: [id])
-  followingId    Int
+  following   User @relation("FollowedUser", fields: [followingId], references: [id])
+  followingId Int
+
+  createdAt DateTime @default(now())
 
   @@unique([followerId, followingId])
 }
 
-
 model Post {
-  id            Int @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   title         String
   description   String
   image         String?
   video         String?
-  user          User @relation(fields:[userId], references:[id])
+  user          User           @relation(fields: [userId], references: [id])
   userId        Int
   comments      Comment[]
   post_likes    PostLike[]
   notifications Notification[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  privacy       PostPrivacy?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Comment {
-  id            Int @id @default(autoincrement())
-  content       String
-  post          Post @relation(fields: [postId], references:[id], onDelete: Cascade)
-  postId        Int
-  user          User @relation(fields:[userId], references:[id])
-  userId        Int
-  parentId      Int?
-  parent        Comment?   @relation("CommentReplies", fields:[parentId], references:[id])
-  replies       Comment[]  @relation("CommentReplies")
+  id       Int       @id @default(autoincrement())
+  content  String
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   Int
+  user     User      @relation(fields: [userId], references: [id])
+  userId   Int
+  parentId Int?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
 
   likes         CommentLike[]
   notifications Notification[]
-  createdAt     DateTime @default(now())
+  isDeleted     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
 }
 
 model PostLike {
-  id            Int @id @default(autoincrement())
-  post          Post @relation(fields:[postId], references:[id], onDelete: Cascade)
-  postId        Int
-  user          User @relation(fields:[userId], references:[id])
-  userId        Int
-  createdAt     DateTime @default(now())
-  status        LikeStatus @default(DISLIKE)
+  id        Int        @id @default(autoincrement())
+  post      Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  user      User       @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime   @default(now())
+  status    LikeStatus @default(DISLIKE)
+
   @@unique([postId, userId])
 }
 
 model CommentLike {
-  id            Int @id @default(autoincrement())
-  comment       Comment @relation(fields:[commentId], references:[id])
-  commentId     Int
-  user          User @relation(fields:[userId], references:[id])
-  userId        Int
-  createdAt     DateTime @default(now())
-  status        LikeStatus @default(DISLIKE)
+  id        Int        @id @default(autoincrement())
+  comment   Comment    @relation(fields: [commentId], references: [id])
+  commentId Int
+  user      User       @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime   @default(now())
+  status    LikeStatus @default(DISLIKE)
+
   @@unique([commentId, userId])
 }
 
 model Notification {
-  id            Int         @id @default(autoincrement())
-  type          NotificationType
-  sender        User        @relation("NotificationSender", fields:[senderId], references:[id])
-  senderId      Int
-  receiver      User        @relation("NotificationReceiver", fields:[receiverId], references:[id])
-  receiverId    Int
-  post          Post?       @relation(fields:[postId], references:[id], onDelete: Cascade)
-  postId        Int?
-  comment       Comment?    @relation(fields:[commentId], references:[id], onDelete: Cascade)
-  message       Message?    @relation(fields:[messageId], references:[id], onDelete: Cascade)
-  messageId     Int?
-  room          Room?       @relation(fields:[roomId], references:[id])
-  roomId        Int?
-  commentId     Int?
-  createdAt     DateTime    @default(now())
-  read          Boolean     @default(false)
+  id         Int              @id @default(autoincrement())
+  type       NotificationType
+  sender     User             @relation("NotificationSender", fields: [senderId], references: [id])
+  senderId   Int
+  receiver   User             @relation("NotificationReceiver", fields: [receiverId], references: [id])
+  receiverId Int
+  post       Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId     Int?
+  comment    Comment?         @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  message    Message?         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId  Int?
+  room       Room?            @relation(fields: [roomId], references: [id])
+  roomId     Int?
+  commentId  Int?
+  createdAt  DateTime         @default(now())
+  read       Boolean          @default(false)
 
   @@index([receiverId, read])
 }
 
 model Room {
-  id            Int         @id @default(autoincrement())
-  name          String?
-  type          RoomType
-  profileImage  String?
-  members       RoomMember[]
-  messages      Message[]
-  lastMessage   Message?    @relation("LastMessage", fields:[lastMessageId], references:[id])
-  lastMessageId Int?        @unique  
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  dmKey         String?     @unique
-  notifications Notification[]
+  id             Int            @id @default(autoincrement())
+  name           String?
+  type           RoomType
+  profileImage   String?
+  profileImageId String?
+  description    String?
+  members        RoomMember[]
+  messages       Message[]
+  lastMessage    Message?       @relation("LastMessage", fields: [lastMessageId], references: [id])
+  lastMessageId  Int?           @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  dmKey          String?        @unique
+  notifications  Notification[]
 }
 
 model RoomMember {
-  id            Int         @id @default(autoincrement())
-  user          User        @relation(fields: [userId], references:[id])
-  userId        Int
-  room          Room        @relation(fields: [roomId], references:[id])
-  roomId        Int
-  role          MemberRole  @default(MEMBER)
-  joinedAt      DateTime    @default(now())
-  lastSeenAt    DateTime    @default(now())
-  isTyping      Boolean     @default(false)
-  isPinned      Boolean     @default(false)
-  readMessages  MessageRead[]
-  muteUntil     DateTime?
+  id           Int           @id @default(autoincrement())
+  user         User          @relation(fields: [userId], references: [id])
+  userId       Int
+  room         Room          @relation(fields: [roomId], references: [id])
+  roomId       Int
+  role         MemberRole    @default(MEMBER)
+  joinedAt     DateTime      @default(now())
+  lastSeenAt   DateTime      @default(now())
+  isTyping     Boolean       @default(false)
+  isPinned     Boolean       @default(false)
+  readMessages MessageRead[]
+  muteUntil    DateTime?
 
   @@unique([roomId, userId])
   @@index([userId])
 }
 
 model MessageRead {
-  id        Int           @id  @default(autoincrement())
-  message   Message?      @relation(fields:[messageId], references:[id])
+  id        Int        @id @default(autoincrement())
+  message   Message?   @relation(fields: [messageId], references: [id])
   messageId Int?
-  member    RoomMember    @relation(fields:[memberId], references:[id])
+  member    RoomMember @relation(fields: [memberId], references: [id])
   memberId  Int
-  readAt    DateTime      @default(now())
+  readAt    DateTime   @default(now())
 
   @@unique([messageId, memberId])
 }
 
 model Message {
-  id                Int           @id @default(autoincrement())
-  text              String? 
-  sender            User          @relation("SenderMessages",fields: [senderId], references:[id])
-  senderId          Int
-  room              Room          @relation(fields:[roomId], references:[id], onDelete: Cascade)
-  roomId            Int
-  type              MessageType   @default(TEXT)
-  attachments       Attachment[]
-  receipts          MessageReceipt[]
-  isEdited          Boolean       @default(false)
-  isDeleted         Boolean       @default(false)
-  repliedTo         Message?      @relation("ReplyTo", fields:[replyTo], references:[id], onDelete: Cascade)
-  replyTo           Int?  
-  replies           Message[]     @relation("ReplyTo")
-  reactions         Reaction[]
-  readBy            MessageRead[]
-  createdAt         DateTime      @default(now())
+  id          Int              @id @default(autoincrement())
+  text        String?
+  sender      User             @relation("SenderMessages", fields: [senderId], references: [id])
+  senderId    Int
+  room        Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId      Int
+  type        MessageType      @default(TEXT)
+  attachments Attachment[]
+  receipts    MessageReceipt[]
+  isEdited    Boolean          @default(false)
+  isDeleted   Boolean          @default(false)
+  repliedTo   Message?         @relation("ReplyTo", fields: [replyTo], references: [id], onDelete: Cascade)
+  replyTo     Int?
+  replies     Message[]        @relation("ReplyTo")
+  reactions   Reaction[]
+  readBy      MessageRead[]
+  createdAt   DateTime         @default(now())
 
-  lastMessageOfRoom Room?         @relation("LastMessage")
+  lastMessageOfRoom Room?          @relation("LastMessage")
   notifications     Notification[]
 
   @@index([roomId, createdAt])
 }
 
 model MessageReceipt {
-  id            Int       @id @default(autoincrement())
-  message       Message   @relation(fields:[messageId], references:[id])
-  messageId     Int
-  user          User      @relation(fields:[userId], references:[id])
-  userId        Int
-  deliveredAt   DateTime?
-  readAt        DateTime?
+  id          Int       @id @default(autoincrement())
+  message     Message   @relation(fields: [messageId], references: [id])
+  messageId   Int
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  deliveredAt DateTime?
+  readAt      DateTime?
 
   @@unique([messageId, userId])
   @@index([userId])
 }
 
 model Reaction {
-  id              Int           @id @default(autoincrement())
-  message         Message       @relation(fields:[messageId], references:[id])
-  messageId       Int
-  user            User          @relation(fields:[userId], references:[id])
-  userId          Int
-  reactionType    ReactionType  @relation(fields: [reactionTypeId], references:[id])
-  reactionTypeId  Int
-  createdAt       DateTime       @default(now())
+  id             Int          @id @default(autoincrement())
+  message        Message      @relation(fields: [messageId], references: [id])
+  messageId      Int
+  user           User         @relation(fields: [userId], references: [id])
+  userId         Int
+  reactionType   ReactionType @relation(fields: [reactionTypeId], references: [id])
+  reactionTypeId Int
+  createdAt      DateTime     @default(now())
 }
-
 
 model ReactionType {
   id          Int      @id @default(autoincrement())
@@ -263,18 +339,96 @@ model ReactionType {
   imageUrl    String?
   category    String?
   keywords    String?
-  createdBy   User?    @relation("UserReactionTypes",fields:[createdById], references:[id])
+  createdBy   User?    @relation("UserReactionTypes", fields: [createdById], references: [id])
   createdById Int?
   createdAt   DateTime @default(now())
 
-  reactions   Reaction[]
+  reactions Reaction[]
 }
 
 model Attachment {
-  id          Int         @id @default(autoincrement())
-  message     Message     @relation(fields:[messageId], references:[id])
-  messageId   Int
-  url         String
-  mimeType    String
-  uploadedAt  DateTime     @default(now())
+  id         Int      @id @default(autoincrement())
+  message    Message  @relation(fields: [messageId], references: [id])
+  messageId  Int
+  url        String
+  mimeType   String
+  fileId     String?
+  uploadedAt DateTime @default(now())
+}
+
+model PrivacyList {
+  id         Int                 @id @default(autoincrement())
+  user       User                @relation(fields: [userId], references: [id])
+  userId     Int
+  name       String
+  members    PrivacyListMember[]
+  customList PostPrivacy[]
+  createdAt  DateTime            @default(now())
+}
+
+model PrivacyListMember {
+  id        Int         @id @default(autoincrement())
+  list      PrivacyList @relation(fields: [listId], references: [id])
+  listId    Int
+  member    User        @relation(fields: [memberId], references: [id])
+  memberId  Int
+  createdAt DateTime    @default(now())
+
+  @@unique([listId, memberId])
+}
+
+model UserPrivacySetting {
+  id                      Int            @id @default(autoincrement())
+  user                    User           @relation(fields: [userId], references: [id])
+  userId                  Int
+  defaultPostVisibility   PostVisibility @default(FOLLOWERS)
+  defaultMessageSetting   MessagePrivacy @default(FOLLOWERS)
+  allowFollowersToMessage Boolean        @default(true)
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+}
+
+model PostPrivacy {
+  id           Int            @id @default(autoincrement())
+  post         Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId       Int            @unique
+  visibility   PostVisibility
+  customList   PrivacyList?   @relation(fields: [customListId], references: [id])
+  customListId Int?
+}
+
+model UserBlock {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation("Blockers", fields: [userId], references: [id])
+  userId        Int
+  blockedUser   User     @relation("Blocked", fields: [blockedUserId], references: [id])
+  blockedUserId Int
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, blockedUserId])
+}
+
+model Story {
+  id        Int         @id @default(autoincrement())
+  mediaUrl  String
+  mediaType String
+  caption   String?
+  createdAt DateTime    @default(now())
+  expiresAt DateTime
+  user      User        @relation(fields: [userId], references: [id])
+  userId    Int
+  views     StoryView[]
+  songName  String?
+  songType  String?
+  isActive  Boolean     @default(true)
+}
+
+model StoryView {
+  id             Int      @id @default(autoincrement())
+  story          Story    @relation(fields: [storyId], references: [id])
+  storyId        Int
+  viewer         User     @relation(fields: [viewerId], references: [id])
+  viewerId       Int
+  viewedAt       DateTime @default(now())
+  viewerReaction String?
 }

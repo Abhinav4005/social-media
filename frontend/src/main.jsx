@@ -7,6 +7,12 @@ import store from './store/index.js';
 import { persistor} from "./store/index.js";
 import { PersistGate } from 'redux-persist/integration/react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import SocketPresence from './SocketPresence.jsx';
+import { Buffer } from 'buffer';
+import process from 'process';
+
+window.Buffer = Buffer;
+window.process = process;
 
 const queryClient = new QueryClient();
 
@@ -15,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
+          <SocketPresence />
           <App/>
         </QueryClientProvider>
       </PersistGate>

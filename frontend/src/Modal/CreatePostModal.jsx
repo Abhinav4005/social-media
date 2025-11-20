@@ -74,6 +74,8 @@ export default function CreatePostModal({ isOpen, onClose, isEditing = false, ed
     }
   };
 
+  console.log("user:", user);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -90,7 +92,7 @@ export default function CreatePostModal({ isOpen, onClose, isEditing = false, ed
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition cursor-pointer"
         >
           <X size={24} />
         </button>
@@ -100,11 +102,19 @@ export default function CreatePostModal({ isOpen, onClose, isEditing = false, ed
         </h2>
 
         <div className="flex items-center gap-4 mb-6">
-          <img
-            src="/default-avatar.png"
+          {user?.profileImage ? (
+            <img
+              src={`${user.profileImage}`}
+              alt="User Avatar"
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ) : (
+            <img
+            src={`https://i.pravatar.cc/150?u=${user.email}`}
             alt="User Avatar"
             className="w-12 h-12 rounded-full border border-gray-300 shadow-sm"
           />
+          )}
           <span className="font-medium text-gray-700 capitalize">{user?.name}</span>
         </div>
 

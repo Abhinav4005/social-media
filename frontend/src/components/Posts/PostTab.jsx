@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ThumbsUp } from 'lucide-react';
 
 const PostTab = ({ posts, isLoading, isError }) => {
     const navigate = useNavigate();
@@ -17,10 +18,10 @@ const PostTab = ({ posts, isLoading, isError }) => {
     return (
         <>
             {isLoading && (
-                <p className="text-center text-gray-500 py-8 animate-pulse text-lg">⏳ Loading posts...</p>
+                <p className="text-center text-gray-500 py-8 animate-pulse text-lg">Loading posts...</p>
             )}
             {isError && (
-                <p className="text-center text-red-500 py-8 text-lg">⚠️ Failed to load posts</p>
+                <p className="text-center text-red-500 py-8 text-lg">Failed to load posts</p>
             )}
             {posts?.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
@@ -32,7 +33,7 @@ const PostTab = ({ posts, isLoading, isError }) => {
                         >
                             {post.image && (
                                 <img
-                                    src={'/smart.jpeg' }
+                                    src={post?.image != null ? post?.image : "/smart.jpeg"}
                                     alt={post.title}
                                     className="w-full h-56 object-cover"
                                 />
@@ -43,7 +44,7 @@ const PostTab = ({ posts, isLoading, isError }) => {
 
                                 <div className="mt-4 flex justify-between items-center text-gray-500 text-sm">
                                     <button className="flex items-center gap-1 hover:text-blue-500 transition-colors">
-                                        👍 <span>{post?.post_likes?.length}</span>
+                                    <ThumbsUp /> <span>{post?.post_likes?.length}</span>
                                     </button>
                                     <button className="flex items-center gap-1 hover:text-blue-500 transition-colors">
                                         💬 <span>{post?.comments?.length}</span>

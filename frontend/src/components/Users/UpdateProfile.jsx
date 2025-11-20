@@ -1,17 +1,24 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { QueryClient, useMutation } from "@tanstack/react-query";
 import { updateUserProfile } from "../../api";
 import Navbar from "../../pages/Navbar";
+import { setCredentials } from "../../store/slices/authSlice";
+import { useNavigate } from "react-router-dom";
 
 export default function UpdateProfile() {
   const queryClient = new QueryClient();
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [avatarPreview, setAvatarPreview] = useState(
     user?.profileImage || "/default-avatar.png"
   );
+  const [avatarFile, setAvatar] = useState(null);
+
+  console.log("User from Redux:", user);
 
   const initialData = {
     name: user?.name || "",
@@ -19,6 +26,8 @@ export default function UpdateProfile() {
     bio: user?.bio || "",
     location: user?.location || "",
     profileImage: user?.profileImage || null,
+    about: user?.about || "",
+    password: "",
   }
 
   const [formData, setFormData] = useState(initialData);
@@ -27,26 +36,32 @@ export default function UpdateProfile() {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarPreview(URL.createObjectURL(file));
+      setAvatar(file);
     }
   };
 
   const handleRemoveAvatar = () => {
     setAvatarPreview("/default-avatar.png");
+    setAvatar(null);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log("Name value",name, value);
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }))
   }
 
+  console.log("Form Data:", formData);
+
   const mutation = useMutation({
     mutationFn: (userData) => updateUserProfile(userData),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(["userProfile"]);
-      setFormData(initialData);
+      dispatch(setCredentials({ user: data?.user }))
+      navigate("/profile");
       console.log("Profile updated successfully!");
     },
     onError: (error) => {
@@ -60,10 +75,16 @@ export default function UpdateProfile() {
     data.append("email", formData.email);
     data.append("bio", formData.bio);
     data.append("location", formData.location);
-    if (avatarPreview !== "/default-avatar.png") {
-      data.append("profileImage", avatarPreview)
+    data.append("about", formData.about);
+    data.append("password", formData.password);
+    if(avatarFile){
+      data.append("profileImage", avatarFile);
     }
     mutation.mutate(data);
+  }
+
+  const handleCancel = () => {
+    navigate("/profile")
   }
 
   return (
@@ -103,6 +124,8 @@ export default function UpdateProfile() {
                 type="file"
                 accept="image/*"
                 className="hidden"
+                name="profileImage"
+                value={formData.profileImage ? undefined : ""}
                 onChange={handleAvatarChange}
               />
             </label>
@@ -113,14 +136,16 @@ export default function UpdateProfile() {
             <input
               type="text"
               placeholder="Full Name"
-              defaultValue={formData.name}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm transition"
             />
             <input
               type="email"
               placeholder="Email"
-              defaultValue={formData.email}
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm transition"
             />
@@ -129,22 +154,35 @@ export default function UpdateProfile() {
           <textarea
             placeholder="Bio"
             rows="4"
-            defaultValue={formData.bio}
+            name="bio"
+            value={formData.bio}
+            onChange={handleChange}
+            className="w-full mt-6 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none shadow-sm transition"
+          ></textarea>
+
+          <textarea
+            name="about"
+            placeholder="About"
+            rows="2"
+            value={formData.about}
             onChange={handleChange}
             className="w-full mt-6 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none shadow-sm transition"
           ></textarea>
 
           <input
             type="text"
+            name="location"
             placeholder="Location"
-            defaultValue={formData.location}
+            value={formData.location}
             onChange={handleChange}
             className="w-full mt-4 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm transition"
           />
 
           <input
             type="password"
+            name="password"
             placeholder="New Password"
+            value={formData.password}
             onChange={handleChange}
             className="w-full mt-4 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm transition"
           />
@@ -154,7 +192,8 @@ export default function UpdateProfile() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 rounded-xl bg-gray-300 text-gray-700 hover:bg-gray-400 transition font-semibold"
+              className="px-6 py-3 rounded-xl bg-gray-300 text-gray-700 hover:bg-gray-400 transition font-semibold cursor-pointer"
+              onClick={handleCancel}
             >
               Cancel
             </motion.button>
@@ -162,7 +201,7 @@ export default function UpdateProfile() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleUpdateProfile}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 transition font-semibold"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 transition font-semibold cursor-pointer"
             >
               Save Changes
             </motion.button>
