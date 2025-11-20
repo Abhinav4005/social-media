@@ -1,17 +1,35 @@
 import bcrypt from "bcryptjs";
 import prisma from "../config/db.js"
+import uploadImageToImageKit, { replaceImageInImageKit } from "../utils/uploadImage.js";
+import imagekit from "../config/imagekit.js";
 
 export const getUserProfile = async (req, res) => {
     try {
         const userId = req.user.id;
+
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
+
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
-                followers: true,
-                following: true,
+                followers: {
+                    include: {
+                        follower: {
+                            select: { id: true, name: true, profileImage: true, email: true }
+                        }
+                    }
+                },
+                following: {
+                    include: {
+                        following: {
+                            select: { id: true, name: true, profileImage: true, email: true }
+                        }
+                    }
+                },
+                receivedFriendShips:true,
+                requestedFriendShips: true,
                 posts: {
                     select: {
                         id: true,
@@ -19,7 +37,9 @@ export const getUserProfile = async (req, res) => {
                         post_likes: true,
                         image: true,
                         title: true,
-                        description: true
+                        description: true,
+                        createdAt: true,
+                        updatedAt: true
                     }
                 },
             },
@@ -38,7 +58,7 @@ export const getUserProfile = async (req, res) => {
 export const getUserById = async (req, res) => {
     try {
         const { userId } = req.params;
-        if(!userId) {
+        if (!userId) {
             return res.status(400).json({ message: "Missing userId" });
         }
 
@@ -49,6 +69,8 @@ export const getUserById = async (req, res) => {
                 following: true,
                 posts: true,
                 postLikes: true,
+                requestedFriendShips: true,
+                receivedFriendShips: true,
             },
         })
         if (!user) {
@@ -71,14 +93,35 @@ export const updateUserProfile = async (req, res) => {
             return res.status(401).json({ error: "Unauthorized access" });
         }
 
-        const { name, email, password, bio, location } = req.body;
-        const profileImage = req.files.profileImage ? req.files.profileImage[0] : null;
+        const { name, email, password, bio, location, about } = req.body;
+        const profileImage = req?.files?.profileImage ? req.files.profileImage[0] : null;
+        const coverImage = req?.files?.coverImage ? req.files.coverImage[0] : null;
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id: userId }
+        })
 
         const dataToUpdate = {};
         if (name) dataToUpdate.name = name;
         if (email) dataToUpdate.email = email;
         if (bio) dataToUpdate.bio = bio;
-        if (profileImage) dataToUpdate.profileImage = profileImage ? profileImage.originalname : null;
+        if (about) dataToUpdate.about = about;
+        if (profileImage) {
+            if( existingUser?.profileImage ){
+                await replaceImageInImageKit(existingUser.profileImage, profileImage, "social-hub/users", existingUser?.profileImageId);
+            }
+            const uploadedImage = await uploadImageToImageKit(profileImage, "social-hub/users");
+            dataToUpdate.profileImage = uploadedImage.url;
+            dataToUpdate.profileImageId = uploadedImage.fileId;
+        }
+        if (coverImage) {
+            if( existingUser?.coverImage ){
+                await replaceImageInImageKit(existingUser.coverImage, coverImage, "social-hub/users/cover", existingUser?.coverImageId);
+            }
+            const uploadedCoverImage = await uploadImageToImageKit(coverImage, "social-hub/users/cover");
+            dataToUpdate.coverImage = uploadedCoverImage.url;
+            dataToUpdate.coverImageId = uploadedCoverImage.fileId;
+        }
         if (location) dataToUpdate.location = location;
         if (password) dataToUpdate.password = await bcrypt.hash(password, 10);
 
@@ -87,10 +130,10 @@ export const updateUserProfile = async (req, res) => {
         }
 
         if (email) {
-            const existingUser = await prisma.user.findUnique({
+            const existingEmailUser = await prisma.user.findUnique({
                 where: { email }
             });
-            if (existingUser && existingUser.id !== userId) {
+            if (existingEmailUser && existingEmailUser.id !== userId) {
                 return res.status(400).json({ error: "Email is already in use by another user" });
             }
         }
@@ -123,7 +166,7 @@ export const searchUsersByQuery = async (req, res) => {
         }
 
         const searchTerm = search.trim();
-        
+
         if (searchTerm.length < 3) {
             return res.status(400).json({ error: "Search query must be at least 3 characters long" });
         }
@@ -149,20 +192,20 @@ export const searchUsersByQuery = async (req, res) => {
 
         res.status(200).json({ users: usersWithoutPassword });
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ error: "An error occurred while searching for users." });
     }
 }
 
-export const followUser = async(req, res) => {
+export const followUser = async (req, res) => {
     try {
         const userId = req.user.id;
         const { followingId } = req.body;
-        if(!userId || !followingId) {
+        if (!userId || !followingId) {
             return res.status(400).json({ error: "User ID and follow user ID are required" });
         }
 
-        if(userId === parseInt(followingId, 10)) {
+        if (userId === parseInt(followingId, 10)) {
             return res.status(400).json({ error: "You cannot follow yourself" });
         }
 
@@ -175,7 +218,7 @@ export const followUser = async(req, res) => {
             }
         });
         let follow;
-        if(existingFollow) {
+        if (existingFollow) {
             await prisma.follower.delete({
                 where: {
                     followerId_followingId: {
@@ -210,8 +253,8 @@ export const followUser = async(req, res) => {
 export const getFollowers = async (req, res) => {
     try {
         const userId = req.user.id;
-        if(!userId){
-            return res.status(401).json({error: "Unauthroized access" });
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthroized access" });
         }
         const followers = await prisma.follower.findMany({
             where: { followingId: parseInt(userId, 10) },
@@ -226,7 +269,7 @@ export const getFollowers = async (req, res) => {
                 }
             }
         });
-        if(followers.length === 0) {
+        if (followers.length === 0) {
             return res.status(200).json({ message: "No followers found", followers: [] });
         }
         // Map to extract follower details
@@ -246,15 +289,15 @@ export const getFollowers = async (req, res) => {
 export const getFollowing = async (req, res) => {
     try {
         const userId = req.user.id;
-        if(!userId){
+        if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
         const following = await prisma.follower.findMany({
-            where: { followerId: parseInt(userId, 10)},
+            where: { followerId: parseInt(userId, 10) },
             include: {
                 following: {
                     select: {
-                        id:true,
+                        id: true,
                         name: true,
                         email: true,
                         profileImage: true,
@@ -262,7 +305,7 @@ export const getFollowing = async (req, res) => {
                 }
             }
         });
-        if(following.length === 0) {
+        if (following.length === 0) {
             return res.status(200).json({ message: "No following user found", following: [] });
         }
         // Map to extract following user details
@@ -282,18 +325,18 @@ export const getFollowing = async (req, res) => {
 export const getUserFeed = async (req, res) => {
     try {
         const userId = req.user.id;
-        if(!userId){
+        if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
         const following = await prisma.follower.findMany({
-            where: { followerId: parseInt(userId, 10)},
+            where: { followerId: parseInt(userId, 10) },
             select: { followingId: true }
         })
 
         const followingIds = following.map(follow => follow.followingId);
 
-        if(followingIds.length === 0) {
-            return res.status(200).json({ error: "No following users found", posts:[] });
+        if (followingIds.length === 0) {
+            return res.status(200).json({ error: "No following users found", posts: [] });
         }
 
         const posts = await prisma.post.findMany({
@@ -327,19 +370,59 @@ export const getUserFeed = async (req, res) => {
                 },
                 post_likes: true
             },
-            orderBy:{
+            orderBy: {
                 createdAt: 'desc'
             }
         });
 
-        if(posts.length === 0) {
+        if (posts.length === 0) {
             return res.status(200).json({ message: "No posts found from followed users", posts: [] });
         }
 
         res.status(200).json({ message: "User feed fetched successfully", posts });
     } catch (error) {
-        
+
         console.error(error);
         res.status(500).json({ error: "An error occurred while fetching user feed." });
+    }
+}
+
+export const getAllPhotosOfUser = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        if(!userId) {
+            return res.status(401).json({ error: "Unauthorized access" });
+        }
+
+        const photos = await prisma.post.findMany({
+            where: { userId: parseInt(userId, 10), NOT: { image: null } },
+            select: { image: true, id: true },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const userPhotos = await prisma.user.findMany({
+            where: { id: parseInt(userId, 10), NOT: { profileImage: null , coverImage: null } },
+            select: { profileImage: true, coverImage: true, profileImageId: true, coverImageId: true }
+        });
+
+        const profileAndCoverImages = [];
+        userPhotos.forEach(user => {
+            if (user?.profileImage) {
+                profileAndCoverImages.push({ id: 'profile-image', image: user.profileImage, fileId: user?.profileImageId });
+            }
+            if (user?.coverImage) {
+                profileAndCoverImages.push({ id: 'cover-image', image: user.coverImage, fileId: user?.coverImageId });
+            }
+        });
+        
+        res.status(200).json({ 
+            message: "Photos fetched successfully", 
+            userImage: profileAndCoverImages,
+            postImages: photos
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "An error occurred while fetching user photos." });
     }
 }

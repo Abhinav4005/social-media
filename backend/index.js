@@ -5,6 +5,9 @@ import cors from 'cors';
 import path from "path";
 import http from "http";
 import { initSocket } from './src/socket/index.js';
+import dns from "dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 
@@ -14,7 +17,7 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", 'https://dc95f8256a79.ngrok-free.app'],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
     allowedHeaders: ["Content-Type", "Authorization"],

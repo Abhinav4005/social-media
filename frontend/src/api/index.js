@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
 
 const getAuthToken = () => {
     const token = localStorage.getItem('token');
@@ -9,8 +9,7 @@ const getAuthToken = () => {
 
 export const signUp = async (userData) => {
     const response = await axios.post(`${API_BASE_URL}/auth/signup`, userData);
-    console.log("Sign Up Response:", response);
-    console.log("Sign Up Response Data:", response.data);
+    
     if (!response.data.user) {
         throw new Error(response.data.message || "Sign Up failed");
     }
@@ -19,7 +18,6 @@ export const signUp = async (userData) => {
 
 export const signIn = async (data) => {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
-    console.log("Sign In Response:", response.data);
     if (response.data.token) {
         localStorage.setItem('token', response.data.token);
     }
@@ -36,6 +34,29 @@ export const logout = async () => {
     }
     localStorage.removeItem('token');
     console.log("Logout successful");
+    return response.data;
+}
+
+export const forgotPassword = async (email) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+        email
+    })
+
+    if(response.status !==200){
+        throw new Error("failed to forgot password");
+    }
+    return response.data;
+}
+
+export const resetPassword = async (token, newPassword, confirmPassword) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+        token,
+        newPassword,
+        confirmPassword
+    });
+    if(response.status !== 200){
+        throw new Error("Failed to reset password");
+    }
     return response.data;
 }
 
@@ -127,6 +148,18 @@ export const deletePost = async (postId) => {
     });
     if (response.status !== 200) {
         throw new Error("Failed to delete post");
+    }
+    return response.data;
+}
+
+export const followUser = async (followingId) => {
+    const response = await axios.post(`${API_BASE_URL}/user/follow`, { followingId }, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to follow/unfollow user");
     }
     return response.data;
 }
@@ -247,7 +280,7 @@ export const getPostFeed = async (page) => {
         },
         params: { page }
     });
-    // console.log("Post Feed Response:", response);
+    console.log("Post Feed Response:", response);
     if (response.status !== 200) {
         throw new Error("Failed to fetch post feed");
     }
@@ -276,8 +309,110 @@ export const createOrGetRoom = async (name = null, type, memberIds = []) => {
             Authorization: getAuthToken(),
         }
     });
-    if (response.status !== 201) {
+    if (![200, 201].includes(response.status)) {
         throw new Error("Failed to create or get chat room");
     }
-    return response.data.room || {};
+    return response.data.room || [];
+}
+
+export const getMessages = async (roomId) => {
+    const response = await axios.get(`${API_BASE_URL}/chat/room/${roomId}/messages`, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch messages");
+    }
+    return response.data.messages || [];
+}
+
+export const globalSearch = async (search, type = 'all', limit = 10, offset = 1) => {
+    const response = await axios.get(`${API_BASE_URL}/global/search`, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+        params: { search, type, limit, offset }
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to perform global search");
+    }
+    return response.data.data || { users: [], posts: [] };
+}
+
+export const sendFriendRequest = async (addresseeId) => {
+    const response = await axios.post(`${API_BASE_URL}/friend/request`, {}, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+        params: { addresseeId: addresseeId }
+    });
+    if (response.status !== 201) {
+        throw new Error("Failed to send friend request");
+    }
+}
+
+export const cancelFriendRequest = async (requestId) => {
+    const response = await axios.post(`${API_BASE_URL}/friend/cancel`, {}, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+        params: { requestId }
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to cancel friend request");
+    }
+    return response.data;
+}
+
+export const getFriendRequests = async () => {
+    const response = await axios.get(`${API_BASE_URL}/friend`, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch friend requests");
+    }
+    return response.data || [];
+}
+
+export const respondToFriendRequest = async (requestId, action) => {
+    console.log("Responding to Friend Request ID:", requestId, "with Action:", action);
+    const response = await axios.post(`${API_BASE_URL}/friend/respond`, {},{
+        headers: {
+            Authorization: getAuthToken(),
+        },
+        params: { requestId, action }
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to respond to friend request");
+    }
+    return response.data;
+}
+
+export const getAllPhotosOfUser = async () => {
+    const response = await axios.get(`${API_BASE_URL}/user/photos`, {
+        headers: {
+            Authorization: getAuthToken(),
+        },
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch user photos");
+    }
+    return response.data || { userImage: [], postImages: [] };
+}
+
+export const deleteMessage = async (messageId) => {
+    const response = await axios.delete(`${API_BASE_URL}/chat/message/delete`, {},{
+        headers: {
+            Authorization: getAuthToken(),
+        },
+        params: { messageId },
+    });
+
+    if (response.status !== 200) {
+        throw new Error("Failed to delete message");
+    }
+    return response.data;
 }

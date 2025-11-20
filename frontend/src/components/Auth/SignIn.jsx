@@ -5,7 +5,7 @@ import { signIn } from "../../api";
 import { useDispatch, useSelector } from "react-redux";
 import { loginStart, setCredentials, loginFailure } from "../../store/slices/authSlice";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function SignIn() {
   const initailData = {
@@ -111,6 +111,15 @@ export default function SignIn() {
             >
               Password
             </label>
+          </div>
+
+          <div className="text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-200 hover:underline"
+            >
+              Forgot Password?
+            </Link>
           </div>
 
 

@@ -1,4 +1,5 @@
 import prisma from "../config/db.js";
+import uploadImageToImageKit, { replaceImageInImageKit } from "../utils/uploadImage.js";
 
 export const createRoom = async (req, res) => {
     try {
@@ -81,12 +82,14 @@ export const getRooms = async (req, res) => {
                     some: {
                         userId: userId,
                     }
-                }
+                },
             },
             include: {
                 members: {
                     include: {
-                        user: true
+                        user: {
+                            select: { id: true, name: true, email: true, profileImage: true }
+                        }
                     }
                 },
                 messages: {
@@ -217,13 +220,152 @@ export const getMessages = async (req, res) => {
                             include: { user: true }
                         }
                     }
+                },
+                receipts: true,
+                room: {
+                    include: {
+                        members:{
+                            select:{
+                                isTyping: true
+                            }
+                        }
+                    }
                 }
             }
         });
 
-        return res.status(200).json({ message: "Messages fetched successfully", messages: messages });
+        const formattedMessages = messages.map((msg) => ({
+            ...msg,
+            readBy: msg.readBy.map((r) => ({
+                id: r.member.user.id,
+                name: r.member.user.name
+            }))
+        }));
+
+        return res.status(200).json({ message: "Messages fetched successfully", messages: formattedMessages });
     } catch (error) {
         console.error("Error fetching messages:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export const changeGroupName = async(req, res) => {
+    try {
+        const userId = req?.user?.id;
+        const { roomId, name } = req.body;
+        const profileImage = req?.files?.profileImage ? req.files.profileImage[0] : null;
+
+        const dataToUpdate = {};
+
+        const existingRoom = await prisma.room.findUnique({
+            where: { id: roomId }
+        });
+
+        if(name) dataToUpdate.name = name;
+        if(description) dataToUpdate.description = description;
+        if(profileImage) {
+            if(existingRoom?.profileImage) {
+                await replaceImageInImageKit(existingRoom?.profileImage, profileImage, "social-hub/rooms", existingRoom?.profileImageId)
+            }
+            const uploadImage = await uploadImageToImageKit(profileImage, "social-hub/rooms")
+            dataToUpdate.profileImage = uploadImage.url;
+            dataToUpdate.profilImageId = uploadImage.fileId;
+        }
+        if(!userId) {
+            return res.status(401).json({ message: "Unauthorized Access" });
+        }
+
+        if(!roomId) {
+            return res.status(400).json({ message: "roomId is required" });
+        }
+
+        if(!name) {
+            return res.status(400).json({ message: "group name is required for update" });
+        }
+
+        const room = await prisma.room.findUnique({
+            where: { id: roomId }
+        })
+
+        if(!room) {
+            return res.status(404).json({ message: "Room not found" });
+        }
+
+        const updatedRoom = await prisma.room.update({
+            where: { id: roomId },
+            data:dataToUpdate
+        })
+
+        return res.status(200).json({ 
+            message: "Group name updated successfully",
+            updatedRoom
+        });
+    } catch (error) {
+        console.error("Error in updating group name", error);
+        return res.status(500).json({ message:"Error in updating group name" });
+    }
+}
+
+export const deleteMessage = async (req, res) => {
+  try {
+    const userId = req?.user?.id;
+    const { messageId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized Access" });
+    }
+
+    const message = await prisma.message.findUnique({
+      where: { id: parseInt(messageId) },
+      include: {
+        attachments: true,
+        reactions: true,
+        readBy: true,
+        replies: true,
+        receipts: true,
+      },
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (message.senderId !== userId) {
+      return res.status(403).json({ message: "Forbidden: You can only delete your own messages" });
+    }
+
+    for (const attachment of message.attachments) {
+      try {
+        await imagekit.deleteFile(attachment.fileId);
+      } catch (err) {
+        console.warn(`Failed to delete file ${attachment.fileId}:`, err.message);
+      }
+    }
+
+    await prisma.attachment.deleteMany({ where: { messageId: message.id } });
+    await prisma.reaction.deleteMany({ where: { messageId: message.id } });
+    await prisma.messageRead.deleteMany({ where: { messageId: message.id } });
+    await prisma.messageReceipt.deleteMany({ where: { messageId: message.id } });
+    await prisma.notification.deleteMany({ where: { messageId: message.id } });
+    await prisma.message.updateMany({
+      where: { replyTo: message.id },
+      data: { replyTo: null },
+    });
+
+    const updatedMessage = await prisma.message.update({
+      where: { id: message.id },
+      data: {
+        text: "This message has been deleted",
+        isDeleted: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Message deleted successfully",
+      deletedMessage: updatedMessage,
+    });
+  } catch (error) {
+    console.error("Error in deleting message", error);
+    return res.status(500).json({ message: "Error in deleting message" });
+  }
+};

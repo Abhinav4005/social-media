@@ -1,28 +1,15 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getUserFollowers, getUserFollowing } from "../../api";
 import Button from "../UI/Button";
 import { useNavigate } from "react-router-dom";
 
-const FriendsTab = ({ activeTab }) => {
-  const [tab, setTab] = useState("followers");
+const FriendsTab = ({ activeTab, followers, following, isLoading, isError }) => {
+  if (activeTab !== "friends") return null;
+  const [tab, setTab] = useState("following");
   const navigate = useNavigate();
 
   const handleOpenDetail = (userId) => {
     navigate(`/friends/${userId}`);
   }
-
-  const { data: followers, isLoading: loadingFollowers, isError: errorFollowers } = useQuery({
-    queryKey: ["userFollowers"],
-    queryFn: getUserFollowers,
-    enabled: tab === "followers",
-  });
-
-  const { data: following, isLoading: loadingFollowing, isError: errorFollowing } = useQuery({
-    queryKey: ["userFollowing"],
-    queryFn: getUserFollowing,
-    enabled: tab === "following",
-  });
 
   const renderList = (list, loading, error, label) => {
     if (loading) return <p className="text-gray-500 text-center py-4">⏳ Loading {label}...</p>;
@@ -34,11 +21,11 @@ const FriendsTab = ({ activeTab }) => {
         {list.map((user) => (
           <div
             key={user.id}
-            className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow hover:shadow-lg transition-all duration-300"
+            className="flex items-center gap-4 p-4 bg-white rounded-2xl cursor-pointer shadow hover:shadow-lg transition-all duration-300"
             onClick={() => handleOpenDetail(user?.id)}
           >
             <div className="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
-              {user.name
+              {user?.name
                 ?.split(" ")
                 .map((n) => n[0]?.toUpperCase())
                 .slice(0, 2)
@@ -65,7 +52,6 @@ const FriendsTab = ({ activeTab }) => {
 
   return (
     <div className="p-4 bg-gray-50 rounded-2xl">
-      {/* Sub-tabs */}
       <div className="flex justify-center gap-4 mb-6 border-b border-gray-200">
         <Button
           onClick={() => setTab("followers")}
@@ -85,8 +71,8 @@ const FriendsTab = ({ activeTab }) => {
         </Button>
       </div>
 
-      {tab === "followers" && renderList(followers, loadingFollowers, errorFollowers, "followers")}
-      {tab === "following" && renderList(following, loadingFollowing, errorFollowing, "following")}
+      {tab === "followers" && renderList(followers.map(user => user.follower), isLoading, isError, "followers")}
+      {tab === "following" && renderList(following.map(user => user.following), isLoading, isError, "following")}
     </div>
   );
 };

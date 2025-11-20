@@ -1,12 +1,7 @@
-import { User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { menuItems } from "../constant/constant"
 
 export default function Sidebar() {
-  const menuItems = [
-    { icon: <User size={20} />, label: "Profile", path: "/profile" },
-    // { icon: <Settings size={20} />, label: "Settings", path: "/" },
-    { icon: <Settings size={20} />, label: "Settings", path: "/settings" },
-  ];
 
   return (
     <div className="p-4 bg-white rounded-2xl shadow-md space-y-4 sticky top-6">

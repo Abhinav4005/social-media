@@ -3,15 +3,15 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Button from "../UI/Button";
 import Navbar from "../../pages/Navbar";
-import { createOrGetRoom, getUserById } from "../../api";
-import { useQueryClient } from "@tanstack/react-query";
+import { createOrGetRoom, followUser, getUserById } from "../../api";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const FriendsDetail = () => {
+    const {user: currentUser } = useSelector((state) => state.auth);
     const { userId } = useParams();
-    console.log("FriendsDetail - userId:", userId);
-    const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const [isFollower, setIsFollower] = useState(false);
 
     const { data: user, isLoading, isError } = useQuery({
         queryKey: ["userDetail", userId],
@@ -22,10 +22,20 @@ const FriendsDetail = () => {
         enabled: !!userId,
     });
 
+    console.log("Fetched user data:", currentUser);
+
+    useEffect(() => {
+        user?.followers?.forEach(follower => {
+            if (follower.followerId === currentUser?.id ) setIsFollower(true);
+        });
+    }, [userId, user?.followers]);
+
+    console.log("Is Follower:", isFollower);
+
     const mutation = useMutation({
         mutationFn: () => createOrGetRoom(null, "DM", [userId]),
         onSuccess:(room) => {
-            navigate(`/chat`)
+            navigate(`/chat/${room?.id}`)
         },
         onError: (err) => {
             console.error("Room creation failed:", err)
@@ -33,8 +43,24 @@ const FriendsDetail = () => {
     })
 
     const handleMessage = () => {
-        mutation.mutate(null, "DM", [userId]);
+        mutation.mutate();
     }
+
+    const followMutation = useMutation({
+        mutationFn: (followingId) => followUser(followingId),
+        onMutate: () => {
+            setIsFollower((prev) => !prev);
+            
+        }
+    })
+
+    const handleFollow = (followingId) => {
+        followMutation.mutate(followingId);
+    }
+
+    // const handleFollowClick = () => {
+    //     handleFollow(user?.id);
+    // }
 
     if (isLoading) return <p className="text-center py-20">⏳ Loading user...</p>;
     if (isError || !user) return <p className="text-center py-20 text-red-500">⚠️ Failed to load user</p>;
@@ -58,8 +84,8 @@ const FriendsDetail = () => {
                 </div>
 
                 <div className="flex gap-4 mb-6">
-                    <Button className="bg-indigo-500 text-white px-6 py-2 rounded-xl" onClick={() => { }}>
-                        Follow
+                    <Button className="bg-indigo-500 text-white px-6 py-2 rounded-xl" onClick={()=> handleFollow(user?.id)}>
+                        {isFollower ? "Unfollow" : "Follow"}
                     </Button>
                     <Button className="bg-green-500 text-white px-6 py-2 rounded-xl" onClick={handleMessage}>
                         Message

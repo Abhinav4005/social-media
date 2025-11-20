@@ -97,7 +97,7 @@ const PostDetail = () => {
         <div className='relative'>
           {post?.image && (
             <motion.img
-              src={"/smart.jpeg"}
+              src={post?.image}
               alt={post?.title}
               className="w-full h-80 object-cover cursor-pointer"
               whileHover={{ scale: 1.02 }}
@@ -126,7 +126,7 @@ const PostDetail = () => {
         {deletePopup && <DeleteModal isOpen={deletePopup} onClose={()=> setDeletePopup(!deletePopup)} onDelete={handleDelete}/>}
         {post?.video && !post?.image && (
           <video controls className="w-full h-80 object-cover rounded-t-3xl">
-            <source src={post.video} type="video/mp4" />
+            <source src={post?.video} type="video/mp4" />
           </video>
         )}
 

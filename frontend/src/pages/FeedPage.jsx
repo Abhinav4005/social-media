@@ -27,7 +27,7 @@ export default function FeedPage() {
     },
   });
 
-  console.log("FeedPage - feedPosts:", feedPosts?.pages);
+  // console.log("FeedPage - feedPosts:", feedPosts?.pages);
 
   const handleScroll = () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && hasNextPage && !isFetchingNextPage) {
@@ -84,11 +84,19 @@ export default function FeedPage() {
             {/* Create Post Button */}
             <div className="bg-white p-4 rounded-2xl shadow-md mb-6">
               <div className="flex items-center gap-3">
-                <img
+                {user?.profileImage ? (
+                  <img
+                    src={user?.profileImage}
+                    alt="User Avatar"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <img
                   src={`https://ui-avatars.com/api/?name=${user?.name || "U"}&background=random`}
                   alt="User"
                   className="w-10 h-10 rounded-full border border-gray-200"
                 />
+                )}
                 <Button
                   color="blue"
                   className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white cursor-pointer p-3 flex items-center gap-2 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-transform duration-200"
@@ -104,7 +112,7 @@ export default function FeedPage() {
             <div className="space-y-4">
               {feedPosts.pages?.length > 0 ? (
                 feedPosts.pages.flatMap((page) =>
-                  page.posts.map((post) => <PostCard key={post.id} {...post} />)
+                  page?.posts?.map((post) => <PostCard key={post.id} {...post} />)
                 )
               ) : (
                 <p className="text-center mt-6 text-gray-500">
