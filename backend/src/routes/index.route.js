@@ -7,6 +7,7 @@ import chatRoutes from "./chat.route.js";
 import friendRoutes from "./friend.route.js";
 import globalRoutes from "./global.route.js";
 import imageRoutes from "./image.route.js";
+import storyRoutes from "./story.route.js";
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use("/chat", chatRoutes);
 router.use("/friend", friendRoutes);
 router.use("/global", globalRoutes);
 router.use("/image", imageRoutes);
+router.use("/story", storyRoutes);
 
 export default router;
