@@ -37,17 +37,17 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
     },
     onSettled: (data, error, postId) => {
       queryClient.invalidateQueries(["post", postId]);
-    }
-  })
+    },
+  });
 
   const handleLike = () => {
     console.log("PostCard - handleLike called with postId:", props.id);
     likeMutation.mutate(props.id);
   };
 
-  // console.log("Props in PostCard:", props);
+  console.log("Props in PostCard:", props);
 
-  console.log("props", props)
+  // console.log("props", props)
 
   return (
     <motion.div
@@ -65,14 +65,20 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
           />
         ) : (
           <img
-            src={`https://ui-avatars.com/api/?name=${props?.user.name || "U"}&background=random`}
+            src={`https://ui-avatars.com/api/?name=${
+              props?.user.name || "U"
+            }&background=random`}
             alt={props?.user?.name}
             className="w-10 h-10 rounded-full border border-gray-200"
           />
         )}
         <div>
-          <h4 className="font-semibold text-gray-800 capitalize">{props?.user?.name}</h4>
-          <p className="text-xs text-gray-500">{formatTime(props?.createdAt)}</p>
+          <h4 className="font-semibold text-gray-800 capitalize">
+            {props?.user?.name}
+          </h4>
+          <p className="text-xs text-gray-500">
+            {formatTime(props?.createdAt)}
+          </p>
         </div>
       </div>
 
@@ -91,6 +97,19 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
         </div>
       )}
 
+      {props?.video && (
+        <div className="rounded-lg overflow-hidden mb-3">
+          <video
+            src={props?.video}
+            alt="Post video"
+            controls
+            playsInline
+            // muted
+            className="w-full max-h-96 object-cover rounded-lg hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      )}
+
       {/* Actions */}
 
       <div className="flex gap-6 pt-3 border-t border-gray-100 mt-2">
@@ -99,15 +118,17 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
             onClick={handleLike}
             className="text-gray-600 hover:text-red-500 cursor-pointer transition transform hover:scale-110"
           >
-            <Heart className={`w-5 h-5 ${liked ? "fill-red-500 text-red-500" : ""}`} />
+            <Heart
+              className={`w-5 h-5 ${liked ? "fill-red-500 text-red-500" : ""}`}
+            />
           </button>
           <span className="text-sm">{post_likes.length}</span>
         </div>
 
-
         <button
           className="flex items-center gap-2 text-gray-600 cursor-pointer hover:text-blue-500 transition transform hover:scale-110"
-          onClick={() => setOpenCommentModal(true)}>
+          onClick={() => setOpenCommentModal(true)}
+        >
           <MessageCircle className="w-5 h-5" />
           <span className="text-sm">{comments.length}</span>
         </button>

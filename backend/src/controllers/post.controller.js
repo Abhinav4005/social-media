@@ -26,8 +26,8 @@ export const createPost = async (req, res) => {
             data: {
                 title,
                 description,
-                image: imageUrl,
-                video: videoUrl,
+                image: imageUrl ? imageUrl : "",
+                video: videoUrl.url,
                 userId,
                 ...(comments?.length ?
                     { comments: { create: comments.map(content => ({ content, userId })) } }

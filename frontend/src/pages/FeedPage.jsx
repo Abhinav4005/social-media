@@ -2,7 +2,7 @@ import FeedLayout from "../components/FeedLayout";
 import PostCard from "../components/Posts/PostCard";
 import Sidebar from "./Sidebar";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { getPostFeed, getUserPosts } from "../api";
+import { getPostFeed } from "../api";
 import { Plus } from "lucide-react";
 import Button from "../components/UI/Button";
 import CreatePostModal from "../Modal/CreatePostModal";
@@ -23,9 +23,11 @@ export default function FeedPage() {
     queryKey: ["feedPosts"],
     queryFn: ({ pageParam = 1 }) => getPostFeed(pageParam),
     getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.page + 1 : undefined;
+      return lastPage?.hasMore ? lastPage?.page + 1 : undefined;
     },
   });
+
+  console.log("FeedPost----->", feedPosts)
 
   // console.log("FeedPage - feedPosts:", feedPosts?.pages);
 
@@ -110,8 +112,8 @@ export default function FeedPage() {
 
             {/* Posts */}
             <div className="space-y-4">
-              {feedPosts.pages?.length > 0 ? (
-                feedPosts.pages.flatMap((page) =>
+              {feedPosts?.pages?.length > 0 ? (
+                feedPosts?.pages.flatMap((page) =>
                   page?.posts?.map((post) => <PostCard key={post.id} {...post} />)
                 )
               ) : (

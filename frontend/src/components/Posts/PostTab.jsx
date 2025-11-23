@@ -1,8 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ThumbsUp } from 'lucide-react';
+import Button from '../UI/Button';
+import { useState } from 'react';
+import CreatePostModal from '../../Modal/CreatePostModal';
 
 const PostTab = ({ posts, isLoading, isError }) => {
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
     const navigate = useNavigate();
     const renderComments = (comments, parentId = null, level = 0) => {
         return comments
@@ -55,7 +59,16 @@ const PostTab = ({ posts, isLoading, isError }) => {
                     ))}
                 </div>
             ) : (
+                <>
                 <p className="text-center text-gray-400 py-8 text-lg">🙅 No posts found</p>
+                <Button className="cursor-pointer" onClick={() => setIsCreateOpen(!isCreateOpen)}>Create Post</Button>
+                {isCreateOpen && 
+                    <CreatePostModal 
+                        isOpen={isCreateOpen} 
+                        onClose={() => setIsCreateOpen(!isCreateOpen)}
+                    />
+                }
+                </>
             )}
         </>
     )
