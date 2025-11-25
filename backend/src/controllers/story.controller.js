@@ -73,24 +73,21 @@ export const getStories = async(req, res) => {
 
         const friendOrFollowingUser = await prisma.user.findUnique({
             where: { id: userId },
-            include: {
+            select: {
                 following: {
                     select: {
                         followingId: true,
                     }
                 },
-                receivedFriendShips:{
+                receivedFriendShips: {
                     where: {
                         status: "ACCEPTED"
                     },
                     select: {
-                        requesterId:true,
+                        requesterId: true
                     }
                 },
-                requestedFriendShips:{
-                    where: {
-                        status:"ACCEPTED"
-                    },
+                requestedFriendShips: {
                     select:{
                         addresseeId: true
                     }
@@ -98,23 +95,46 @@ export const getStories = async(req, res) => {
             }
         });
 
-        console.log("frinedOrFollowingUser", friendOrFollowingUser);
-
-        const followingId = friendOrFollowingUser.following.map(f => f.followingId)
-
-        console.log("followingId", followingIds);
-
-        if(friendOrFollowingUser){
-            return res.status(200).json({ user: friendOrFollowingUser});
+        if(!friendOrFollowingUser){
+            return res.status(404).json({error: "User not found" });
         }
 
+        const followingId = friendOrFollowingUser.following.map(f => f.followingId)
+        const requesterId = friendOrFollowingUser.receivedFriendShips.map(r => r.requesterId);
+        const addresseeId = friendOrFollowingUser.requestedFriendShips.map(a => a.addresseeId);
 
-        const stories = await prisma.story.findUnique({
+        const userIds = [...followingId, ...requesterId, ...addresseeId, userId];
+
+        const uniqueUserIds = [...new Set(userIds)];
+
+        const stories = await prisma.story.findMany({
             where: {
-                userId: friendOrFollowingUser
+                userId: {
+                    in: uniqueUserIds
+                }
+            },
+            include:{
+                user:{
+                    select:{
+                        id: true,
+                        name: true,
+                        profileImage: true,
+                        profileImageId: true,
+                    }
+                }
+            },
+            orderBy:{
+                createdAt: "desc"
             }
         });
+
+        return res.status(200).json({
+            message: "Stories Retreived successfully",
+            stories: stories,
+            count: stories.length
+        })
     } catch (error) {
-        
+        console.error("Error in Getting stories", error.message);
+        return res.status(500).json({error: "Error in getting stories"});
     }
 }

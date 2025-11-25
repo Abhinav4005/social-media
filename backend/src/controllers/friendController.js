@@ -48,9 +48,9 @@ export const sendFriendRequest = async (req, res) => {
             }
         })
 
-        if (existingFollowingOrFollower) {
-            return res.status(400).json({ message: "You are already following this user." });
-        }
+        // if (existingFollowingOrFollower) {
+        //     return res.status(400).json({ message: "You are already following this user." });
+        // }
 
         const friendRequest = await prisma.friendShip.create({
             data: {
@@ -59,12 +59,15 @@ export const sendFriendRequest = async (req, res) => {
                 status: "PENDING"
             }
         })
-        const friendShip = await prisma.follower.create({
+        let friendShip;
+        if(!existingFollowingOrFollower){
+            friendShip = await prisma.follower.create({
             data: {
                 followerId: parseInt(requesterId),
                 followingId: parseInt(addresseeId),
             }
         });
+        }
         return res.status(201).json({ message: "Friend request sent successfully.", friendRequest, friendShip });
     } catch (error) {
         console.error("Error sending friend request:", error);
