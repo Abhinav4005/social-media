@@ -1,6 +1,7 @@
 import imagekit from "../config/imagekit.js";
 
 const uploadImageToImageKit = async (file, folder="social-hub") => {
+    console.log("file in uploadKit", file)
 
     if(!file) return null;
 
