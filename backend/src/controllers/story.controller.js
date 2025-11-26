@@ -10,8 +10,21 @@ export const createStory = async (req, res) => {
     }
     const media = req.files.media ? req?.files?.media[0] : null;
 
+    console.log("media", media)
+
     if (!mediaType || !media) {
       return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    const MAX_VIDEO_SIZE  = 30 * 1024 * 1024;
+
+    if( mediaType === "image" && media.size > MAX_IMAGE_SIZE) {
+      return res.status(400).json({error: "Image too large (Max 5MB)" });
+    }
+
+    if (mediaType === "video" && media.size > MAX_VIDEO_SIZE) {
+      return res.status(400).json({error: "Video too large (Max 20MB)" })
     }
 
     const allowedMediaType = ["image", "video"];
@@ -41,15 +54,27 @@ export const createStory = async (req, res) => {
     const folder =
       mediaType === "image" ? "social-hub/imageMedia" : "social-hub/videoMedia";
 
+    const uploadWithTimeout = (promise, ms = 15000) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Upload timeout")), ms)
+        ),
+      ]);
+
+      console.log("folder", folder)
+
     const mediaUrl =
       media && mediaType === "image"
-        ? await uploadImageToImageKit(media, folder).catch(() => null)
-        : null;
+        ? await uploadWithTimeout(uploadImageToImageKit(media, folder)).catch(() => null)
+        : await uploadWithTimeout(uploadImageToImageKit(media, folder)).catch(() => null);
 
-    const url = mediaType === "image" ? mediaUrl : mediaVideoUrl.url;
+    console.log("mediaUrl", mediaUrl)
+
+    const url = mediaType === "image" ? mediaUrl : mediaUrl.url;
 
     if (!url) {
-      return res.staus(500).json({ error: "Media Uplaod fail" });
+      return res.status(500).json({ error: "Media Uplaod failed" });
     }
 
     const story = await prisma.story.create({
@@ -69,7 +94,10 @@ export const createStory = async (req, res) => {
       story: story,
     });
   } catch (error) {
-    console.error("Error while creating story", error.message);
+    console.error("[CreateStory Error]:", {
+      message: error.message,
+      stack: error.stack,
+    });
     return res.status(500).json({ error: "Failed to create story" });
   }
 };
