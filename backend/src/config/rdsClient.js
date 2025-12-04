@@ -1,35 +1,42 @@
-import { Redis } from '@upstash/redis';
-import dotenv from 'dotenv';
-import { Agent, fetch as undiciFetch, setGlobalDispatcher } from 'undici';
+import {Redis} from "ioredis";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-// ✅ Force IPv4 by using Undici Agent
-const ipv4Agent = new Agent({
-    connect: {
-      family: 4, // Force IPv4 instead of IPv6
-    },
-  });
-  
-  // Apply the agent globally for all fetch calls (Upstash uses fetch internally)
-  setGlobalDispatcher(ipv4Agent);
-  globalThis.fetch = undiciFetch;
+let isProd = process.env.NODE_ENV === "production";
 
-console.log("Connecting to Redis with URL:", process.env.UPSTASH_REDIS_REST_URL);
-console.log("Using Redis Token:", process.env.UPSTASH_REDIS_REST_TOKEN ? "Provided" : "Not Provided");
+let redisClient;
 
-const redisClient = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+if(isProd){
+    const { Redis } = await import("@upstash/redis");
+
+    redisClient = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+}
+
+if(!isProd){
+    
+//     redisClient = new Redis({
+//     host: "127.0.0.1",
+//     port: "6379"
+// });
+
+const IoRedis = (await import("ioredis")).default;
+redisClient = new IoRedis({
+    host: "127.0.0.1",
+    port: "6379"
+})
+}
 
 (async () => {
-    try {
+    try{
         await redisClient.set("test", "connected");
         const value = await redisClient.get("test");
         console.log("Redis connected successfully:", value)
     } catch (error) {
-        console.error("Error connecting to Redis:", error);
+        console.error("Error connecting to Redis", error);
     }
 })();
 

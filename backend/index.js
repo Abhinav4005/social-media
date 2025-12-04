@@ -6,6 +6,7 @@ import path from "path";
 import http from "http";
 import { initSocket } from './src/socket/index.js';
 import dns from "dns";
+import queueMonitor from "./src/monitor/queueMonitor.js";
 
 dns.setDefaultResultOrder("ipv4first");
 
@@ -25,6 +26,7 @@ app.use(cors({
 }));
 
 app.use("/api/v1", indexRoutes);
+app.use("/admin/queues", queueMonitor.getRouter());
 
 initSocket(server);
 

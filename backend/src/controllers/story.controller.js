@@ -1,106 +1,55 @@
 import prisma from "../config/db.js";
 import uploadImageToImageKit from "../utils/uploadImage.js";
+import { storyQueue } from "../queues/storyQueue.js";
 
-export const createStory = async (req, res) => {
-  try {
-    const { mediaType, caption, songName, songType } = req.body;
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized to create story" });
-    }
-    const media = req.files.media ? req?.files?.media[0] : null;
+export const createStory = async(req, res) => {
+  const userId = req?.user?.id;
+  try{
+    const {mediaType, caption, songName, songType} = req.body;
+    const media = req?.files ? req?.files?.media[0] : null;
 
-    console.log("media", media)
-
-    if (!mediaType || !media) {
-      return res.status(400).json({ error: "All fields are required" });
+    if(!userId){
+      return res.status(401).json("Unauthorize access");
     }
 
-    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-    const MAX_VIDEO_SIZE  = 30 * 1024 * 1024;
-
-    if( mediaType === "image" && media.size > MAX_IMAGE_SIZE) {
-      return res.status(400).json({error: "Image too large (Max 5MB)" });
-    }
-
-    if (mediaType === "video" && media.size > MAX_VIDEO_SIZE) {
-      return res.status(400).json({error: "Video too large (Max 20MB)" })
-    }
-
-    const allowedMediaType = ["image", "video"];
-    if (!allowedMediaType.includes(mediaType)) {
-      return res
-        .status(400)
-        .json({ error: "Invalid mediaType. Must be image or video" });
-    }
-
-    const fileMime = media.mimetype;
-    const imageMimes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    const videoMimes = [
-      "video/mp4",
-      "video/webm",
-      "video/quicktime",
-      "video/mov",
-    ];
-
-    if (mediaType === "image" && !imageMimes.includes(fileMime)) {
-      return res.status(400).json({ error: "Invalid image file format" });
-    }
-
-    if (mediaType === "video" && !videoMimes.includes(fileMime)) {
-      return res.status(400).json({ error: "Invalid video file format" });
-    }
-
-    const folder =
-      mediaType === "image" ? "social-hub/imageMedia" : "social-hub/videoMedia";
-
-    const uploadWithTimeout = (promise, ms = 15000) =>
-      Promise.race([
-        promise,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Upload timeout")), ms)
-        ),
-      ]);
-
-      console.log("folder", folder)
-
-    const mediaUrl =
-      media && mediaType === "image"
-        ? await uploadWithTimeout(uploadImageToImageKit(media, folder)).catch(() => null)
-        : await uploadWithTimeout(uploadImageToImageKit(media, folder)).catch(() => null);
-
-    console.log("mediaUrl", mediaUrl)
-
-    const url = mediaType === "image" ? mediaUrl : mediaUrl.url;
-
-    if (!url) {
-      return res.status(500).json({ error: "Media Uplaod failed" });
+    if(!mediaType || !media) {
+      return res.status(400).json({error: "mediaType and media required" });
     }
 
     const story = await prisma.story.create({
       data: {
-        mediaUrl: url,
-        mediaType: mediaType,
-        caption: caption,
-        songName: songName,
-        songType: songType,
         userId: userId,
+        mediaType: mediaType,
+        caption,
+        songName,
+        songType,
+        mediaUrl:"",
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
 
-    return res.status(201).json({
-      message: "Story create successfully",
-      story: story,
+    console.log("stroy----", story);
+
+    await storyQueue.add("upload-story", {
+      storyId: story.id,
+      media,
+      mediaType,
     });
-  } catch (error) {
-    console.error("[CreateStory Error]:", {
+
+    console.log("Job added to queue:", story.id);
+
+    return res.status(201).json({
+      message: "Story created, processing in background",
+      storyId: (await story).id
+    })
+  } catch(error) {
+    console.error("[create story] Error:", {
+      userId,
       message: error.message,
       stack: error.stack,
-    });
-    return res.status(500).json({ error: "Failed to create story" });
+    })
   }
-};
+}
 
 export const getStories = async (req, res) => {
   try {
