@@ -6,9 +6,10 @@ const uploadImageToImageKit = async (file, folder="social-hub") => {
     if(!file) return null;
 
     const base64Data = file.buffer.toString('base64');
+    const mime = file.mimetype;
 
     const result = await imagekit.upload({
-        file: base64Data,
+        file: `data:${mime};base64,${base64Data}`,
         fileName: file.originalname,
         folder: `/${folder}`,
     });
