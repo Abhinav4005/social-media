@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
 import { connection } from "../queues/storyQueue.js";
 import uploadImageToImageKit from "../utils/uploadImage.js";
-import prisma from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 
 const storyWorker = new Worker(
   "story-processing",
