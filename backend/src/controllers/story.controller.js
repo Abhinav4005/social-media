@@ -27,7 +27,7 @@ export const createStory = async(req, res) => {
       },
     });
 
-    console.log("stroy----", story);
+    console.log("story----", story);
 
     await storyQueue.add("upload-story", {
       storyId: story.id,
@@ -50,112 +50,147 @@ export const createStory = async(req, res) => {
   }
 }
 
-export const getStories = async (req, res) => {
-  try {
-    const userId = req.user?.id;
+export const getStories = async(req, res) => {
+  try{
+    const userId = req?.user?.id;
 
-    if (!userId) {
+    if(!userId) {
       return res.status(401).json({ error: "Unauthorized access" });
     }
 
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const cursor = req.query.cursor ? Number(req.query.cursor) : null;
 
-    const friendOrFollowingUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        following: {
-          select: {
-            followingId: true,
-          },
-        },
-        receivedFriendShips: {
-          where: {
-            status: "ACCEPTED",
-          },
-          select: {
-            requesterId: true,
-          },
-        },
-        requestedFriendShips: {
-          select: {
-            addresseeId: true,
+    const queryOption = {
+      where: {
+        userId: userId,
+        story: {
+          is: {
+            expiresAt: { gt: new Date() },
+            mediaUrl: { not: "" },
+          }
+        }
+      },
+      include: {
+        story: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                profileImage: true,
+              },
+            },
+            views:{
+              where: {
+                viewerId: userId,
+              },
+              select: {id : true }
+            }
           },
         },
       },
-    });
+      orderBy: { createdAt: "desc" },
+      take: limit + 1
+    };
 
-    if (!friendOrFollowingUser) {
-      return res.status(404).json({ error: "User not found" });
+    if(cursor) {
+      queryOption.cursor = { id: cursor };
+      queryOption.skip = 1;
     }
 
-    const userIds = [
-      userId,
-      ...friendOrFollowingUser.following.map((f) => f.followingId),
-      ...friendOrFollowingUser.receivedFriendShips.map((r) => r.requesterId),
-      ...friendOrFollowingUser.requestedFriendShips.map((r) => r.addresseeId),
-    ];
+    const feed = await prisma.storyFeed.findMany(queryOption);
 
-    const uniqueUserIds = [...new Set(userIds)];
+    let nextCursor = null;
+    if(feed.length > limit) {
+      const nextItem = feed[feed.length -1];
+      nextCursor = nextItem.id;
+      feed.pop();
+    }
 
-    if (uniqueUserIds.length === 0) {
-      return res.status(200).json({
-        sucess: true,
-        message: "",
-        stories: [],
-        count: 0,
-        nextCursor: null,
+    const rawStories = feed.map((f) => f.story);
+
+    const grouped ={};
+
+    for (const story of rawStories) {
+      const uid = story.userId;
+
+      if(grouped[uid]){
+        grouped[uid] = {
+          userId: uid,
+          user: story.user,
+          stories:[]
+        }
+      }
+
+      grouped[uid].stories.push({
+        id: story.id,
+        mediaUrl: story.mediaUrl,
+        mediaType: story.mediaType,
+        caption: story.caption,
+        createdAt: story.createdAt,
+        isSeen: story.views.length > 0,
+      })
+    }
+
+    const groups = Object.values(grouped).map((g) => {
+      g.stories.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      g.allSeen = g.stories.every((s) => s.isSeen)
+
+      return g;
+    })
+
+    return res.status(200).json({
+      message: "Stories retreived successfully",
+      stories: groups,
+      count: groups.length,
+      nextCursor: nextCursor
+    })
+  } catch(error) {
+    console.error("[getStories Error]:", error);
+    return res.status(500).json({error: "Error fetching stories"})
+  }
+}
+
+export const markStorySeen = async (req, res) => {
+  try{
+    const userId = req?.user?.id;
+    const storyId = Number(req.query.storyId);
+
+    if(!userId) {
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+
+    const story = await prisma.story.findUnique({
+      where: { id: storyId }
+    });
+
+    if(!story) {
+      return res.status(404).json({ error: "Story not found" });
+    };
+
+    const existingView = await prisma.storyView.findFirst({
+      where: {
+        storyId,
+        viewerId: userId,
+      }
+    });
+
+    if(!existingView) {
+      await prisma.storyView.create({
+        data: {
+          storyId,
+          viewerId: userId
+        },
       });
     }
 
-    const TWENT_FOUR_HOUR_AGO = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-    const queryOptions = {
-      where: {
-        userId: { in: userIds },
-        createdAt: { gte: TWENT_FOUR_HOUR_AGO },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            profileImage: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: limit + 1,
-    };
-
-    if (cursor) {
-      (queryOptions.cursor = { id: cursor }), (queryOptions.skip = 1);
-    }
-
-    const stories = await prisma.story.findMany(queryOptions);
-
-    let nextCursor = null;
-    if (stories.length > limit) {
-      const nextItem = stories[stories.length - 1];
-      nextCursor = nextItem.id;
-      stories.pop();
-    }
-
     return res.status(200).json({
-      message: "Stories Retreived successfully",
-      stories: stories,
-      count: stories.length,
-      nextCursor,
-    });
-  } catch (error) {
-    console.error("[getStories] Error:", {
-      userId,
-      message: error.message,
-      stack: error.stack,
-    });
-
-    return res.status(500).json({ error: "Error in getting stories" });
+      message:"Story marked as seen",
+    })
+  } catch(error) {
+    console.error("[markStorySeen] Error:", error);
+    return res.status(500).json({ error: "Error marking story seen"})
   }
-};
+}

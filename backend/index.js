@@ -7,6 +7,7 @@ import http from "http";
 import { initSocket } from './src/socket/index.js';
 import dns from "dns";
 import queueMonitor from "./src/monitor/queueMonitor.js";
+import { cleanupQueue } from './src/queues/cleanupQueue.js';
 
 dns.setDefaultResultOrder("ipv4first");
 
@@ -29,6 +30,13 @@ app.use("/api/v1", indexRoutes);
 app.use("/admin/queues", queueMonitor.getRouter());
 
 initSocket(server);
+
+await cleanupQueue.add("cleanup-expired-stories", {}, {
+    repeat: {
+        cron: "0 * * * *"
+    }
+   }
+);
 
 server.listen(3000, () => {
     console.log('Server is running on port 3000');
