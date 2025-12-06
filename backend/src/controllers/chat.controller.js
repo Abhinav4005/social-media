@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 import uploadImageToImageKit, { replaceImageInImageKit } from "../utils/uploadImage.js";
 
 export const createRoom = async (req, res) => {

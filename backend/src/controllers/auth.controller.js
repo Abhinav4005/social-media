@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken.js";
 import { sendEmail } from "../utils/email.js";
