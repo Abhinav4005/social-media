@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 import redisClient from "../config/rdsClient.js";
 import { GLOBALSEARCHTYPE } from "../lib/type.js";
 

@@ -80,10 +80,10 @@ const storyWorker = new Worker(
     }));
 
     if(rows.length > 0){
-      await prisma.storyView.createMany({
-        data:rows,
-        skipDuplicates: true
-      });
+      await prisma.storyFeed.createMany({
+        data: rows,
+        skipDuplicates: true,
+      })
     }
 
     console.log("Story feed fan-out done for story: ", story.id);

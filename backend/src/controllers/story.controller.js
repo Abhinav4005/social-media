@@ -1,5 +1,4 @@
-import prisma from "../config/db.js";
-import uploadImageToImageKit from "../utils/uploadImage.js";
+import { prisma } from "../lib/prisma.js";
 import { storyQueue } from "../queues/storyQueue.js";
 
 export const createStory = async(req, res) => {
