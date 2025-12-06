@@ -194,3 +194,204 @@ export const markStorySeen = async (req, res) => {
     return res.status(500).json({ error: "Error marking story seen"})
   }
 }
+
+export const getStoryAnalytics = async (req, res) => {
+  try{
+    const userId = req?.user?.id;
+    const storyId = Number(req.params.storyId);
+
+    if(!userId){
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+
+    const story = await prisma.story.findUnique({
+      where: { id: storyId },
+      select: {
+        id: true,
+        userId: true,
+        createdAt: true,
+        expiresAt: true
+      }
+    });
+
+    if(!story) {
+      return res.status(404).json({error: "Story not found" })
+    }
+
+    if(story.id !== userId){
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const totalViews = await prisma.storyView.count({
+      where: { storyId }
+    });
+
+    // const reactions = await prisma
+
+    const lastViewers = await prisma.storyView.findMany({
+      where: { storyId },
+      include: {
+        viewer: {
+          select:{
+            id: true,
+            name: true,
+            profileImage: true
+          },
+        },
+      },
+      orderBy: { viewedAt: "desc" },
+      take: 10
+    });
+
+    return res.json({
+      story:{
+        id: story.id,
+        createAt: story.createdAt,
+        expiresAt: story.expiresAt
+      },
+      lastViewers: lastViewers.map((v) => ({
+        id: v.viewer.id,
+        name: v.viewer.name,
+        profileImage: v.viewer.profileImage,
+        viewedAt: v.viewedAt,
+      }))
+    })
+  } catch(error) {
+    console.error("[getStoriesAnalytics] Error:", error);
+    return res.status(500).json({ error: "Failed to fetch story analytics" })
+  }
+}
+
+export const getStoriesSummaryAnalytics = async (req, res) => {
+  try{
+    const userId = req.user?.id;
+    const summaryInterval = req.query.summaryInterval;
+    if(!userId){
+      return res.status(401).json({ error: "Unauthorized access" })
+    }
+
+    const now = new Date();
+    const summaryIntervalAgo = new Date(now.getTime() - summaryInterval * 24 * 60 * 60 * 1000);
+
+    const stories = await prisma.story.findMany({
+      where: {
+        userId,
+        createdAt: { gte: summaryIntervalAgo },
+      },
+      select: {
+        id: true,
+        createdAt: true
+      }
+    })
+
+    if(!stories.length) {
+      return res.json({
+        totalStories: 0,
+        totalViews: 0,
+        avgViewsPerStory: 0,
+        reach: 0,
+      })
+    };
+
+    const storyIds = stories.map((s) => s.id);
+
+    const totalViews = await prisma.storyView.count({
+      where: { storyId: { in: storyIds }},
+    })
+
+    const uniqueViewers = await prisma.storyView.groupBy({
+      by: ["viewerId"],
+      where: { storyId: { in: storyIds }},
+      _count: { _all: true}
+    })
+
+    const reach = uniqueViewers.length;
+
+    const avgViewsPerStory = stories.length > 0 ? Math.round(totalViews / stories.length) : 0;
+
+    return res.json({
+      totalStories: stories.length,
+      totalViews,
+      avgViewsPerStory,
+      reach
+    })
+  } catch(error){
+    console.error("[getStoriesSummaryAnalytics] Error:", error);
+    return res.status(500).json({ error: "Failed to fetch summary analytics" });
+  }
+}
+
+export const getCombinedSummaryAnalytics = async(req, res) => {
+  try{
+    const userId = req?.user?.id;
+    const summaryInterval = Number(req.query.summaryInterval) || 24;
+
+    const storyId = Number(req.query.storyId);
+
+    if(!userId){
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+
+    const story = await prisma.story.findUnique({
+      where: { id: storyId },
+      select:{
+        id: true,
+        userId: true,
+        createdAt: true,
+        expiresAt: true
+      }
+    });
+
+    if (!story){
+      return res.status(404).json({ error: "Story not found"})
+    }
+
+    if(story.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden"})
+    }
+
+    const totalViews = await prisma.storyView.count({
+      where: { storyId },
+    })
+
+    const lastViewers = await prisma.storyView.findMany({
+      where: { storyId },
+      include: {
+        viewer:{
+          select: {
+            id: true,
+            name: true,
+            profileImage: true,
+          }
+        }
+      },
+      orderBy: { viewedAt: "desc" },
+      take: 10
+    });
+
+    const storyAnalytics ={
+      story: {
+        id: story.id,
+        createdAt: story.createdAt,
+        expiresAt: story.expiresAt,
+      },
+      totalViews,
+      lastViewers: lastViewers.map(lv => ({
+        id: lv.viewer.id,
+        name: lv.viewer.name,
+        profileImage: lv.viewer.profileImage,
+        viewedAt: lv.viewedAt
+      }))
+    }
+
+    // Story Analytics based on the Time/Day
+
+    const now = new Date();
+    const summaryIntervalAgo = new Date(now.getTime() - summaryInterval * 24 * 60 * 60 * 1000);
+
+    // const stor
+
+  } catch(error) {
+
+  }
+}

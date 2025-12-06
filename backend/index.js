@@ -31,12 +31,16 @@ app.use("/admin/queues", queueMonitor.getRouter());
 
 initSocket(server);
 
-await cleanupQueue.add("cleanup-expired-stories", {}, {
+await cleanupQueue.add(
+  "cleanup-expired-stories",
+  {},
+  {
     repeat: {
-        cron: "0 * * * *"
-    }
-   }
+      cron: "0 * * * *",
+    },
+  }
 );
+
 
 server.listen(3000, () => {
     console.log('Server is running on port 3000');

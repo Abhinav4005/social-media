@@ -434,6 +434,10 @@ model StoryView {
   viewerId       Int
   viewedAt       DateTime @default(now())
   viewerReaction String?
+
+  @@unique([storyId, viewerId])
+  @@unique([storyId, viewedAt])
+  @@unique([viewerId, viewedAt])
 }
 
 model StoryFeed {

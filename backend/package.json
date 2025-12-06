@@ -8,7 +8,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "seed": "node prisma/seed.js",
-    "worker": "node src/workers/storyWorker.js"
+    "worker": "node src/workers/storyWorker.js",
+    "cleanup": "node src/workers/storyCleanupWorker.js"
   },
   "author": "",
   "license": "ISC",
