@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 import { nestComments } from "../helper/formatComment.js";
 import { FRIENDSHIPSTATUS, LIKESTATUS, POSTVISIBLITYSTATUS } from "../lib/type.js";
 import uploadImageToImageKit from "../utils/uploadImage.js";
@@ -14,6 +14,7 @@ export const createPost = async (req, res) => {
 
         const imageUrl = image ? await uploadImageToImageKit(image, "social-hub/images").catch(() => null) : null;
         const videoUrl = video ? await uploadImageToImageKit(video, "social-hub/videos").catch(() => null) : null;
+        console.log("ImageUrl->", imageUrl);
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }

@@ -1,4 +1,4 @@
-import prisma from "../../config/db.js";
+import { prisma } from "../../lib/prisma.js";
 import { getIo } from "../index.js";
 import { UserSocketManager } from "../manager/UserSocketManager.js";
 

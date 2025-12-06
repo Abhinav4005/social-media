@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs";
-import prisma from "../config/db.js"
+import { prisma } from "../lib/prisma.js";
 import uploadImageToImageKit, { replaceImageInImageKit } from "../utils/uploadImage.js";
-import imagekit from "../config/imagekit.js";
 
 export const getUserProfile = async (req, res) => {
     try {
