@@ -389,8 +389,6 @@ export const getCombinedSummaryAnalytics = async(req, res) => {
     const now = new Date();
     const summaryIntervalAgo = new Date(now.getTime() - summaryInterval * 24 * 60 * 60 * 1000);
 
-    // const stor
-
   } catch(error) {
 
   }
