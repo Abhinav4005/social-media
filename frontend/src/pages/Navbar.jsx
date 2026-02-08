@@ -20,7 +20,7 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-blue-600">
+        <Link to="/" className="text-2xl font-bold text-primary-600">
           MySocial
         </Link>
 
@@ -37,13 +37,14 @@ export default function Navbar() {
 
         <div className="flex items-center gap-6">
           <Link to="/notifications">
-            <Bell className="w-6 h-6 text-gray-600 hover:text-blue-600" />
+            <Bell className="w-6 h-6 text-gray-600 hover:text-primary-600" />
           </Link>
           <Link to="/profile">
             {user ? (
               <motion.div
                 // whileHover={{ scale: 1.08 }}
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-3xl font-bold flex items-center justify-center shadow-2xl border-4 border-white cursor-pointer transition-all"
+                className="w-10 h-10 rounded-full text-white text-3xl font-bold flex items-center justify-center shadow-2xl border-4 border-white cursor-pointer transition-all"
+                style={{ background: 'var(--gradient-vibrant)' }}
               >
                 {user.profileImage ? (
                   <img
@@ -55,10 +56,10 @@ export default function Navbar() {
                   getInitials(user.name)
                 )}
               </motion.div>
-            ) : (<User className="w-6 h-6 text-gray-600 hover:text-blue-600" />)}
+            ) : (<User className="w-6 h-6 text-gray-600 hover:text-primary-600" />)}
           </Link>
           <Link to="/chat">
-            <MessagesSquare className="w-6 h-6 text-gray-600 hover:text-blue-600" />
+            <MessagesSquare className="w-6 h-6 text-gray-600 hover:text-primary-600" />
           </Link>
         </div>
       </div>

@@ -11,7 +11,7 @@ export default function Sidebar() {
           <li key={index}>
             <Link
               to={item.path}
-              className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg cursor-pointer transition duration-200"
+              className="flex items-center gap-3 p-2 hover:bg-primary-50 rounded-lg cursor-pointer transition duration-200"
             >
               {item.icon}
               <span className="text-gray-700 font-medium">{item.label}</span>

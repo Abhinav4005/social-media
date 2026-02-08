@@ -94,14 +94,15 @@ export default function FeedPage() {
                   />
                 ) : (
                   <img
-                  src={`https://ui-avatars.com/api/?name=${user?.name || "U"}&background=random`}
-                  alt="User"
-                  className="w-10 h-10 rounded-full border border-gray-200"
-                />
+                    src={`https://ui-avatars.com/api/?name=${user?.name || "U"}&background=random`}
+                    alt="User"
+                    className="w-10 h-10 rounded-full border border-gray-200"
+                  />
                 )}
                 <Button
                   color="blue"
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white cursor-pointer p-3 flex items-center gap-2 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-transform duration-200"
+                  className="text-white cursor-pointer p-3 flex items-center gap-2 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-transform duration-200"
+                  style={{ background: 'var(--gradient-vibrant)' }}
                   onClick={() => setIsModalOpen(true)}
                 >
                   <Plus className="w-4 h-5" />
@@ -125,7 +126,7 @@ export default function FeedPage() {
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="w-full py-2 mt-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"
+                  className="w-full py-2 mt-4 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition"
                 >
                   {isFetchingNextPage ? "Loading..." : "Load More"}
                 </button>
