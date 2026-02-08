@@ -1,20 +1,20 @@
 import { motion } from "framer-motion";
-import Button from "../UI/Button";
 import { useState } from "react";
-import { signIn } from "../../api";
 import { useDispatch, useSelector } from "react-redux";
-import { loginStart, setCredentials, loginFailure } from "../../store/slices/authSlice";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, LogIn, ArrowRight, Sparkles } from "lucide-react";
+import { signIn } from "../../api";
+import { loginStart, setCredentials, loginFailure } from "../../store/slices/authSlice";
+import Button from "../UI/Button";
 
 export default function SignIn() {
-  const initailData = {
+  const initialState = {
     email: "",
     password: "",
   };
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState(initailData);
+  const [formData, setFormData] = useState(initialState);
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
@@ -43,103 +43,137 @@ export default function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     mutation.mutate(formData);
-    setFormData(initailData);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        staggerChildren: 0.1,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 px-4">
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden"
+      style={{ background: 'var(--gradient-hero)' }}>
+
+      {/* Dynamic Background Accents */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary-500 rounded-full blur-[120px] opacity-20" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary-500 rounded-full blur-[150px] opacity-10" />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md p-8 bg-white/10 backdrop-blur-lg shadow-2xl rounded-2xl border border-white/20"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full max-w-md relative z-10"
       >
-        <h2 className="text-3xl font-bold mb-6 text-center text-white">
-          Welcome Back 👋
-        </h2>
+        <div className="bg-white/10 backdrop-blur-2xl p-10 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20">
+          <motion.div variants={itemVariants} className="text-center mb-10">
+            <div className="inline-flex p-4 bg-white/10 rounded-2xl mb-4 border border-white/10">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-4xl font-extrabold text-white tracking-tighter mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-white/60 font-medium">Please enter your details to sign in.</p>
+          </motion.div>
 
-        {/* Show error if any */}
-        {error && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-red-400 text-sm mb-4 text-center"
-          >
-            {error}
-          </motion.p>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          {/* Email Field */}
-          <div className="relative w-full">
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email Address"
-              className="peer block w-full rounded-lg bg-white/20 p-3 pt-5 text-white placeholder-transparent border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            />
-            <label
-              htmlFor="email"
-              className="absolute left-3 top-3 text-gray-400 text-base transition-all 
-               peer-placeholder-shown:top-5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base 
-               peer-focus:top-1 peer-focus:text-xs peer-focus:text-blue-200"
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-red-500/20 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl mb-6 text-red-200 text-sm font-bold text-center"
             >
-              Email Address
-            </label>
-          </div>
+              {error}
+            </motion.div>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <motion.div variants={itemVariants}>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors">
+                  <Mail size={18} />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Email Address"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all cursor-text font-medium"
+                />
+              </div>
+            </motion.div>
 
-          {/* Password Field */}
-          <div className="relative w-full">
-            <input
-              id="password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Password"
-              className="peer block w-full rounded-lg bg-white/20 p-3 pt-5 text-white placeholder-transparent border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            />
-            <label
-              htmlFor="password"
-              className="absolute left-3 top-3 text-gray-400 text-base transition-all 
-               peer-placeholder-shown:top-5 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base 
-               peer-focus:top-1 peer-focus:text-xs peer-focus:text-blue-200"
-            >
-              Password
-            </label>
-          </div>
+            <motion.div variants={itemVariants}>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Password"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all cursor-text font-medium"
+                />
+              </div>
+            </motion.div>
 
-          <div className="text-right">
+            <motion.div variants={itemVariants} className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-bold text-white/40 hover:text-white transition-colors cursor-pointer"
+              >
+                Forgot Password?
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-white text-gray-900 font-bold rounded-2xl shadow-xl shadow-black/20 hover:bg-gray-100 disabled:opacity-50 transition-all flex items-center justify-center gap-3 cursor-pointer border-none outline-none appearance-none"
+              >
+                {loading ? "AUTHENTICATING..." : <><LogIn size={20} /> SIGN IN</>}
+              </motion.button>
+            </motion.div>
+          </form>
+
+          <motion.p variants={itemVariants} className="text-center mt-10 text-white/60 font-medium">
+            Don't have an account?{" "}
             <Link
-              to="/forgot-password"
-              className="text-sm text-blue-200 hover:underline"
+              to="/signup"
+              className="text-white font-bold hover:underline underline-offset-4 cursor-pointer"
             >
-              Forgot Password?
+              Sign Up For Free
             </Link>
-          </div>
+          </motion.p>
+        </div>
 
-
-          <Button
-            type="submit"
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition"
-          >
-            {loading ? "Signing In..." : "Sign In"}
-          </Button>
-
-          <p className="text-sm text-center text-gray-200 mt-4">
-            Don’t have an account?{" "}
-            <a
-              href="/signup"
-              className="text-blue-200 font-medium hover:underline"
-            >
-              Sign Up
-            </a>
-          </p>
-        </form>
+        {/* Footer info */}
+        <motion.div variants={itemVariants} className="mt-8 flex items-center justify-center gap-6 text-white/20 font-bold text-xs tracking-[0.2em] uppercase">
+          <span>Secure Login</span>
+          <span className="w-1.5 h-1.5 bg-white/10 rounded-full" />
+          <span>Privacy First</span>
+        </motion.div>
       </motion.div>
     </div>
   );

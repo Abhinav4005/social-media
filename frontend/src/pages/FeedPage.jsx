@@ -84,32 +84,62 @@ export default function FeedPage() {
         center={
           <div className="space-y-6">
             {/* Create Post Button */}
-            <div className="bg-white p-4 rounded-2xl shadow-md mb-6">
-              <div className="flex items-center gap-3">
-                {user?.profileImage ? (
-                  <img
-                    src={user?.profileImage}
-                    alt="User Avatar"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${user?.name || "U"}&background=random`}
-                    alt="User"
-                    className="w-10 h-10 rounded-full border border-gray-200"
-                  />
-                )}
-                <Button
-                  color="blue"
-                  className="text-white cursor-pointer p-3 flex items-center gap-2 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-transform duration-200"
-                  style={{ background: 'var(--gradient-vibrant)' }}
+            <div className="bg-white p-5 rounded-2xl shadow-lg mb-6 border border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  {user?.profileImage ? (
+                    <img
+                      src={user?.profileImage}
+                      alt="User Avatar"
+                      className="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100"
+                    />
+                  ) : (
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${user?.name || "U"}&background=random`}
+                      alt="User"
+                      className="w-12 h-12 rounded-full border-2 border-gray-200"
+                    />
+                  )}
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></span>
+                </div>
+
+                <div
                   onClick={() => setIsModalOpen(true)}
+                  className="flex-1 bg-gray-50 hover:bg-gray-100 rounded-full px-5 py-3 cursor-pointer transition-all duration-200 border border-gray-200 hover:border-primary-300"
                 >
-                  <Plus className="w-4 h-5" />
-                  Create
-                </Button>
+                  <p className="text-gray-500 text-sm">
+                    What's on your mind, {user?.name?.split(' ')[0] || 'there'}?
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-gray-600 hover:text-primary-600"
+                  >
+                    <span className="text-xl">📷</span>
+                    <span className="text-sm font-medium">Photo</span>
+                  </button>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-gray-600 hover:text-primary-600"
+                  >
+                    <span className="text-xl">🎥</span>
+                    <span className="text-sm font-medium">Video</span>
+                  </button>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-gray-600 hover:text-primary-600"
+                  >
+                    <span className="text-xl">😊</span>
+                    <span className="text-sm font-medium">Feeling</span>
+                  </button>
+                </div>
               </div>
             </div>
+
 
             {/* Posts */}
             <div className="space-y-4">
