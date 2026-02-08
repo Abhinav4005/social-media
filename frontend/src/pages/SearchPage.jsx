@@ -9,7 +9,7 @@ import useDebounce from "../utils/useDebounce";
 export default function SearchPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("all");
-  const [query, setQuery] = useState(""); 
+  const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 500);
   const [results, setResults] = useState({ users: [], posts: [] });
 
@@ -24,16 +24,16 @@ export default function SearchPage() {
     if (data) {
       setResults({
         users: data.users.map(user => ({
-            id: user.id,
-            name: user.name,
-            username: user.email.split('@')[0],
-            profileImage: user.profileImage || `https://i.pravatar.cc/150?u=${user.email}`
+          id: user.id,
+          name: user.name,
+          username: user.email.split('@')[0],
+          profileImage: user.profileImage || `https://i.pravatar.cc/150?u=${user.email}`
         })) || [],
         posts: data?.posts?.map(post => ({
-            id: post?.id,
-            text: post?.title,
-            likes: post?._count?.likes || 0,
-            comments: post?._count?.comments || 0
+          id: post?.id,
+          text: post?.title,
+          likes: post?._count?.likes || 0,
+          comments: post?._count?.comments || 0
         })) || []
       })
     } else {
@@ -71,11 +71,10 @@ export default function SearchPage() {
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`pb-3 text-sm font-medium transition-colors ${
-                    tab === t
-                      ? "border-b-2 border-blue-600 text-blue-600"
+                  className={`pb-3 text-sm font-medium transition-colors ${tab === t
+                      ? "border-b-2 border-primary-600 text-primary-600"
                       : "text-gray-500 hover:text-gray-700"
-                  }`}
+                    }`}
                 >
                   {t.toUpperCase()}
                 </button>
@@ -106,7 +105,7 @@ export default function SearchPage() {
                             <p className="text-sm text-gray-500">@{user.username}</p>
                           </div>
                         </div>
-                        <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <button className="px-3 py-1 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700">
                           Follow
                         </button>
                       </div>

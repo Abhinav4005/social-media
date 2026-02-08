@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function HeroSection({ isAuthenticated, user }) {
   return (
-    <section className="relative h-screen bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 text-white overflow-hidden">
+    <section className="relative h-screen text-white overflow-hidden" style={{ background: 'var(--gradient-hero)' }}>
       {/* Background decoration */}
       <div className="absolute inset-0">
         <motion.div
@@ -55,13 +55,13 @@ export default function HeroSection({ isAuthenticated, user }) {
             <>
               <Link
                 to="/feed"
-                className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
+                className="bg-white text-primary-600 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
               >
                 Go to Feed
               </Link>
               <Link
                 to="/create-post"
-                className="bg-indigo-900 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
+                className="bg-primary-900 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
               >
                 Create Post
               </Link>
@@ -70,13 +70,13 @@ export default function HeroSection({ isAuthenticated, user }) {
             <>
               <Link
                 to="/signup"
-                className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
+                className="bg-white text-primary-600 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
               >
                 Get Started
               </Link>
               <Link
                 to="/signin"
-                className="bg-indigo-900 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
+                className="bg-primary-900 px-8 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:shadow-2xl transform transition duration-300"
               >
                 Sign In
               </Link>

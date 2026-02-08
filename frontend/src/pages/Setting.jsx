@@ -8,7 +8,7 @@ export default function Settings() {
 
     return (
         <>
-        <Navbar/>
+            <Navbar />
             <div className="max-w-3xl mx-auto mt-4 mb-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 space-y-8">
                 {/* Header */}
                 <div className="border-b pb-4">
@@ -29,12 +29,12 @@ export default function Settings() {
                         <input
                             type="text"
                             placeholder="Full Name"
-                            className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                         />
                         <input
                             type="email"
                             placeholder="Email Address"
-                            className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                         />
                     </div>
                 </section>
@@ -56,7 +56,7 @@ export default function Settings() {
                             className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                     </div>
-                    <button className="text-blue-600 text-sm font-medium hover:underline">
+                    <button className="text-primary-600 text-sm font-medium hover:underline">
                         Forgot Password?
                     </button>
                 </section>
@@ -72,7 +72,7 @@ export default function Settings() {
                         </span>
                         <button
                             onClick={() => setDarkMode(!darkMode)}
-                            className={`relative w-12 h-6 flex items-center rounded-full transition ${darkMode ? "bg-blue-600" : "bg-gray-300"
+                            className={`relative w-12 h-6 flex items-center rounded-full transition ${darkMode ? "bg-primary-600" : "bg-gray-300"
                                 }`}
                         >
                             <span
@@ -114,14 +114,14 @@ export default function Settings() {
                         <p>• Who can see your profile: <span className="font-medium text-gray-900 dark:text-gray-100">Everyone</span></p>
                         <p>• Who can send you messages: <span className="font-medium text-gray-900 dark:text-gray-100">Friends only</span></p>
                     </div>
-                    <button className="text-blue-600 text-sm font-medium hover:underline">
+                    <button className="text-primary-600 text-sm font-medium hover:underline">
                         Manage Privacy Settings
                     </button>
                 </section>
 
                 {/* Save Button */}
                 <div className="pt-6 border-t">
-                    <button className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                    <button className="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition">
                         Save Changes
                     </button>
                 </div>
