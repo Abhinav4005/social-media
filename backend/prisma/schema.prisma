@@ -113,6 +113,7 @@ model User {
   stories    Story[]
   storyViews StoryView[]
   storyFeed  StoryFeed[]
+  savePost   SavedPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,6 +172,7 @@ model Post {
   comments      Comment[]
   post_likes    PostLike[]
   notifications Notification[]
+  savedPost     SavedPost[]
   privacy       PostPrivacy?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -450,4 +452,15 @@ model StoryFeed {
   updatedAt DateTime @updatedAt
 
   @@index([userId, createdAt])
+}
+
+model SavedPost {
+  id          Int        @id @default(autoincrement())
+  user        User       @relation(fields:[userId], references: [id])
+  userId      Int
+  post        Post       @relation(fields:[postId], references: [id])
+  postId      Int
+  createdAt   DateTime   @default(now())
+
+  @@unique([userId, postId])
 }
