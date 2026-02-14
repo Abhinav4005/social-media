@@ -16,6 +16,8 @@ if(isProd){
     });
 }
 
+console.log("isprod: ", isProd);
+
 if(!isProd){
     
 //     redisClient = new Redis({
