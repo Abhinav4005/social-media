@@ -13,6 +13,7 @@ import { Plus, Camera, Edit2, MapPin, Calendar, Link as LinkIcon, Heart, Users, 
 import CoverModal from "../../Modal/CoverModal";
 import { updateUserProfile } from "../../api";
 import Photos from "../Photos/Photos";
+import { formatJoinDate } from "../../utils/formatTime.js";
 
 export default function Profile({ user }) {
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -32,6 +33,8 @@ export default function Profile({ user }) {
     queryFn: getUserProfile,
     enabled: !!user
   });
+
+  console.log("userprofile: ", userProfile)
 
   const getInitials = (name = "") =>
     name
@@ -91,57 +94,54 @@ export default function Profile({ user }) {
   ];
 
   return (
-    <>
+    <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-5xl mx-auto mt-6 mb-10"
+        className="max-w-5xl mx-auto pt-8 pb-20 px-4"
       >
-        {/* Main Profile Card */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+        {/* Main Profile Card with Glassmorphism */}
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden border border-white/40">
 
           {/* Cover Photo Section */}
-          <div className="relative h-64 md:h-80 overflow-hidden group">
-            {/* Cover Image or Gradient */}
+          <div className="relative h-72 md:h-96 overflow-hidden group">
             {userProfile?.coverImage ? (
               <motion.img
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.6 }}
+                initial={{ scale: 1.1 }}
+                animate={{ scale: 1 }}
                 src={userProfile.coverImage}
                 alt="Cover"
                 className="w-full h-full object-cover"
               />
             ) : (
               <div
-                className="w-full h-full"
-                style={{ background: 'var(--gradient-hero)' }}
+                className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x"
               />
             )}
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+            {/* Premium Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
 
-            {/* Action Buttons */}
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+            {/* Glass Action Buttons */}
+            <div className="absolute top-6 right-6 flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,1)" }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleViewCover(userProfile?.coverImage)}
-                className="px-4 py-2 bg-white/90 backdrop-blur-md hover:bg-white text-gray-800 text-sm font-medium rounded-xl shadow-lg flex items-center gap-2 transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-white/90 backdrop-blur-md text-gray-900 text-sm font-bold rounded-2xl shadow-xl flex items-center gap-2 transition-all cursor-pointer border border-white/50"
               >
                 <Camera className="w-4 h-4" />
-                View
+                View Cover
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setOpenCoverModal(true)}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl shadow-lg flex items-center gap-2 transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-2xl shadow-xl flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                {userProfile?.coverImage ? "Update" : "Add"}
+                {userProfile?.coverImage ? "Change" : "Add Cover"}
               </motion.button>
             </div>
 
@@ -159,187 +159,146 @@ export default function Profile({ user }) {
           </div>
 
           {/* Profile Info Section */}
-          <div className="relative px-6 md:px-10 pb-8">
+          <div className="relative px-6 md:px-12 pb-10">
 
-            {/* Avatar */}
-            <div className="absolute -top-20 left-1/2 transform -translate-x-1/2">
-              <div className="relative group">
-                {user?.profileImage ? (
-                  <motion.img
-                    whileHover={{ scale: 1.05 }}
-                    src={user?.profileImage}
-                    alt="Profile"
-                    className="w-40 h-40 rounded-full border-6 border-white shadow-2xl object-cover ring-4 ring-primary-100"
-                  />
-                ) : (
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className="w-40 h-40 rounded-full text-white text-4xl font-bold flex items-center justify-center shadow-2xl border-6 border-white ring-4 ring-primary-100"
-                    style={{ background: 'var(--gradient-vibrant)' }}
-                  >
-                    {user?.name ? getInitials(user.name) : "?"}
-                  </motion.div>
-                )}
+            {/* Avatar - Elevated Architecture */}
+            <div className="absolute -top-24 left-1/2 md:left-12 transform -translate-x-1/2 md:translate-x-0">
+              <div className="relative">
+                <div className="p-1.5 bg-white rounded-[32px] shadow-2xl backdrop-blur-xl border border-white/50">
+                  {user?.profileImage ? (
+                    <motion.img
+                      whileHover={{ scale: 1.02 }}
+                      src={user?.profileImage}
+                      alt="Profile"
+                      className="w-44 h-44 rounded-[28px] object-cover"
+                    />
+                  ) : (
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className="w-44 h-44 rounded-[28px] text-white text-5xl font-black flex items-center justify-center shadow-inner"
+                      style={{ background: 'var(--gradient-vibrant)' }}
+                    >
+                      {user?.name ? getInitials(user.name) : "?"}
+                    </motion.div>
+                  )}
+                </div>
 
                 {/* Online Indicator */}
-                <span className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full ring-4 ring-white shadow-lg" />
+                <div className="absolute bottom-2 right-2 w-8 h-8 bg-green-500 rounded-2xl border-4 border-white shadow-lg" />
 
-                {/* Edit Avatar Button */}
+                {/* Edit Avatar Overlay */}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute bottom-0 right-0 p-3 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                  className="absolute -top-2 -right-2 p-3 bg-white hover:bg-gray-50 text-indigo-600 rounded-2xl shadow-xl border border-gray-100 transition-all cursor-pointer opacity-0 group-hover:opacity-100 md:opacity-100"
                   onClick={() => navigate("/update-profile")}
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-5 h-5" />
                 </motion.button>
               </div>
             </div>
 
-            {/* User Info */}
-            <div className="pt-24 text-center">
-              <motion.h1
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-4xl font-bold text-gray-900 capitalize mb-2"
-              >
-                {user?.name || "Guest User"}
-              </motion.h1>
+            {/* User Content Layout */}
+            <div className="pt-28 md:pt-6 md:pl-56 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+              <div className="text-center md:text-left">
+                <motion.h1
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-5xl font-black text-gray-900 tracking-tight mb-3"
+                >
+                  {user?.name || "Guest User"}
+                </motion.h1>
 
-              {/* Bio */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-gray-600 text-lg max-w-2xl mx-auto mb-6"
-              >
-                {user?.bio}
-              </motion.p>
+                {/* Bio with subtle styling */}
+                <p className="text-gray-500 text-lg font-medium max-w-xl leading-relaxed mb-6">
+                  {user?.bio || "No bio yet. Add one to tell your story!"}
+                </p>
 
-              {/* User Details */}
-              <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500 mb-8">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{user?.location || "Unknown"}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>Joined {user?.createdAt || "Unknown"}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <LinkIcon className="w-4 h-4" />
-                  <a href="#" className="text-primary-600 hover:underline">website.com</a>
+                {/* Meta details */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm font-bold text-gray-400">
+                  <div className="flex items-center gap-2 bg-gray-100/50 px-3 py-1.5 rounded-full">
+                    <MapPin className="w-4 h-4 text-indigo-500" />
+                    <span>{user?.location || "Everywhere"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-gray-100/50 px-3 py-1.5 rounded-full">
+                    <Calendar className="w-4 h-4 text-purple-500" />
+                    <span>{formatJoinDate(user?.createdAt)}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto mb-8">
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl p-6 cursor-pointer border border-primary-200 shadow-sm hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="p-3 bg-primary-600 rounded-xl">
-                      <ImageIcon className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-primary-900">{userProfile?.posts?.length || 0}</p>
-                  <p className="text-sm text-primary-700 font-medium mt-1">Posts</p>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  className="bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-2xl p-6 cursor-pointer border border-secondary-200 shadow-sm hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="p-3 bg-secondary-600 rounded-xl">
-                      <Users className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-secondary-900">{userProfile?.followers?.length || 0}</p>
-                  <p className="text-sm text-secondary-700 font-medium mt-1">Followers</p>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  className="bg-gradient-to-br from-accent-50 to-accent-100 rounded-2xl p-6 cursor-pointer border border-accent-200 shadow-sm hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="p-3 bg-accent-600 rounded-xl">
-                      <Heart className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-accent-900">{userProfile?.following?.length || 0}</p>
-                  <p className="text-sm text-accent-700 font-medium mt-1">Following</p>
-                </motion.div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-center gap-4 flex-wrap">
+              {/* Primary Actions */}
+              <div className="flex flex-col sm:flex-row gap-4">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => navigate("/update-profile")}
-                  className="px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all text-white cursor-pointer"
-                  style={{ background: 'var(--gradient-vibrant)' }}
+                  className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:bg-black transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <Edit2 className="w-4 h-4" />
-                    Edit Profile
-                  </div>
+                  <Edit2 className="w-5 h-5" />
+                  Edit Profile
                 </motion.button>
-
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02, backgroundColor: "rgba(239, 68, 68, 0.1)" }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleLogout}
-                  className="px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all bg-gray-600 hover:bg-gray-700 text-white cursor-pointer"
+                  className="px-10 py-4 bg-white text-red-500 font-black rounded-2xl border-2 border-red-500/20 hover:border-red-500 transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   Logout
                 </motion.button>
               </div>
             </div>
+
+            {/* Stats Cards - Sophisticated Glass Rendering */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+              {[
+                { label: 'Posts', value: userProfile?.posts?.length || 0, color: 'indigo', icon: ImageIcon },
+                { label: 'Followers', value: userProfile?.followers?.length || 0, color: 'purple', icon: Users },
+                { label: 'Following', value: userProfile?.following?.length || 0, color: 'blue', icon: Heart }
+              ].map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  whileHover={{ y: -6, shadow: '0 25px 50px -12px rgba(0,0,0,0.15)' }}
+                  className="bg-white/40 backdrop-blur-md border border-white/60 p-8 rounded-[32px] flex flex-col items-center group cursor-pointer transition-all"
+                >
+                  <div className={`p-4 rounded-2xl bg-${stat.color}-500/10 text-${stat.color}-600 mb-4 group-hover:scale-110 transition-transform`}>
+                    <stat.icon className="w-8 h-8" />
+                  </div>
+                  <span className="text-4xl font-black text-gray-900 mb-1">{stat.value}</span>
+                  <span className="text-sm font-black text-gray-400 uppercase tracking-widest">{stat.label}</span>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
-          {/* Tabs Section */}
-          <div className="border-t border-gray-200">
-            {/* Tab Headers */}
-            <div className="flex justify-around bg-gray-50/50 relative">
+          {/* Refined Tabs Section */}
+          <div className="mt-4 border-t border-gray-100 bg-gray-50/30 backdrop-blur-sm">
+            <div className="flex max-w-2xl mx-auto px-4">
               {tabs.map((tab) => (
-                <motion.button
+                <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`flex-1 py-4 px-6 text-sm font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === tab.id
-                    ? "text-primary-600 bg-white"
-                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-                    }`}
+                  className={`flex-1 flex flex-col items-center gap-3 py-6 px-4 transition-all relative ${activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                 >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                  {activeTab === tab.id && userProfile?.posts?.length > 0 && tab.id === "posts" && (
-                    <span className="ml-1 px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-bold cursor-pointer">
-                      {userProfile.posts.length}
-                    </span>
+                  <div className={`p-2 rounded-xl transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-transparent'}`}>
+                    {tab.icon}
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-tighter">{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="tabActiveIndicator"
+                      className="absolute bottom-0 w-12 h-1.5 bg-indigo-600 rounded-t-full"
+                    />
                   )}
-                </motion.button>
+                </button>
               ))}
-
-              {/* Animated Indicator */}
-              <motion.div
-                layoutId="activeTabIndicator"
-                className="absolute bottom-0 h-1 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-t-full"
-                style={{
-                  width: `${100 / tabs.length}%`,
-                  left: `${(tabs.findIndex(t => t.id === activeTab) * 100) / tabs.length}%`
-                }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
             </div>
 
-            {/* Tab Content */}
-            <div className="p-6 min-h-[400px]">
+            {/* Content Area */}
+            <div className="p-8 md:p-12 min-h-[500px] bg-white rounded-t-[40px] shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.05)] border-t border-white">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -350,8 +309,16 @@ export default function Profile({ user }) {
                 >
                   {activeTab === "posts" && <PostTab posts={userProfile?.posts} isLoading={isLoading} isError={isError} />}
                   {activeTab === "about" && (
-                    <div className="text-center text-gray-600 max-w-2xl mx-auto">
-                      <p className="text-lg">{user?.about || "No additional information available."}</p>
+                    <div className="max-w-3xl mx-auto py-10">
+                      <div className="bg-gray-50 rounded-[32px] p-10 border border-gray-100">
+                        <h3 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                          <Heart className="w-6 h-6 text-pink-500" />
+                          About {user?.name?.split(' ')[0]}
+                        </h3>
+                        <p className="text-gray-600 text-xl leading-relaxed italic">
+                          "{user?.about || "This user prefers to keep their life a mystery... for now."}"
+                        </p>
+                      </div>
                     </div>
                   )}
                   {activeTab === "friends" && (
@@ -370,6 +337,6 @@ export default function Profile({ user }) {
           </div>
         </div>
       </motion.div>
-    </>
+    </div>
   );
 }

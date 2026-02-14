@@ -39,7 +39,7 @@ export const createStory = async(req, res) => {
 
     return res.status(201).json({
       message: "Story created, processing in background",
-      storyId: (await story).id
+      storyId: story.id
     })
   } catch(error) {
     console.error("[create story] Error:", {

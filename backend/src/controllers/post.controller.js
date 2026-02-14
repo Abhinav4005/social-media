@@ -124,6 +124,7 @@ export const getPostById = async (req, res) => {
             include: {
                 comments: true,
                 post_likes: true,
+                user: true
             },
         })
 
