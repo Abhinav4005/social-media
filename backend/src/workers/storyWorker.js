@@ -1,5 +1,5 @@
 import { Worker } from "bullmq";
-import { connection } from "../queues/storyQueue.js";
+import connection from "../queues/queueConnection.js";
 import uploadImageToImageKit from "../utils/uploadImage.js";
 import { prisma } from "../lib/prisma.js";
 

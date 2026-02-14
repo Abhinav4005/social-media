@@ -1,5 +1,5 @@
 import { Worker } from "bullmq";
-import { connection } from "../queues/cleanupQueue";
+import connection from "../queues/queueConnection.js";
 import { prisma } from "../lib/prisma";
 
 const storyCleanupWorker = new Worker(
