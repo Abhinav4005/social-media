@@ -54,22 +54,22 @@ export default function Navbar() {
           >
             <Sparkles className="w-6 h-6 text-white" />
           </motion.div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-            MySocial
+          <span className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent tracking-tighter">
+            mysocial.
           </span>
         </Link>
 
         {/* Enhanced Search Bar */}
         <div className="relative group" ref={searchRef}>
           <motion.div
-            className={`flex items-center bg-gray-50 rounded-xl px-4 py-3 w-96 transition-all duration-300 ${searchFocused ? 'ring-2 ring-primary-500 shadow-lg bg-white' : 'hover:bg-gray-100'
+            className={`flex items-center bg-gray-50/50 backdrop-blur-sm rounded-2xl px-5 py-3 w-96 border border-gray-100 transition-all duration-300 ${searchFocused ? 'ring-4 ring-primary-500/10 shadow-2xl bg-white border-primary-200' : 'hover:bg-gray-100'
               }`}
           >
             <Search className={`w-5 h-5 transition-colors ${searchFocused ? 'text-primary-600' : 'text-gray-400'}`} />
             <input
               type="text"
-              placeholder="Search users, posts, or topics..."
-              className="bg-transparent outline-none ml-3 text-sm w-full placeholder-gray-400"
+              placeholder="Search people or stories..."
+              className="bg-transparent outline-none ml-3 text-sm w-full placeholder-gray-300 font-extrabold"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
@@ -80,67 +80,69 @@ export default function Navbar() {
                 }
               }}
             />
-            <kbd className="hidden sm:inline-block px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded">
+            <kbd className="hidden sm:inline-block px-2.5 py-1 text-[10px] font-black text-gray-400 bg-white border border-gray-200 rounded-lg shadow-sm">
               ⌘K
             </kbd>
           </motion.div>
 
-          {/* Instant Search Results Dropdown */}
+          {/* Instant Search Results Dropdown - Glass Overhaul */}
           <AnimatePresence>
             {searchFocused && (searchQuery.trim() || isLoading) && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
+                exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                className="absolute top-full left-0 right-0 mt-4 bg-white/90 backdrop-blur-2xl rounded-[28px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] border border-white overflow-hidden z-[100]"
               >
-                <div className="max-h-[400px] overflow-y-auto p-2 space-y-2">
+                <div className="max-h-[440px] overflow-y-auto p-3 space-y-1">
                   {isLoading ? (
-                    <div className="flex flex-col gap-2 p-2">
+                    <div className="flex flex-col gap-3 p-2">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />
+                        <div key={i} className="h-14 bg-gray-50/50 rounded-2xl animate-pulse" />
                       ))}
                     </div>
                   ) : searchQuery.trim() && (results?.users?.length > 0 || results?.posts?.length > 0) ? (
                     <>
+                      <div className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">People</div>
                       {results.users.slice(0, 3).map((user) => (
                         <motion.div
                           key={user.id}
-                          whileHover={{ backgroundColor: 'rgb(249, 250, 251)' }}
+                          whileHover={{ backgroundColor: 'rgba(99, 102, 241, 0.05)', x: 4 }}
                           onClick={() => {
                             navigate(`/user/${user.id}`);
                             setSearchFocused(false);
                           }}
-                          className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
+                          className="flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all"
                         >
                           <img
                             src={user.profileImage || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
                             alt={user.name}
-                            className="w-10 h-10 rounded-full object-cover border border-gray-100"
+                            className="w-11 h-11 rounded-xl object-cover border-2 border-white shadow-md"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
-                            <p className="text-xs text-gray-500 truncate">@{user.email.split('@')[0]}</p>
+                            <p className="text-sm font-black text-gray-900 truncate">{user.name}</p>
+                            <p className="text-xs text-gray-400 font-bold truncate tracking-tight">@{user.email.split('@')[0]}</p>
                           </div>
                         </motion.div>
                       ))}
 
+                      <div className="px-4 py-2 mt-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Discover</div>
                       {results.posts.slice(0, 3).map((post) => (
                         <motion.div
                           key={post.id}
-                          whileHover={{ backgroundColor: 'rgb(249, 250, 251)' }}
+                          whileHover={{ backgroundColor: 'rgba(168, 85, 247, 0.05)', x: 4 }}
                           onClick={() => {
                             navigate(`/post/${post.id}`);
                             setSearchFocused(false);
                           }}
-                          className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
+                          className="flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all"
                         >
-                          <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600">
+                          <div className="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 border-2 border-white shadow-sm">
                             <Sparkles className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{post.title}</p>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Post</p>
+                            <p className="text-sm font-bold text-gray-900 truncate">{post.title}</p>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black opacity-60">Story Feed</p>
                           </div>
                         </motion.div>
                       ))}
@@ -150,15 +152,17 @@ export default function Navbar() {
                           navigate(`/search-page?q=${encodeURIComponent(searchQuery.trim())}`);
                           setSearchFocused(false);
                         }}
-                        className="w-full py-3 text-sm font-bold text-primary-600 hover:bg-primary-50 transition-colors rounded-xl border-t border-gray-50 mt-1"
+                        className="w-full py-4 text-xs font-black text-indigo-600 hover:bg-indigo-50 transition-all rounded-2xl mt-4 border border-dashed border-indigo-100 uppercase tracking-widest"
                       >
-                        See all results for "{searchQuery}"
+                        Deep Dive Results
                       </button>
                     </>
                   ) : searchQuery.trim() && (
-                    <div className="p-8 text-center">
-                      <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 text-sm font-medium">No results found for "{searchQuery}"</p>
+                    <div className="p-12 text-center">
+                      <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-8 h-8 text-gray-200" />
+                      </div>
+                      <p className="text-gray-400 font-bold italic">No echoes found for "{searchQuery}"</p>
                     </div>
                   )}
                 </div>
@@ -206,8 +210,8 @@ export default function Navbar() {
                 className="relative"
               >
                 <div
-                  className="w-11 h-11 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-lg border-2 border-white cursor-pointer ring-2 ring-primary-100 hover:ring-primary-300 transition-all"
-                  style={{ background: 'var(--gradient-vibrant)' }}
+                  className="w-11 h-11 rounded-[14px] text-white text-xs font-black flex items-center justify-center shadow-xl border border-white/40 cursor-pointer transition-all"
+                  style={{ background: 'var(--gradient-primary)' }}
                 >
                   {user.profileImage ? (
                     <img

@@ -44,3 +44,12 @@ export function formatLastSeen(timeStamp) {
         minute: "2-digit",
     });
 }
+
+export const formatJoinDate = (dateString) => {
+    const date = new Date(dateString);
+    const formatted = new Intl.DateTimeFormat('en', {
+        month: "short",
+        year: "numeric"
+    }).format(date);
+    return formatted;
+}
