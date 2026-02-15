@@ -37,6 +37,9 @@ export function formatLastSeen(timeStamp) {
     if (diffInMinutes < 1) return "just now";
     if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""} ago`;
     if (diffInHours < 24) return `${diffInHours} hr${diffInHours > 1 ? "s" : ""} ago`;
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+    if (diffInDays < 30) return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+    if (diffInDays < 365) return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
 
     return date.toLocaleDateString("en-IN", {
         weekday: "short",
