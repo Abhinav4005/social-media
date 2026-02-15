@@ -9,6 +9,7 @@ import CreatePostModal from "../Modal/CreatePostModal";
 import { useEffect, useState } from "react";
 import Notifications from "./Notification";
 import { useSelector } from "react-redux";
+import StoryTray from "../components/Strories/StoryTray";
 
 export default function FeedPage() {
   const { user } = useSelector((state) => state.auth);
@@ -139,6 +140,9 @@ export default function FeedPage() {
                 </div>
               </div>
             </div>
+
+            {/* Story tray */}
+            <StoryTray />
 
 
             {/* Posts */}
