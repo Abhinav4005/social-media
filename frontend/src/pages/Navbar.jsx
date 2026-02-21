@@ -80,9 +80,9 @@ export default function Navbar() {
                 }
               }}
             />
-            <kbd className="hidden sm:inline-block px-2.5 py-1 text-[10px] font-black text-gray-400 bg-white border border-gray-200 rounded-lg shadow-sm">
+            {/* <kbd className="hidden sm:inline-block px-2.5 py-1 text-[10px] font-black text-gray-400 bg-white border border-gray-200 rounded-lg shadow-sm">
               ⌘K
-            </kbd>
+            </kbd> */}
           </motion.div>
 
           {/* Instant Search Results Dropdown - Glass Overhaul */}
