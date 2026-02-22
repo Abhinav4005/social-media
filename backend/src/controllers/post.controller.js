@@ -12,8 +12,8 @@ export const createPost = async (req, res) => {
         const video = req?.files?.video ? req.files.video[0] : null;
         const userId = req.user.id;
 
-        const imageUrl = image ? await uploadImageToImageKit(image, "social-hub/images").catch(() => null) : null;
-        const videoUrl = video ? await uploadImageToImageKit(video, "social-hub/videos").catch(() => null) : null;
+        const imageUrl = image ? await uploadImageToImageKit(image, "social-hub/images").catch(() => null) : "";
+        const videoUrl = video ? await uploadImageToImageKit(video, "social-hub/videos").catch(() => null) : "";
         console.log("ImageUrl->", imageUrl);
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
@@ -27,7 +27,7 @@ export const createPost = async (req, res) => {
             data: {
                 title,
                 description,
-                image: imageUrl.url ? imageUrl.url : "",
+                image: imageUrl?.url ? imageUrl.url : "",
                 video: videoUrl ? videoUrl?.url : "",
                 userId,
                 ...(comments?.length ?
