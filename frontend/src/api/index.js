@@ -280,7 +280,7 @@ export const getPostFeed = async (page) => {
         },
         params: { page }
     });
-    console.log("Post Feed Response:", response);
+    // console.log("Post Feed Response:", response);
     if (response.status !== 200) {
         throw new Error("Failed to fetch post feed");
     }
