@@ -5,7 +5,9 @@ export const globalSearch = async (req, res) => {
     const userId = req.user.id;
 
     const limitValue = parseInt(limit, 10) || 10;
-    const offset = (parseInt(page, 10) - 1) * limitValue || 0;
+
+    const pageValue = parseInt(page, 10) || 1;
+    const offset = (pageValue - 1) * limitValue;
 
     const searchTrim = search ? search.trim() : "";
 
@@ -14,8 +16,10 @@ export const globalSearch = async (req, res) => {
     }
 
     try {
-        const users = await globalUserSearch(searchTrim, type, limit, offset, userId);
-        const posts = await globalPostSearch(searchTrim, type, limit, offset);
+        const [users, posts] = await Promise.all([
+            globalUserSearch(searchTrim, type, limitValue, offset, userId),
+            globalPostSearch(searchTrim, type, limitValue, offset)
+        ]);
 
         console.log("Global Search Results:", { users, posts });
 

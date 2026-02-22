@@ -5,8 +5,13 @@ import { GLOBALSEARCHTYPE } from "../lib/type.js";
 export const globalUserSearch = async (search, type, limit, offset, userId) => {
     const cacheKey = `search:users:${search}:${type}:${limit}:${offset}:${userId}`;
 
+    let cachedResults;
     try {
-      const cachedResults = await redisClient.get(cacheKey);
+      try {
+        cachedResults = await redisClient.get(cacheKey);
+      } catch (error) {
+        console.error("Redis get error: ", error);
+      }
       if (cachedResults) {
           return JSON.parse(cachedResults);
       }
@@ -27,8 +32,12 @@ export const globalUserSearch = async (search, type, limit, offset, userId) => {
             LIMIT ${parseInt(limit, 10)}
             OFFSET ${parseInt(offset, 10)}
             `;
-            
-        await redisClient.set(cacheKey, JSON.stringify(users), "EX", 30)
+          
+        try {
+          await redisClient.set(cacheKey, JSON.stringify(users), "EX",30);
+        } catch (error) {
+          console.error("Redis set error: ", error);
+        }
         return users;
     }
     } catch (error) {
@@ -62,7 +71,11 @@ export const globalPostSearch = async (search, type, limit, offset) => {
         LIMIT ${parseInt(limit, 10)} 
         OFFSET ${parseInt(offset, 10)};
       `;
-      await redisClient.set(cacheKey, JSON.stringify(posts), "EX", 30);
+      try {
+        await redisClient.set(cacheKey, JSON.stringify(posts), "EX", 30);
+      } catch (error) {
+        console.error("Redis set error: ", error);
+      }
       console.log("Returning Post Search Results from DB:", posts);
       return posts;
   }

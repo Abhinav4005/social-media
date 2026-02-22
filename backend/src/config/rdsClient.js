@@ -3,7 +3,7 @@ let redisClient;
 async function initRedis() {
   if (
     process.env.UPSTASH_REDIS_REST_URL &&
-    process.env.UPSTASH_REDIS_REST_TOKEN
+    process.env.UPSTASH_REDIS_REST_TOKEN && process.env.NODE_ENV === 'production'
   ) {
     const { Redis } = await import("@upstash/redis");
 

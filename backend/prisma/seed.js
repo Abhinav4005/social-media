@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  // Clear old data (development only)
   await prisma.commentLike.deleteMany()
   await prisma.postLike.deleteMany()
   await prisma.comment.deleteMany()
@@ -82,11 +81,11 @@ async function main() {
   await prisma.commentLike.createMany({
     data: [
       { commentId: comment1.id, userId: user1.id },
-      { commentId: reply1.id, userId: user2.id }, 
+      { commentId: reply1.id, userId: user2.id },
     ],
   })
 
-  console.log("✅ Seed data inserted successfully!")
+  console.log("Seed data inserted successfully!")
 }
 
 main()
