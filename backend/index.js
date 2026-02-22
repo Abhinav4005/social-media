@@ -16,15 +16,16 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(cors({
     origin: ["http://localhost:5173", "https://social-media-frontend-sable-three.vercel.app"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/v1", indexRoutes);
 app.use("/admin/queues", queueMonitor.getRouter());

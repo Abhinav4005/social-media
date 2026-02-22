@@ -1,65 +1,22 @@
 import { prisma } from "../../lib/prisma.js";
 import { getIo } from "../index.js";
 import { UserSocketManager } from "../manager/UserSocketManager.js";
+import { createMessage } from "../services/message.service.js";
 
 const registerChatHandler = (socket) => {
     const io = getIo();
     // Implement chat event handlers here
     socket.on("joinRoom", ({ roomId, userId }) => {
+        // const userId = socket.userId;
         socket.join(roomId);
         console.log(`User ${userId} joined room ${roomId}`);
     });
 
     socket.on("sendMessage", async (data) => {
-        const { text, senderId, type, roomId, attachments, replyTo } = data;
-        console.log("Received sendMessage event with data:", data);
+        // const senderId = socket.userId;
+        const { roomId } = data;
 
-        if ( !senderId || !roomId || !type) {
-            console.error("Missing required fields to send message");
-            return;
-        }
-        console.log("Sending message:", { text, senderId, roomId, type, attachments, replyTo });
-
-        const newMessage = await prisma.message.create({
-            data: {
-                text,
-                senderId,
-                roomId: parseInt(roomId),
-                type,
-                replyTo: replyTo ? parseInt(replyTo) : null,
-                attachments: attachments && attachments.length > 0
-                    ? {
-                        create: attachments.map(file => ({
-                            url: file.url,
-                            fileId: file.fileId,
-                            mimeType: file.url.endsWith('.png') ||
-                                file.url.endsWith('.jpg') || file.url.endsWith('.gif') ||
-                                file.url.endsWith('.jpeg') || file.url.endsWith('.svg') || file.url.endsWith('.webp') ? 'IMAGE' :
-                                file.url.endsWith('.mp4') ||
-                                    file.url.endsWith('.mkv') ||
-                                    file.url.endsWith('.mov') ||
-                                    file.url.endsWith('.avi') ||
-                                    file.url.endsWith('.wmv') ||
-                                    file.url.endsWith('.flv') ||
-                                    file.url.endsWith('.webm') ? 'VIDEO' :
-                                    file.url.endsWith('.mp3') ||
-                                        file.url.endsWith('.wav') ||
-                                        file.url.endsWith('.flac') ||
-                                        file.url.endsWith('.aac') ? 'AUDIO' : 'FILE'
-                        }))
-                    }
-                    : undefined,
-
-            },
-            include: {
-                sender: true,
-                attachments: true,
-                reactions: true,
-                readBy: true,
-                repliedTo: true,
-                replies: true
-            }
-        });
+        const newMessage = await createMessage(data);
 
         io.to(roomId).emit("newMessage", newMessage);
 
