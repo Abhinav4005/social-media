@@ -1,8 +1,8 @@
 import { prisma } from "../../lib/prisma.js"
 
-export const createMessage = async (data) => {
+export const createMessage = async (senderId, data) => {
     try {
-        const { text, senderId, replyTo, attachments, type, roomId } = data;
+        const { text, replyTo, attachments, type, roomId } = data;
 
         const isTextMissing = !text || text.trim() === "";
         const hasAttachments = attachments && attachments.length > 0;
@@ -61,4 +61,68 @@ export const createMessage = async (data) => {
         console.error("Failed to create new message: ", error);
         throw new Error(`Failed to create new message:  ${error}`)
     }
+}
+
+export const messageRead = async (messageId, userId, roomId )=>{
+    const messageIdNum = parseInt(messageId);
+        const userIdNum = parseInt(userId);
+        const roomIdNum = parseInt(roomId);
+
+        if (!messageId || !userId || !roomId) {
+            console.error("Missing required fields to mark message as read");
+            return;
+        }
+
+        const member = await prisma.roomMember.findUnique({
+            where: {
+                roomId_userId: {
+                    roomId: roomIdNum,
+                    userId: userIdNum
+                }
+            }
+        })
+
+        if (!member) {
+            console.error(`User ${userId} is not a member of room ${roomId}`);
+            return;
+        }
+
+        const [readEntry, receipt] = await prisma.$transaction([
+            prisma.messageRead.upsert({
+                where: {
+                    messageId_memberId: {
+                        messageId: messageIdNum,
+                        memberId: member.id,
+                    },
+                },
+                update: {
+                    readAt: new Date()
+                },
+                create: {
+                    messageId: messageIdNum,
+                    memberId: member.id,
+                    readAt: new Date(),
+                },
+            }),
+
+            prisma.messageReceipt.upsert({
+                where: {
+                    messageId_userId: {
+                        messageId: messageIdNum,
+                        userId: userIdNum,
+                    },
+                },
+                update: {
+                    readAt: new Date()
+                },
+                create: {
+                    messageId: messageIdNum,
+                    userId: userIdNum,
+                    readAt: new Date(),
+                },
+            }),
+        ])
+
+        console.log(`Message ${messageId} read by user ${userId} in room ${roomId}`);
+        return readEntry;
 }
