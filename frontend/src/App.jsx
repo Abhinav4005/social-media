@@ -65,14 +65,14 @@ const App = () => {
             </PrivateRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/feed"
           element={
             <PrivateRoute>
               <FeedPage />
             </PrivateRoute>
           }
-        />
+        /> */}
         <Route
           path="/posts/:postId"
           element={
@@ -137,7 +137,7 @@ const App = () => {
             </PrivateRoute>
           }
         />
-        <Route 
+        <Route
           path="/friend-requests"
           element={
             <PrivateRoute>
@@ -149,7 +149,7 @@ const App = () => {
           path="/share"
           element={
             <PrivateRoute>
-              <SahreModal/>
+              <SahreModal />
             </PrivateRoute>
           }
         />
@@ -157,7 +157,7 @@ const App = () => {
           path="/forgot-password"
           element={
             <PublicRoute>
-              <ForgotPasswordPage/>
+              <ForgotPasswordPage />
             </PublicRoute>
           }
         />
@@ -165,17 +165,17 @@ const App = () => {
           path="/reset-password"
           element={
             <PublicRoute>
-              <ResetPasswordPage/>
+              <ResetPasswordPage />
             </PublicRoute>
           }
         />
         <Route
-         path="/video-call/:roomId"
-         element={
-          <PrivateRoute>
-            <VideoCall />
-          </PrivateRoute>
-         }
+          path="/video-call/:roomId"
+          element={
+            <PrivateRoute>
+              <VideoCall />
+            </PrivateRoute>
+          }
         />
       </Routes>
     </Router>

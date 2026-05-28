@@ -27,9 +27,9 @@ export default function Footer() {
   };
 
   const socialLinks = [
-    { icon: <Facebook className="w-5 h-5" />, color: "hover:text-blue-600", path: "#" },
-    { icon: <Twitter className="w-5 h-5" />, color: "hover:text-sky-500", path: "#" },
-    { icon: <Instagram className="w-5 h-5" />, color: "hover:text-pink-500", path: "#" },
+    { icon: <Facebook className="w-5 h-5" />, color: "hover:text-primary-600", path: "#" },
+    { icon: <Twitter className="w-5 h-5" />, color: "hover:text-primary-500", path: "#" },
+    { icon: <Instagram className="w-5 h-5" />, color: "hover:text-secondary-500", path: "#" },
     { icon: <Github className="w-5 h-5" />, color: "hover:text-gray-900", path: "#" },
     { icon: <Youtube className="w-5 h-5" />, color: "hover:text-red-600", path: "#" },
   ];

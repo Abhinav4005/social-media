@@ -65,8 +65,8 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
       onClick={() => handleChatClick(chat.id)}
       className={`p-3 rounded-xl cursor-pointer flex items-center gap-3 transition backdrop-blur-lg 
         ${activeChat === chat.id
-          ? "bg-blue-500/90 text-white shadow-md border-l-4 border-blue-700"
-          : "bg-white/70 dark:bg-gray-800/70 hover:bg-white dark:hover:bg-gray-700 shadow-sm hover:shadow-md"
+          ? "bg-primary-600/90 text-white shadow-md border-l-4 border-primary-800"
+          : "bg-white/70 hover:bg-white shadow-sm hover:shadow-md"
         }`}
     >
       {/* Profile Image / Avatar */}
@@ -82,8 +82,8 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
             whileHover={{ rotate: 10 }}
             className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shadow capitalize 
         ${activeChat === chat.id
-                ? "bg-white text-blue-600"
-                : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+                ? "bg-white text-primary-600"
+                : "bg-gradient-to-r from-primary-500 to-secondary-500 text-white"
               }`}
           >
             {chat.name?.charAt(0)}
@@ -109,8 +109,8 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
         </p>
         <p
           className={`text-xs truncate ${activeChat === chat.id
-            ? "text-blue-100"
-            : "text-gray-500 dark:text-gray-400"
+            ? "text-primary-100"
+            : "text-gray-500"
             }`}
         >
           {chat.lastMessage}
@@ -129,7 +129,7 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
   );
 
   return (
-    <div className="w-1/4 border-r border-gray-200 dark:border-gray-800 bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-950 p-4 flex flex-col">
+    <div className="w-1/4 border-r border-gray-200 bg-gradient-to-b from-primary-50 to-primary-100 p-4 flex flex-col">
       {/* Logo / Branding */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -138,10 +138,10 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
         className="flex items-center gap-2 mb-6 cursor-pointer"
         onClick={() => navigate("/")}
       >
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-blue-500 flex items-center justify-center shadow-lg">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg">
           <MessageCircle className="text-white w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-secondary-500 text-transparent bg-clip-text">
           MySocial
         </h1>
       </motion.div>
@@ -161,11 +161,10 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
             placeholder="Search chats..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-white/70 
-                 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 
-                 focus:outline-none focus:ring-2 focus:ring-blue-400 
-                 text-gray-800 dark:text-gray-200 placeholder-gray-400 
-                 dark:placeholder-gray-500 shadow-sm"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-white/70
+                 border border-gray-200
+                 focus:outline-none focus:ring-2 focus:ring-primary-400
+                 text-gray-800 placeholder-gray-400 shadow-sm"
           />
         </div>
         {/* Sidebar New Group Button (Desktop/Laptop) */}
@@ -174,7 +173,7 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpenCreateGroupModal(true)}
           className="hidden md:flex items-center justify-center cursor-pointer gap-2 px-3 py-2 text-sm font-medium 
-             rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 
+             rounded-xl bg-gradient-to-r from-primary-500 to-secondary-500 
              text-white shadow-md hover:shadow-lg md:w-auto"
         >
           <Plus className="w-5 h-5" />
@@ -187,7 +186,7 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
           whileTap={{ scale: 0.9 }}
           onClick={() => setOpenCreateGroupModal(true)}
           className="fixed bottom-6 right-6 md:hidden w-12 h-12 rounded-full cursor-pointer
-             bg-gradient-to-r from-blue-500 to-indigo-500 text-white 
+             bg-gradient-to-r from-primary-500 to-secondary-500 text-white 
              flex items-center justify-center shadow-lg"
         >
           <Plus className="w-6 h-6" />

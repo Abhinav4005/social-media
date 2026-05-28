@@ -46,13 +46,21 @@ const FriendsTab = ({ activeTab, followers, following, isLoading, isError }) => 
             onClick={() => handleOpenDetail(user?.id)}
           >
             <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-black shadow-lg">
-                {user?.name
-                  ?.split(" ")
-                  .map((n) => n[0]?.toUpperCase())
-                  .slice(0, 2)
-                  .join("")}
-              </div>
+              {user?.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt={user.name}
+                  className="w-16 h-16 rounded-full object-cover shadow-lg border border-white"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-black shadow-lg border border-white">
+                  {user?.name
+                    ?.split(" ")
+                    .map((n) => n[0]?.toUpperCase())
+                    .slice(0, 2)
+                    .join("")}
+                </div>
+              )}
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
             </div>
 

@@ -43,13 +43,13 @@ export const createPost = async (req, res) => {
             return res.status(500).json({ error: "Failed to create post" });
         }
         let postStatus;
-        if(status === POSTVISIBLITYSTATUS.CUSTOM) {
+        if (status === POSTVISIBLITYSTATUS.CUSTOM) {
             postStatus = POSTVISIBLITYSTATUS.CUSTOM
         }
-        else if(status === POSTVISIBLITYSTATUS.PRIVATE){
+        else if (status === POSTVISIBLITYSTATUS.PRIVATE) {
             postStatus = POSTVISIBLITYSTATUS.PRIVATE
         }
-        else if(status === POSTVISIBLITYSTATUS.FRIENDS) {
+        else if (status === POSTVISIBLITYSTATUS.FRIENDS) {
             postStatus = POSTVISIBLITYSTATUS.FRIENDS;
         }
         else {
@@ -57,7 +57,7 @@ export const createPost = async (req, res) => {
         }
 
         await prisma.postPrivacy.create({
-            data:{
+            data: {
                 postId: newPost.id,
                 visibility: postStatus,
             }
@@ -418,14 +418,14 @@ export const commentLike = async (req, res) => {
             }
         })
         let reaction;
-        if(!existingLike) {
+        if (!existingLike) {
             reaction = await prisma.commentLike.create({
                 data: {
                     commentId: commentId,
                     userId: userId,
                     status: LIKESTATUS.LIKE
                 },
-                include: { 
+                include: {
                     comment: { select: { userId: true } }
                 }
             });
@@ -457,7 +457,7 @@ export const commentLike = async (req, res) => {
                     comment: { select: { userId: true } }
                 }
             });
-            if( status === LIKESTATUS.LIKE && reaction.userId !== userId) {
+            if (status === LIKESTATUS.LIKE && reaction.userId !== userId) {
                 await createNotification("LIKE", userId, reaction.userId, postId);
             }
         }
@@ -467,9 +467,9 @@ export const commentLike = async (req, res) => {
                 commentId: commentId,
             }
         });
-        return res.status(200).json({ 
-            message: "Comment liked successfully", 
-            reaction: reaction,  
+        return res.status(200).json({
+            message: "Comment liked successfully",
+            reaction: reaction,
             likeCount: likeCount
         });
     } catch (error) {
@@ -480,7 +480,7 @@ export const commentLike = async (req, res) => {
 
 export const getCommentLikes = async (req, res) => {
     try {
-        const { commentId} = req.query;
+        const { commentId } = req.query;
         if (!commentId) {
             return res.status(400).json({ error: "Comment ID is required" });
         }
@@ -491,7 +491,7 @@ export const getCommentLikes = async (req, res) => {
             },
         });
 
-        if(!likes.length) {
+        if (!likes.length) {
             return res.status(404).json({ error: "No likes found for this comment" });
         }
 
@@ -667,7 +667,7 @@ export const getPostLikes = async (req, res) => {
             }
         });
 
-        return res.status(200).json({ message:"Likes retrieved successfully", likes: likes})
+        return res.status(200).json({ message: "Likes retrieved successfully", likes: likes })
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: "An error occurred while retrieving likes" });
@@ -688,7 +688,7 @@ export const getPostFeed = async (req, res) => {
 
         const following = await prisma.follower.findMany({
             where: { followerId: userId },
-            select: { followingId: true}
+            select: { followingId: true }
         });
 
         const followingIds = following.map(f => f.followingId);
@@ -696,8 +696,8 @@ export const getPostFeed = async (req, res) => {
         const friends = await prisma.friendShip.findMany({
             where: {
                 OR: [
-                    { requesterId: userId, status: FRIENDSHIPSTATUS.ACCEPTED},
-                    { addresseeId: userId, status: FRIENDSHIPSTATUS.ACCEPTED},
+                    { requesterId: userId, status: FRIENDSHIPSTATUS.ACCEPTED },
+                    { addresseeId: userId, status: FRIENDSHIPSTATUS.ACCEPTED },
                 ]
             },
             include: {
@@ -706,7 +706,7 @@ export const getPostFeed = async (req, res) => {
             }
         })
 
-        const friendIds = friends.map(f => (f.requesterId === userId ? f.addresseeId : f.requesterId ));
+        const friendIds = friends.map(f => (f.requesterId === userId ? f.addresseeId : f.requesterId));
 
         // console.log("Following IDs:", followingIds);
         console.log("Friend IDs:", friendIds);
@@ -714,10 +714,10 @@ export const getPostFeed = async (req, res) => {
         const uniqueIds = Array.from(new Set([...followingIds, ...friendIds]));
 
         const posts = await prisma.post.findMany({
-           where: { userId: { in: uniqueIds } },
+            where: { userId: { in: uniqueIds } },
             take: followingLimit,
             skip: (page - 1) * followingLimit,
-            
+
             include: {
                 post_likes: true,
                 comments: true,
@@ -755,24 +755,31 @@ export const getPostFeed = async (req, res) => {
             post.comments = nestComments(post.comments);
         })
 
-        const allPosts = [...posts, ...topPosts].sort(
+        const seenIds = new Set();
+        const uniquePosts = [...posts, ...topPosts].filter(post => {
+            if (seenIds.has(post.id)) return false;
+            seenIds.add(post.id);
+            return true;
+        });
+
+        const allPosts = uniquePosts.sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
         const totalPosts = await prisma.post.count();
-        const hasMore = page * limit < totalPosts;
-        
+        const hasMore = Number(page) * Number(limit) < totalPosts;
+
         if (!allPosts || allPosts.length === 0) {
             return res.status(404).json({ error: "No posts found" });
         }
-        
-        return res.status(200).json({ 
-            message: "Posts retrieved successfully", 
+
+        return res.status(200).json({
+            message: "Posts retrieved successfully",
             posts: allPosts,
             hasMore: hasMore,
             page: Number(page),
             totalPosts: totalPosts
-         });
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: "An error occurred while retrieving posts" });
@@ -781,25 +788,25 @@ export const getPostFeed = async (req, res) => {
 
 export const changePostStatus = async (req, res) => {
     try {
-        const { postId, status} = req.body;
+        const { postId, status } = req.body;
 
-        if(!postId || !status) {
+        if (!postId || !status) {
             return res.status(400).json({ error: "Post ID and status are required" });
         }
 
         const userId = req.user.id;
-        if(!userId) {
-            return res.status(401).json({ error:"Unauthorized access"});
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized access" });
         }
 
         let postStatus;
-        if(status === POSTVISIBLITYSTATUS.CUSTOM) {
+        if (status === POSTVISIBLITYSTATUS.CUSTOM) {
             postStatus = POSTVISIBLITYSTATUS.CUSTOM
         }
-        else if(status === POSTVISIBLITYSTATUS.PRIVATE){
+        else if (status === POSTVISIBLITYSTATUS.PRIVATE) {
             postStatus = POSTVISIBLITYSTATUS.PRIVATE
         }
-        else if(status === POSTVISIBLITYSTATUS.FRIENDS) {
+        else if (status === POSTVISIBLITYSTATUS.FRIENDS) {
             postStatus = POSTVISIBLITYSTATUS.FRIENDS;
         }
         else {
@@ -807,7 +814,7 @@ export const changePostStatus = async (req, res) => {
         }
 
         const updatePostStatus = await prisma.postPrivacy.update({
-            where: { postId: parseInt(postId, 10)},
+            where: { postId: parseInt(postId, 10) },
             data: {
                 postId: parseInt(postId, 10),
                 visibility: postStatus
@@ -820,6 +827,6 @@ export const changePostStatus = async (req, res) => {
         })
     } catch (error) {
         console.error("Error in changing post status", error);
-        return res.status(500).json({ error: "Error in changing post status"})
+        return res.status(500).json({ error: "Error in changing post status" })
     }
 }

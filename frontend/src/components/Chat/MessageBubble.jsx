@@ -72,8 +72,8 @@ const MessageBubble = ({
                 transition={{ duration: 0.25 }}
                 className={`relative max-w-[75%] px-3 py-2 rounded-2xl shadow-md group
           ${mine
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-br-none"
-                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-none"
+                        ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-br-none"
+                        : "bg-white text-gray-900 rounded-bl-none"
                     }
         `}
             >
@@ -81,9 +81,9 @@ const MessageBubble = ({
                 {message.repliedTo && (
                     <div
                         onClick={() => console.log("Scroll to:", message.repliedTo.id)}
-                        className="mb-2 border-l-4 border-blue-400 bg-blue-50 dark:bg-gray-700/40 px-2 py-1 rounded cursor-pointer transition hover:bg-blue-100 dark:hover:bg-gray-700/70"
+                        className="mb-2 border-l-4 border-primary-400 bg-primary-50 px-2 py-1 rounded cursor-pointer transition hover:bg-primary-100"
                     >
-                        <div className="font-medium text-xs text-blue-600 dark:text-blue-300 truncate">
+                        <div className="font-medium text-xs text-primary-600 truncate">
                             {message.repliedTo.sender.name}
                         </div>
                         <div className="text-sm text-gray-700 dark:text-gray-300 truncate">
@@ -154,8 +154,8 @@ const MessageBubble = ({
                 {/* Footer: Time + Status */}
                 <div
                     className={`flex items-center gap-1 mt-1 text-[11px] ${mine
-                        ? "justify-end text-blue-100"
-                        : "justify-start text-gray-500 dark:text-gray-400"
+                        ? "justify-end text-primary-100"
+                        : "justify-start text-gray-500"
                         }`}
                 >
                     <span>
@@ -169,7 +169,7 @@ const MessageBubble = ({
                             {status === "sent" && <Check size={12} />}
                             {status === "delivered" && <CheckCheck size={12} />}
                             {status === "read" && (
-                                <CheckCheck size={12} className="text-blue-300" />
+                                <CheckCheck size={12} className="text-primary-200" />
                             )}
                         </>
                     )}

@@ -119,8 +119,8 @@ export default function UpdateProfile() {
 
               {/* Advanced Avatar Upload */}
               <div className="relative group mb-8">
-                <div className="p-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-[36px] shadow-2xl">
-                  <div className="w-48 h-48 rounded-[32px] overflow-hidden bg-gray-800 relative">
+                <div className="p-1.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full shadow-2xl">
+                  <div className="w-48 h-48 rounded-full overflow-hidden bg-gray-800 relative">
                     <img
                       src={avatarPreview}
                       alt="Avatar"
@@ -128,7 +128,7 @@ export default function UpdateProfile() {
                     />
                     <label className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                       <Camera className="w-10 h-10 text-white mb-2" />
-                      <span className="text-white text-xs font-black uppercase tracking-widest">Upload New</span>
+                      <span className="text-white text-[10px] font-black uppercase tracking-widest">Upload New</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -146,7 +146,7 @@ export default function UpdateProfile() {
                       animate={{ scale: 1, rotate: 0 }}
                       exit={{ scale: 0, rotate: 45 }}
                       onClick={handleRemoveAvatar}
-                      className="absolute -top-3 -right-3 bg-red-500 text-white rounded-2xl w-10 h-10 flex items-center justify-center hover:bg-red-600 shadow-xl border-4 border-gray-900 transition z-20 cursor-pointer"
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 shadow-xl border-4 border-gray-900 transition z-20 cursor-pointer"
                     >
                       <X className="w-5 h-5" />
                     </motion.button>

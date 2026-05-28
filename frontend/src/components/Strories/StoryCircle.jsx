@@ -22,11 +22,11 @@ const StoryCircle = ({ story }) => {
 
             {/* User Avatar Badge - Using the same image for mock */}
             <div className="absolute top-4 left-4">
-                <div className="p-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl overflow-hidden shadow-lg border border-white/20">
+                <div className="p-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full overflow-hidden shadow-lg border border-white/20">
                     <img
                         src={story.image}
                         alt={story.name}
-                        className="w-8 h-8 rounded-[10px] object-cover"
+                        className="w-8 h-8 rounded-full object-cover"
                     />
                 </div>
             </div>

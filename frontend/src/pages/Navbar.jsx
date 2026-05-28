@@ -19,7 +19,7 @@ export default function Navbar() {
   const { data: results, isLoading } = useQuery({
     queryKey: ["instantSearch", debouncedQuery],
     queryFn: () => globalSearch(debouncedQuery, "all", 5, 1),
-    enabled: debouncedQuery.trim().length >= 2,
+    enabled: debouncedQuery.trim().length >= 3,
   });
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function Navbar() {
           >
             <Sparkles className="w-6 h-6 text-white" />
           </motion.div>
-          <span className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent tracking-tighter">
+          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent tracking-tighter">
             mysocial.
           </span>
         </Link>
@@ -69,7 +69,7 @@ export default function Navbar() {
             <input
               type="text"
               placeholder="Search people or stories..."
-              className="bg-transparent outline-none ml-3 text-sm w-full placeholder-gray-300 font-extrabold"
+              className="bg-transparent outline-none ml-3 text-sm w-full placeholder-gray-400 font-medium"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
@@ -80,28 +80,49 @@ export default function Navbar() {
                 }
               }}
             />
-            {/* <kbd className="hidden sm:inline-block px-2.5 py-1 text-[10px] font-black text-gray-400 bg-white border border-gray-200 rounded-lg shadow-sm">
-              ⌘K
-            </kbd> */}
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </motion.div>
 
           {/* Instant Search Results Dropdown - Glass Overhaul */}
           <AnimatePresence>
-            {searchFocused && (searchQuery.trim() || isLoading) && (
+            {searchFocused && (
               <motion.div
                 initial={{ opacity: 0, y: 15, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                className="absolute top-full left-0 right-0 mt-4 bg-white/90 backdrop-blur-2xl rounded-[28px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] border border-white overflow-hidden z-[100]"
+                className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[28px] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.16)] border border-gray-100 overflow-hidden z-[100]"
               >
                 <div className="max-h-[440px] overflow-y-auto p-3 space-y-1">
-                  {isLoading ? (
+                  {searchQuery.trim().length === 0 ? (
+                    <div className="p-8 text-center flex flex-col items-center">
+                      <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-3">
+                        <Search className="w-5 h-5 text-indigo-500" />
+                      </div>
+                      <p className="text-sm font-bold text-gray-800">Search Social Hub</p>
+                      <p className="text-xs text-gray-400 mt-1 max-w-[200px] leading-relaxed">Find people, posts, and topics from across the community.</p>
+                    </div>
+                  ) : searchQuery.trim().length < 3 ? (
+                    <div className="p-8 text-center flex flex-col items-center">
+                      <div className="w-12 h-12 bg-indigo-50/50 rounded-2xl flex items-center justify-center mb-3">
+                        <Sparkles className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <p className="text-sm font-bold text-gray-800">Keep typing...</p>
+                      <p className="text-xs text-gray-400 mt-1 max-w-[200px] leading-relaxed">Enter at least 3 characters to search.</p>
+                    </div>
+                  ) : isLoading ? (
                     <div className="flex flex-col gap-3 p-2">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="h-14 bg-gray-50/50 rounded-2xl animate-pulse" />
                       ))}
                     </div>
-                  ) : searchQuery.trim() && (results?.users?.length > 0 || results?.posts?.length > 0) ? (
+                  ) : (results?.users?.length > 0 || results?.posts?.length > 0) ? (
                     <>
                       <div className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">People</div>
                       {results.users.slice(0, 3).map((user) => (
@@ -117,7 +138,7 @@ export default function Navbar() {
                           <img
                             src={user.profileImage || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
                             alt={user.name}
-                            className="w-11 h-11 rounded-xl object-cover border-2 border-white shadow-md"
+                            className="w-11 h-11 rounded-full object-cover border border-gray-100 shadow-sm"
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-black text-gray-900 truncate">{user.name}</p>
@@ -137,7 +158,7 @@ export default function Navbar() {
                           }}
                           className="flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all"
                         >
-                          <div className="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 border-2 border-white shadow-sm">
+                          <div className="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 border border-gray-100 shadow-sm flex-shrink-0">
                             <Sparkles className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -152,17 +173,18 @@ export default function Navbar() {
                           navigate(`/search-page?q=${encodeURIComponent(searchQuery.trim())}`);
                           setSearchFocused(false);
                         }}
-                        className="w-full py-4 text-xs font-black text-indigo-600 hover:bg-indigo-50 transition-all rounded-2xl mt-4 border border-dashed border-indigo-100 uppercase tracking-widest"
+                        className="w-full py-3.5 text-xs font-black text-indigo-600 hover:bg-indigo-50 transition-all rounded-2xl mt-4 border border-dashed border-indigo-100 uppercase tracking-widest cursor-pointer"
                       >
                         Deep Dive Results
                       </button>
                     </>
-                  ) : searchQuery.trim() && (
-                    <div className="p-12 text-center">
-                      <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                  ) : (
+                    <div className="p-12 text-center flex flex-col items-center">
+                      <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4">
                         <Search className="w-8 h-8 text-gray-200" />
                       </div>
-                      <p className="text-gray-400 font-bold italic">No echoes found for "{searchQuery}"</p>
+                      <p className="text-gray-800 text-sm font-bold">No results found</p>
+                      <p className="text-gray-400 text-xs mt-1 max-w-[200px] leading-relaxed">We couldn't find anything matching "{searchQuery}".</p>
                     </div>
                   )}
                 </div>
@@ -210,7 +232,7 @@ export default function Navbar() {
                 className="relative"
               >
                 <div
-                  className="w-11 h-11 rounded-[14px] text-white text-xs font-black flex items-center justify-center shadow-xl border border-white/40 cursor-pointer transition-all"
+                  className="w-11 h-11 rounded-full text-white text-xs font-black flex items-center justify-center shadow-xl border border-white/40 cursor-pointer transition-all"
                   style={{ background: 'var(--gradient-primary)' }}
                 >
                   {user.profileImage ? (
