@@ -134,18 +134,18 @@ const FriendRequests = () => {
                                                 <img
                                                     src={request.requester.profilImage}
                                                     alt={request.requester.name}
-                                                    className="w-12 h-12 rounded-xl object-cover shadow-sm group-hover:rotate-2 transition-transform"
+                                                    className="w-12 h-12 rounded-full object-cover shadow-sm transition-transform"
                                                 />
                                             ) : (
                                                 <div
-                                                    className="w-12 h-12 rounded-xl text-white font-black text-sm flex items-center justify-center shadow-sm"
-                                                    style={{ background: 'var(--gradient-vibrant)' }}
+                                                    className="w-12 h-12 rounded-full text-white font-black text-sm flex items-center justify-center shadow-sm"
+                                                    style={{ background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)' }}
                                                 >
                                                     {getInitials(request.requester.name)}
                                                 </div>
                                             )}
                                             {request.online && (
-                                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                                             )}
                                         </div>
                                         <div>
@@ -192,7 +192,7 @@ const FriendRequests = () => {
                                 <h2 className="text-xl font-bold text-gray-900 mb-1">No requests right now</h2>
                                 <p className="text-gray-400 text-sm mb-6">You're all caught up with your connections!</p>
                                 <button
-                                    onClick={() => navigate('/feed')}
+                                    onClick={() => navigate('/')}
                                     className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold text-xs hover:bg-black transition-all flex items-center gap-2 mx-auto"
                                 >
                                     Explore <ArrowRight size={14} />

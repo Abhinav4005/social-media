@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Send, MoreHorizontal, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreHorizontal, Bookmark, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,70 +40,74 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
     },
   });
 
-  const handleLike = () => {
-    likeMutation.mutate(props.id);
-  };
+  const handleLike = () => likeMutation.mutate(props.id);
+
+  const initials = props?.user?.name
+    ? props.user.name.split(" ").map((n) => n[0]?.toUpperCase()).slice(0, 2).join("")
+    : "U";
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white border border-gray-100 shadow-sm hover:shadow-xl rounded-2xl overflow-hidden mb-6 transition-all"
-      key={props.id}
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="bg-white border border-gray-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.06)] hover:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.12)] rounded-[28px] overflow-hidden mb-6 transition-all duration-300"
     >
       {/* User Info Header */}
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+      <div className="flex items-center justify-between px-6 pt-5 pb-4">
+        <div className="flex items-center gap-3.5">
+          <div className="relative flex-shrink-0">
             {props?.user?.profileImage ? (
               <img
                 src={props.user.profileImage}
                 alt={props.user.name}
-                className="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100"
+                className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md"
               />
             ) : (
-              <img
-                src={`https://ui-avatars.com/api/?name=${props?.user.name || "U"
-                  }&background=random`}
-                alt={props?.user?.name}
-                className="w-12 h-12 rounded-full border-2 border-gray-200"
-              />
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-sm shadow-md"
+                style={{ background: "linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)" }}
+              >
+                {initials}
+              </div>
             )}
-            {/* Online indicator */}
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white"></span>
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white shadow-sm" />
           </div>
           <div>
-            <h4 className="font-bold text-gray-900 capitalize hover:text-primary-600 cursor-pointer transition">
+            <h4 className="font-extrabold text-gray-900 capitalize text-[15px] leading-tight tracking-tight cursor-pointer hover:text-primary-600 transition-colors">
               {props?.user?.name}
             </h4>
-            <p className="text-xs text-gray-500 flex items-center gap-1">
-              {formatTime(props?.createdAt)}
-              <span className="text-gray-400">•</span>
-              <span>🌍 Public</span>
-            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs text-gray-400 font-medium">{formatTime(props?.createdAt)}</span>
+              <span className="text-gray-300 text-xs">•</span>
+              <div className="flex items-center gap-1 text-xs text-gray-400 font-medium">
+                <Globe className="w-3 h-3" />
+                <span>Public</span>
+              </div>
+            </div>
           </div>
         </div>
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
-          className="p-2 hover:bg-gray-100 rounded-full transition"
+          transition={{ duration: 0.2 }}
+          className="p-2.5 hover:bg-gray-100 rounded-full transition-colors"
         >
-          <MoreHorizontal className="w-5 h-5 text-gray-600" />
+          <MoreHorizontal className="w-5 h-5 text-gray-400" />
         </motion.button>
       </div>
 
       {/* Content */}
       {(props?.title || props?.description) && (
-        <div className="px-4 pb-3">
+        <div className="px-6 pb-4">
           {props?.title && (
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-[17px] font-extrabold text-gray-900 mb-2 tracking-tight leading-snug">
               {props.title}
             </h3>
           )}
           {props?.description && (
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-[15px] text-gray-600 leading-relaxed">
               {props.description}
             </p>
           )}
@@ -112,121 +116,114 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
 
       {/* Post Image */}
       {props.image && (
-        <div className="relative overflow-hidden bg-gray-100">
+        <div className="relative overflow-hidden mx-5 rounded-2xl mb-4 shadow-sm">
           <motion.img
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.4 }}
+            whileHover={{ scale: 1.03 }}
+            transition={{ duration: 0.5 }}
             src={props?.image}
             alt="Post"
             className="w-full aspect-video object-cover cursor-pointer"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-2xl pointer-events-none" />
         </div>
       )}
 
       {/* Post Video */}
       {props?.video && (
-        <div className="relative overflow-hidden bg-gray-100">
+        <div className="relative overflow-hidden mx-5 rounded-2xl mb-4 shadow-sm">
           <video
             src={props?.video}
-            alt="Post video"
             controls
             playsInline
-            className="w-full aspect-video object-cover"
+            className="w-full aspect-video object-cover rounded-2xl"
           />
         </div>
       )}
 
       {/* Engagement Stats */}
-      <div className="px-4 py-2 flex items-center justify-between text-sm text-gray-600 border-b border-gray-100">
-        <div className="flex items-center gap-1">
-          {likeCount > 0 && (
-            <>
-              <div className="flex -space-x-1">
-                <span className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">
-                  ❤️
+      {(likeCount > 0 || comments.length > 0) && (
+        <div className="px-6 py-2.5 flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            {likeCount > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-center w-5 h-5 bg-red-500 rounded-full shadow-sm">
+                  <span className="text-[10px]">❤️</span>
+                </div>
+                <span className="font-semibold text-gray-600 hover:underline cursor-pointer">
+                  {likeCount} {likeCount === 1 ? "like" : "likes"}
                 </span>
               </div>
-              <span className="ml-1 hover:underline cursor-pointer">
-                {likeCount} {likeCount === 1 ? "like" : "likes"}
-              </span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
+            )}
+          </div>
           {comments.length > 0 && (
-            <span className="hover:underline cursor-pointer">
+            <span
+              className="font-semibold text-gray-500 hover:text-primary-600 hover:underline cursor-pointer transition-colors"
+              onClick={() => setOpenCommentModal(true)}
+            >
               {comments.length} {comments.length === 1 ? "comment" : "comments"}
             </span>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Divider */}
+      <div className="mx-6 border-t border-gray-50" />
 
       {/* Actions */}
       <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Like Button */}
+        <div className="flex items-center gap-1">
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.92 }}
             onClick={handleLike}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${liked
-                ? "text-red-500 bg-red-50"
-                : "text-gray-600 hover:bg-gray-100"
+            className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-2xl font-bold text-sm transition-all duration-200 ${liked ? "text-red-500 bg-red-50" : "text-gray-500 hover:bg-gray-50 hover:text-red-500"
               }`}
           >
             <AnimatePresence mode="wait">
               <motion.div
                 key={liked ? "liked" : "unliked"}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
                 exit={{ scale: 0 }}
+                transition={{ duration: 0.15 }}
               >
-                <Heart
-                  className={`w-5 h-5 ${liked ? "fill-red-500" : ""}`}
-                />
+                <Heart className={`w-5 h-5 ${liked ? "fill-red-500" : ""}`} />
               </motion.div>
             </AnimatePresence>
-            <span className="text-sm">Like</span>
+            <span>Like</span>
           </motion.button>
 
-          {/* Comment Button */}
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() => setOpenCommentModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-2xl font-bold text-sm text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200"
           >
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm">Comment</span>
+            <span>Comment</span>
           </motion.button>
 
-          {/* Share Button */}
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => console.log("Share clicked")}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.92 }}
+            className="flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-2xl font-bold text-sm text-gray-500 hover:bg-green-50 hover:text-green-600 transition-all duration-200"
           >
             <Send className="w-5 h-5" />
-            <span className="text-sm">Share</span>
+            <span>Share</span>
           </motion.button>
         </div>
 
-        {/* Save Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setSaved(!saved)}
-          className={`p-2 rounded-lg transition-all ${saved
-              ? "text-primary-600 bg-primary-50"
-              : "text-gray-600 hover:bg-gray-100"
+          className={`p-2.5 rounded-2xl transition-all cursor-pointer duration-200 ${saved ? "text-primary-600 bg-primary-50" : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
             }`}
         >
           <Bookmark className={`w-5 h-5 ${saved ? "fill-primary-600" : ""}`} />
         </motion.button>
       </div>
 
-      {/* Comments Modal */}
       <CommentsModal
         isOpen={openCommentModal}
         onClose={() => setOpenCommentModal(false)}

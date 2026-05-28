@@ -17,11 +17,11 @@ export default function Settings() {
     });
 
     const categories = [
-        { id: "profile", name: "Profile", icon: <User className="w-5 h-5" />, color: "text-blue-500" },
+        { id: "profile", name: "Profile", icon: <User className="w-5 h-5" />, color: "text-primary-500" },
         { id: "security", name: "Security", icon: <Lock className="w-5 h-5" />, color: "text-red-500" },
-        { id: "notifications", name: "Notifications", icon: <Bell className="w-5 h-5" />, color: "text-amber-500" },
-        { id: "privacy", name: "Privacy", icon: <Shield className="w-5 h-5" />, color: "text-green-500" },
-        { id: "preferences", name: "Preferences", icon: <Sun className="w-5 h-5" />, color: "text-indigo-500" },
+        { id: "notifications", name: "Notifications", icon: <Bell className="w-5 h-5" />, color: "text-secondary-500" },
+        { id: "privacy", name: "Privacy", icon: <Shield className="w-5 h-5" />, color: "text-secondary-600" },
+        { id: "preferences", name: "Preferences", icon: <Sun className="w-5 h-5" />, color: "text-primary-500" },
     ];
 
     const Toggle = ({ enabled, onChange }) => (
@@ -232,7 +232,7 @@ export default function Settings() {
                                 <div className="flex items-center justify-between p-6 bg-gray-900 rounded-3xl shadow-xl shadow-gray-200">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-gray-800 rounded-xl">
-                                            {darkMode ? <Moon className="w-6 h-6 text-indigo-400" /> : <Sun className="w-6 h-6 text-amber-400" />}
+                                        {darkMode ? <Moon className="w-6 h-6 text-primary-400" /> : <Sun className="w-6 h-6 text-secondary-400" />}
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-white text-base">Dark Mode</h4>

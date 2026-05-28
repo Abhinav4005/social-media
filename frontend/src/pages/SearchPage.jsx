@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ArrowLeft, Users, FileText, Sparkles } from "lucide-react";
+import { Search, ArrowLeft, Users, FileText, Sparkles, X } from "lucide-react";
 import Navbar from "./Navbar";
 import { useQuery } from "@tanstack/react-query";
 import { globalSearch } from "../api";
@@ -17,10 +17,15 @@ export default function SearchPage() {
   const debouncedQuery = useDebounce(query, 500);
   const [results, setResults] = useState({ users: [], posts: [] });
 
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setQuery(q);
+  }, [searchParams]);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["globalSearch", debouncedQuery, tab],
     queryFn: () => globalSearch(debouncedQuery, tab, 20, 1),
-    enabled: debouncedQuery.trim().length >= 2,
+    enabled: debouncedQuery.trim().length >= 3,
   });
 
   useEffect(() => {
@@ -46,7 +51,7 @@ export default function SearchPage() {
     }
   }, [data]);
 
-  const showResults = query.trim().length > 0;
+  const showResults = query.trim().length >= 3;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -88,9 +93,9 @@ export default function SearchPage() {
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="p-1 hover:bg-gray-100 rounded-full text-gray-400 transition"
+                className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition cursor-pointer"
               >
-                <Search className="w-5 h-5 rotate-45" /> {/* Close button hack */}
+                <X className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -106,8 +111,8 @@ export default function SearchPage() {
               <Search className="w-10 h-10 text-gray-300" />
             </div>
             <p className="text-2xl font-bold text-gray-800 mb-2">Search the Hub</p>
-            <p className="text-gray-500 text-center max-w-xs">
-              Type a name, keyword, or anything else to see what's happening.
+            <p className="text-gray-500 text-center max-w-xs leading-relaxed">
+              Enter at least 3 characters to find people, posts, and topics from across the community.
             </p>
           </motion.div>
         ) : (
@@ -123,8 +128,8 @@ export default function SearchPage() {
                   key={t.id}
                   onClick={() => setTab(t.id)}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t.id
-                      ? "bg-white text-primary-600 shadow-md scale-105"
-                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
+                    ? "bg-white text-primary-600 shadow-md scale-105"
+                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
                     }`}
                 >
                   {t.icon}

@@ -1,24 +1,40 @@
-@import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import "./styles/theme.css";
+@import "tailwindcss";
 
 @layer base {
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Outfit', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     line-height: 1.6;
+    font-feature-settings: "kern" 1, "liga" 1;
+    background-color: #f4f6fa;
+    color: #1e293b;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    letter-spacing: -0.04em;
-    line-height: 1.1;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-weight: 800;
+  }
+
+  p, span, li, a, input, textarea, button {
+    font-family: 'Outfit', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  }
+
+  .font-royal {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  /* Brand-colored text selection */
+  ::selection {
+    background-color: rgba(99, 102, 241, 0.15);
+    color: #4f46e5;
   }
 
   /* Browser Autofill Fix */
@@ -44,14 +60,80 @@
   --color-primary-700: var(--color-primary-700);
   --color-primary-800: var(--color-primary-800);
   --color-primary-900: var(--color-primary-900);
+  --color-primary-950: var(--color-primary-950);
 
+  --color-secondary-50: var(--color-secondary-50);
+  --color-secondary-100: var(--color-secondary-100);
+  --color-secondary-200: var(--color-secondary-200);
+  --color-secondary-300: var(--color-secondary-300);
+  --color-secondary-400: var(--color-secondary-400);
   --color-secondary-500: var(--color-secondary-500);
   --color-secondary-600: var(--color-secondary-600);
   --color-secondary-700: var(--color-secondary-700);
+  --color-secondary-800: var(--color-secondary-800);
+  --color-secondary-900: var(--color-secondary-900);
+  --color-secondary-950: var(--color-secondary-950);
 
+  --color-accent-50: var(--color-accent-50);
+  --color-accent-100: var(--color-accent-100);
+  --color-accent-200: var(--color-accent-200);
+  --color-accent-300: var(--color-accent-300);
+  --color-accent-400: var(--color-accent-400);
   --color-accent-500: var(--color-accent-500);
   --color-accent-600: var(--color-accent-600);
   --color-accent-700: var(--color-accent-700);
+  --color-accent-800: var(--color-accent-800);
+  --color-accent-900: var(--color-accent-900);
+  --color-accent-950: var(--color-accent-950);
+
+  /* Standard Tailwind color overrides to force the 2-brand color layout */
+  --color-blue-50: var(--color-primary-50);
+  --color-blue-100: var(--color-primary-100);
+  --color-blue-200: var(--color-primary-200);
+  --color-blue-300: var(--color-primary-300);
+  --color-blue-400: var(--color-primary-400);
+  --color-blue-500: var(--color-primary-500);
+  --color-blue-600: var(--color-primary-600);
+  --color-blue-700: var(--color-primary-700);
+  --color-blue-800: var(--color-primary-800);
+  --color-blue-900: var(--color-primary-900);
+  --color-blue-950: var(--color-primary-950);
+
+  --color-indigo-50: var(--color-primary-50);
+  --color-indigo-100: var(--color-primary-100);
+  --color-indigo-200: var(--color-primary-200);
+  --color-indigo-300: var(--color-primary-300);
+  --color-indigo-400: var(--color-primary-400);
+  --color-indigo-500: var(--color-primary-500);
+  --color-indigo-600: var(--color-primary-600);
+  --color-indigo-700: var(--color-primary-700);
+  --color-indigo-800: var(--color-primary-800);
+  --color-indigo-900: var(--color-primary-900);
+  --color-indigo-950: var(--color-primary-950);
+
+  --color-purple-50: var(--color-secondary-50);
+  --color-purple-100: var(--color-secondary-100);
+  --color-purple-200: var(--color-secondary-200);
+  --color-purple-300: var(--color-secondary-300);
+  --color-purple-400: var(--color-secondary-400);
+  --color-purple-500: var(--color-secondary-500);
+  --color-purple-600: var(--color-secondary-600);
+  --color-purple-700: var(--color-secondary-700);
+  --color-purple-800: var(--color-secondary-800);
+  --color-purple-900: var(--color-secondary-900);
+  --color-purple-950: var(--color-secondary-950);
+
+  --color-pink-50: var(--color-secondary-50);
+  --color-pink-100: var(--color-secondary-100);
+  --color-pink-200: var(--color-secondary-200);
+  --color-pink-300: var(--color-secondary-300);
+  --color-pink-400: var(--color-secondary-400);
+  --color-pink-500: var(--color-secondary-500);
+  --color-pink-600: var(--color-secondary-600);
+  --color-pink-700: var(--color-secondary-700);
+  --color-pink-800: var(--color-secondary-800);
+  --color-pink-900: var(--color-secondary-900);
+  --color-pink-950: var(--color-secondary-950);
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -83,4 +165,19 @@
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 8s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
 }

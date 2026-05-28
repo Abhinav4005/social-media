@@ -116,7 +116,8 @@ export default function Profile({ user }) {
               />
             ) : (
               <div
-                className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient-x"
+                className="w-full h-full animate-gradient-x"
+                style={{ background: 'var(--gradient-hero)' }}
               />
             )}
 
@@ -138,7 +139,7 @@ export default function Profile({ user }) {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setOpenCoverModal(true)}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-2xl shadow-xl flex items-center gap-2 transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-2xl shadow-xl flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 {userProfile?.coverImage ? "Change" : "Add Cover"}
@@ -163,20 +164,20 @@ export default function Profile({ user }) {
 
             {/* Avatar - Elevated Architecture */}
             <div className="absolute -top-24 left-1/2 md:left-12 transform -translate-x-1/2 md:translate-x-0">
-              <div className="relative">
-                <div className="p-1.5 bg-white rounded-[32px] shadow-2xl backdrop-blur-xl border border-white/50">
+              <div className="relative group">
+                <div className="p-1.5 bg-white rounded-full shadow-2xl border border-white/80">
                   {user?.profileImage ? (
                     <motion.img
                       whileHover={{ scale: 1.02 }}
                       src={user?.profileImage}
                       alt="Profile"
-                      className="w-44 h-44 rounded-[28px] object-cover"
+                      className="w-44 h-44 rounded-full object-cover"
                     />
                   ) : (
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="w-44 h-44 rounded-[28px] text-white text-5xl font-black flex items-center justify-center shadow-inner"
-                      style={{ background: 'var(--gradient-vibrant)' }}
+                      className="w-44 h-44 rounded-full text-white text-5xl font-black flex items-center justify-center shadow-inner"
+                      style={{ background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)' }}
                     >
                       {user?.name ? getInitials(user.name) : "?"}
                     </motion.div>
@@ -184,13 +185,13 @@ export default function Profile({ user }) {
                 </div>
 
                 {/* Online Indicator */}
-                <div className="absolute bottom-2 right-2 w-8 h-8 bg-green-500 rounded-2xl border-4 border-white shadow-lg" />
+                <div className="absolute bottom-1 right-3 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg z-10" />
 
                 {/* Edit Avatar Overlay */}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute -top-2 -right-2 p-3 bg-white hover:bg-gray-50 text-indigo-600 rounded-2xl shadow-xl border border-gray-100 transition-all cursor-pointer opacity-0 group-hover:opacity-100 md:opacity-100"
+                  className="absolute top-1 right-1 p-3 bg-white hover:bg-gray-50 text-indigo-600 rounded-full shadow-xl border border-gray-100 transition-all cursor-pointer opacity-0 group-hover:opacity-100 md:opacity-100 z-10"
                   onClick={() => navigate("/update-profile")}
                 >
                   <Edit2 className="w-5 h-5" />
@@ -204,7 +205,7 @@ export default function Profile({ user }) {
                 <motion.h1
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="text-5xl font-black text-gray-900 tracking-tight mb-3"
+                  className="font-royal text-5xl md:text-6xl text-gray-900 tracking-tight mb-3 italic"
                 >
                   {user?.name || "Guest User"}
                 </motion.h1>
@@ -281,16 +282,16 @@ export default function Profile({ user }) {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex flex-col items-center gap-3 py-6 px-4 transition-all relative ${activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`flex-1 flex flex-col items-center gap-2.5 py-6 px-4 transition-all relative ${activeTab === tab.id ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'}`}
                 >
-                  <div className={`p-2 rounded-xl transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-transparent'}`}>
+                  <div className={`p-2 rounded-xl transition-all ${activeTab === tab.id ? 'bg-primary-600 text-white shadow-lg shadow-primary-200' : 'bg-transparent'}`}>
                     {tab.icon}
                   </div>
-                  <span className="text-xs font-black uppercase tracking-tighter">{tab.label}</span>
+                  <span className="text-xs font-bold tracking-wide">{tab.label}</span>
                   {activeTab === tab.id && (
                     <motion.div
                       layoutId="tabActiveIndicator"
-                      className="absolute bottom-0 w-12 h-1.5 bg-indigo-600 rounded-t-full"
+                      className="absolute bottom-0 w-12 h-1.5 bg-primary-600 rounded-t-full"
                     />
                   )}
                 </button>
