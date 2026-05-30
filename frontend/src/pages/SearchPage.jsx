@@ -210,7 +210,7 @@ export default function SearchPage() {
                               key={post.id}
                               whileHover={{ y: -2 }}
                               className="p-6 bg-white shadow-sm border border-gray-100 rounded-3xl hover:shadow-xl transition-all cursor-pointer"
-                              onClick={() => navigate(`/post/${post.id}`)}
+                              onClick={() => navigate(`/posts/${post.id}`)}
                             >
                               <div className="flex items-start gap-4 mb-4">
                                 <img

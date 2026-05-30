@@ -11,7 +11,7 @@ const ChatMessages = ({ roomId }) => {
   const { user } = useSelector((state) => state.auth);
   const [typingUsers, setTypingUsers] = useState([]);
   const queryClient = useQueryClient();
-  const bottomOfMessageRef = useRef(null);
+  const bottomRef = useRef(null);
 
   const { data: messages = [], isLoading, isError } = useQuery({
     queryKey: ["messages", roomId],
@@ -20,176 +20,175 @@ const ChatMessages = ({ roomId }) => {
   });
 
   useEffect(() => {
-    const handleUserTyping = ({ roomId: incomingRoomId, userId }) => {
-      if (parseInt(incomingRoomId) !== parseInt(roomId)) return;
-      if (userId === user?.id) return;
-      setTypingUsers((prev) => prev.includes(userId) ? prev : [...prev, userId]);
+    const onTyping = ({ roomId: rid, userId }) => {
+      if (parseInt(rid) !== parseInt(roomId) || userId === user?.id) return;
+      setTypingUsers((p) => (p.includes(userId) ? p : [...p, userId]));
     };
-
-    const handleUserStopTyping = ({ roomId: incomingRoomId, userId }) => {
-      if (parseInt(incomingRoomId) !== parseInt(roomId)) return;
-      if (userId === user?.id) return;
-      setTypingUsers((prev) => prev.filter((id) => id !== userId));
+    const onStop = ({ roomId: rid, userId }) => {
+      if (parseInt(rid) !== parseInt(roomId) || userId === user?.id) return;
+      setTypingUsers((p) => p.filter((id) => id !== userId));
     };
-
-
-    socket.on("userTyping", handleUserTyping);
-    socket.on("userStoppedTyping", handleUserStopTyping);
-
+    socket.on("userTyping", onTyping);
+    socket.on("userStoppedTyping", onStop);
     return () => {
-      socket.off("userTyping", handleUserTyping);
-      socket.off("userStoppedTyping", handleUserStopTyping);
+      socket.off("userTyping", onTyping);
+      socket.off("userStoppedTyping", onStop);
       setTypingUsers([]);
-    }
+    };
   }, [roomId, user?.id]);
 
   useEffect(() => {
-    bottomOfMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
     if (!roomId) return;
-
-    const handleNewMessage = (newMessage) => {
+    const handleNewMessage = (msg) => {
       queryClient.setQueryData(["messages", roomId], (old = []) => {
-        if (!old) return [newMessage];
-        const tempIndex = old.findIndex(
-          (msg) => msg.pending && msg.text === newMessage.text && msg.senderId === newMessage.senderId
+        const tempIdx = old.findIndex(
+          (m) => m.pending && m.text === msg.text && m.senderId === msg.senderId
         );
-        if (tempIndex !== -1) {
+        if (tempIdx !== -1) {
           const copy = [...old];
-          copy[tempIndex] = newMessage;
+          copy[tempIdx] = msg;
           return copy;
         }
-        if (old.some((msg) => msg.id === newMessage.id)) return old;
-        return [...old, newMessage];
+        if (old.some((m) => m.id === msg.id)) return old;
+        return [...old, msg];
       });
     };
-
     socket.on("newMessage", handleNewMessage);
-
-    return () => {
-      socket.off("newMessage", handleNewMessage);
-    }
+    return () => socket.off("newMessage", handleNewMessage);
   }, [roomId]);
 
   const handleMessageRead = ({ messageId, userId, roomId }) => {
-    const currentMessages = queryClient.getQueryData(["messages", roomId]);
-
-    // console.log("Cache before update:", currentMessages);
-
-    if (!currentMessages || currentMessages.length === 0) {
-      // console.log("Cache empty, invalidating query...");
-      queryClient.invalidateQueries(["messages", roomId]);
-      return;
-    }
-
-    queryClient.setQueryData(["messages", roomId], (old = []) => {
-      return old.map((msg) => {
-        if (msg?.id === messageId) {
-          return {
-            ...msg,
-            readBy: msg?.readBy?.some(r => r.id === userId)
-              ? msg.readBy
-              : [...(msg.readBy || []), { id: userId }]
-          };
-        }
-        return msg;
-      });
-    });
+    const current = queryClient.getQueryData(["messages", roomId]);
+    if (!current?.length) { queryClient.invalidateQueries(["messages", roomId]); return; }
+    queryClient.setQueryData(["messages", roomId], (old = []) =>
+      old.map((msg) =>
+        msg?.id === messageId
+          ? { ...msg, readBy: msg?.readBy?.some((r) => r.id === userId) ? msg.readBy : [...(msg.readBy || []), { id: userId }] }
+          : msg
+      )
+    );
   };
-
 
   useEffect(() => {
     if (!roomId || !user) return;
-
     socket.on("messageRead", handleMessageRead);
-
-    return () => {
-      socket.off("messageRead", handleMessageRead);
-    }
+    return () => socket.off("messageRead", handleMessageRead);
   }, [roomId, user?.id]);
 
-  const otherMembers = queryClient
-    .getQueryData(["rooms"])
-    ?.find((r) => r.id === parseInt(roomId))?.members.filter((m) => m.user.id !== user?.id) || [];
+  const otherMembers =
+    queryClient.getQueryData(["rooms"])?.find((r) => r.id === parseInt(roomId))?.members.filter((m) => m.user.id !== user?.id) || [];
 
   const deleteMutation = useMutation({
     mutationFn: (messageId) => deleteMessage(messageId),
     onMutate: async (messageId) => {
       await queryClient.cancelQueries({ queryKey: ["messages", roomId] });
-
-      const previousMessages = queryClient.getQueryData(["messages", roomId]);
-
-      queryClient.setQueryData(["messages", roomId], (old = []) =>
-        old.filter((msg) => msg.id !== messageId)
-      );
-
-      return { previousMessages };
+      const prev = queryClient.getQueryData(["messages", roomId]);
+      queryClient.setQueryData(["messages", roomId], (old = []) => old.filter((m) => m.id !== messageId));
+      return { prev };
     },
-    onError: (error, messageId, context) => {
-      console.error("Error deleting message:", error);
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["messages", roomId], context.previousMessages);
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries(["rooms"]);
-      queryClient.invalidateQueries(["messages", roomId]);
-      console.log("Message deleted successfully", data);
+    onError: (err, id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["messages", roomId], ctx.prev);
     },
     onSettled: () => {
+      queryClient.invalidateQueries(["rooms"]);
       queryClient.invalidateQueries(["messages", roomId]);
-    }
-  })
+    },
+  });
 
-  const handleDeleteMessage = (messageId) => {
-    deleteMutation.mutate(messageId);
-  }
-
+  // ── Loading ──────────────────────────────────────────────────────────────────
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4" style={{ background: "#f0f2f5" }}>
+        {["left", "right", "left", "right", "left"].map((side, i) => (
+          <div key={i} className={`flex items-end gap-3 ${side === "right" ? "justify-end" : "justify-start"}`}>
+            {side === "left" && <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />}
+            <div className={`h-10 rounded-2xl animate-pulse ${side === "right" ? "bg-primary-100" : "bg-gray-100"}`}
+              style={{ width: `${100 + (i % 3) * 60}px` }} />
+          </div>
+        ))}
+      </div>
+    );
   }
 
-  if (isError) {
-    return <div>Error fetching messages</div>;
-  }
+  if (isError) return (
+    <div className="flex-1 flex items-center justify-center" style={{ background: "#f0f2f5" }}>
+      <p className="text-sm text-gray-400 font-medium">Failed to load messages</p>
+    </div>
+  );
+
+  // ── Group messages by date ───────────────────────────────────────────────────
+  const grouped = messages.reduce((acc, msg) => {
+    const date = new Date(msg.createdAt).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(msg);
+    return acc;
+  }, {});
 
   return (
-    <div className="flex-1 p-6 space-y-4 overflow-y-auto bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-950 scrollbar-hide">
-      {messages.map((msg) => {
-        // console.log("Message in chat",msg);
-        const mine = msg.senderId === user?.id;
-        return (
-          <motion.div
-            key={`${msg.id}-${msg.createdAt}`}
-            initial={{ x: msg.mine ? 40 : -40, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 120, damping: 15 }}
-            className={`flex ${mine ? "justify-end" : "items-start gap-3"}`}
-          >
-            {/* Avatar for other user */}
-            {!mine && (
-              <div className="w-9 h-9 rounded-full mt-2 bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold shadow capitalize">
-                {msg.sender?.profileImage ? (
-                  <img
-                    src={msg.sender.profileImage}
-                    alt={msg.sender.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  msg.sender?.name?.charAt(0)
-                )}
-              </div>
-            )}
+    <div className="flex-1 overflow-y-auto px-6 py-5 scrollbar-hide" style={{ background: "#f0f2f5" }}>
+      {Object.entries(grouped).map(([date, msgs]) => (
+        <div key={date}>
+          {/* Date divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-gray-200/60" />
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] px-3 py-1 bg-white/80 rounded-full border border-gray-200/60 shadow-sm">
+              {date}
+            </span>
+            <div className="flex-1 h-px bg-gray-200/60" />
+          </div>
 
-            {/* Message bubble */}
-            <MessageBubble message={msg} currentUserId={user?.id} roomMembers={otherMembers || []} handleMessageRead={handleMessageRead} onDelete={handleDeleteMessage} />
-          </motion.div>
-        )
-      })}
+          <div className="space-y-1">
+            {msgs.map((msg) => {
+              const mine = msg.senderId === user?.id;
+              return (
+                <motion.div
+                  key={`${msg.id}-${msg.createdAt}`}
+                  initial={{ x: mine ? 20 : -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 22 }}
+                  className={`flex ${mine ? "justify-end" : "items-end gap-2.5"}`}
+                >
+                  {!mine && (
+                    <div className="flex-shrink-0 mb-1">
+                      {msg.sender?.profileImage ? (
+                        <img
+                          src={msg.sender.profileImage}
+                          alt={msg.sender.name}
+                          className="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200"
+                        />
+                      ) : (
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black text-white"
+                          style={{ background: "var(--gradient-primary)" }}
+                        >
+                          {msg.sender?.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <MessageBubble
+                    message={msg}
+                    currentUserId={user?.id}
+                    roomMembers={otherMembers}
+                    handleMessageRead={handleMessageRead}
+                    onDelete={(m) => deleteMutation.mutate(m.id)}
+                    onReply={() => {}}
+                    onReact={() => {}}
+                    onEdit={() => {}}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
       <TypingIndicator typingUsers={typingUsers} otherMembers={otherMembers} />
-      <div ref={bottomOfMessageRef}></div>
+      <div ref={bottomRef} />
     </div>
   );
 };

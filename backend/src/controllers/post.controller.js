@@ -6,15 +6,12 @@ import uploadImageToImageKit from "../utils/uploadImage.js";
 export const createPost = async (req, res) => {
     try {
         const { title, description, comments, status } = req.body;
-        console.log("req.body", req.body);
         const image = req?.files?.image ? req.files.image[0] : null;
-        console.log("image", image);
         const video = req?.files?.video ? req.files.video[0] : null;
         const userId = req.user.id;
 
         const imageUrl = image ? await uploadImageToImageKit(image, "social-hub/images").catch(() => null) : "";
         const videoUrl = video ? await uploadImageToImageKit(video, "social-hub/videos").catch(() => null) : "";
-        console.log("ImageUrl->", imageUrl);
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
@@ -707,9 +704,6 @@ export const getPostFeed = async (req, res) => {
         })
 
         const friendIds = friends.map(f => (f.requesterId === userId ? f.addresseeId : f.requesterId));
-
-        // console.log("Following IDs:", followingIds);
-        console.log("Friend IDs:", friendIds);
 
         const uniqueIds = Array.from(new Set([...followingIds, ...friendIds]));
 

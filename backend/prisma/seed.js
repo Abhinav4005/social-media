@@ -84,8 +84,6 @@ async function main() {
       { commentId: reply1.id, userId: user2.id },
     ],
   })
-
-  console.log("Seed data inserted successfully!")
 }
 
 main()

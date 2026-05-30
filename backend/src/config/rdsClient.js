@@ -11,8 +11,6 @@ async function initRedis() {
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     });
-
-    console.log("Using Upstash Redis (Production)");
   }
 
   else {
@@ -22,8 +20,6 @@ async function initRedis() {
       host: "127.0.0.1",
       port: 6379,
     });
-
-    console.log("Using Local Redis (Docker)");
   }
 
   return redisClient;

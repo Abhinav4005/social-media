@@ -35,14 +35,17 @@ export default function NotificationList({ notifications, isLoading, isError }) 
     <>
       {location.pathname !== "/" && <Navbar />}
 
-      <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-white/60 overflow-hidden sticky top-28">
+      <div className="sticky top-24 overflow-hidden rounded-3xl border border-white/80 bg-white/86 shadow-[0_24px_70px_-45px_rgba(15,23,42,0.45)] backdrop-blur-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-50">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100/50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50">
               <Bell className="w-4 h-4 text-indigo-600" />
             </div>
-            <h2 className="text-sm font-extrabold text-gray-800 tracking-tight">Notifications</h2>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-gray-400">Activity</p>
+              <h2 className="text-sm font-extrabold tracking-tight text-gray-900">Notifications</h2>
+            </div>
           </div>
           {notifications?.length > 0 && (
             <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-full uppercase tracking-wider">
@@ -52,7 +55,7 @@ export default function NotificationList({ notifications, isLoading, isError }) 
         </div>
 
         {/* List */}
-        <div className="divide-y divide-gray-50 max-h-[520px] overflow-y-auto scrollbar-hide">
+        <div className="max-h-[520px] divide-y divide-gray-100 overflow-y-auto scrollbar-hide">
           <AnimatePresence>
             {isLoading ? (
               [1, 2, 3].map((i) => (
@@ -101,13 +104,13 @@ export default function NotificationList({ notifications, isLoading, isError }) 
                 key="empty"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center justify-center text-center py-14 px-6"
+                className="flex flex-col items-center justify-center px-6 py-14 text-center"
               >
-                <div className="w-16 h-16 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-gray-100 bg-gray-50">
                   <Inbox className="w-7 h-7 text-gray-300" />
                 </div>
-                <h3 className="text-sm font-extrabold text-gray-700 mb-1">All caught up!</h3>
-                <p className="text-xs text-gray-400 font-medium leading-relaxed max-w-[160px]">
+                <h3 className="mb-1 text-sm font-extrabold text-gray-800">All caught up</h3>
+                <p className="max-w-[170px] text-xs font-semibold leading-relaxed text-gray-400">
                   We'll let you know when something new happens.
                 </p>
               </motion.div>

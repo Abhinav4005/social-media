@@ -21,7 +21,6 @@ export const initSocket = (server) => {
     io.use(socketAuthMiddleware);
 
     io.on("connection", (socket) => {
-        console.log("New client connected", socket.id);
         const userId = socket.userId;
         UserSocketManager.addUser(userId, socket.id);
 

@@ -42,27 +42,27 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/86 backdrop-blur-xl shadow-[0_16px_40px_-32px_rgba(15,23,42,0.55)]">
+      <div className="mx-auto flex h-20 max-w-[1220px] items-center justify-between gap-5 px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
           <motion.div
             whileHover={{ rotate: 360 }}
             transition={{ duration: 0.6 }}
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg shadow-indigo-100"
             style={{ background: 'var(--gradient-vibrant)' }}
           >
             <Sparkles className="w-6 h-6 text-white" />
           </motion.div>
-          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent tracking-tighter">
+          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent tracking-tight">
             mysocial.
           </span>
         </Link>
 
         {/* Enhanced Search Bar */}
-        <div className="relative group" ref={searchRef}>
+        <div className="relative hidden flex-1 justify-center md:flex" ref={searchRef}>
           <motion.div
-            className={`flex items-center bg-gray-50/50 backdrop-blur-sm rounded-2xl px-5 py-3 w-96 border border-gray-100 transition-all duration-300 ${searchFocused ? 'ring-4 ring-primary-500/10 shadow-2xl bg-white border-primary-200' : 'hover:bg-gray-100'
+            className={`flex h-12 w-full max-w-[440px] items-center rounded-2xl border px-5 transition-all duration-300 ${searchFocused ? 'border-indigo-200 bg-white shadow-2xl shadow-indigo-100/60 ring-4 ring-indigo-500/10' : 'border-gray-200 bg-gray-50/70 hover:bg-white'
               }`}
           >
             <Search className={`w-5 h-5 transition-colors ${searchFocused ? 'text-primary-600' : 'text-gray-400'}`} />
@@ -97,7 +97,7 @@ export default function Navbar() {
                 initial={{ opacity: 0, y: 15, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[28px] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.16)] border border-gray-100 overflow-hidden z-[100]"
+                className="absolute left-1/2 top-full z-[100] mt-4 w-full max-w-[440px] -translate-x-1/2 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)]"
               >
                 <div className="max-h-[440px] overflow-y-auto p-3 space-y-1">
                   {searchQuery.trim().length === 0 ? (
@@ -153,7 +153,7 @@ export default function Navbar() {
                           key={post.id}
                           whileHover={{ backgroundColor: 'rgba(168, 85, 247, 0.05)', x: 4 }}
                           onClick={() => {
-                            navigate(`/post/${post.id}`);
+                            navigate(`/posts/${post.id}`);
                             setSearchFocused(false);
                           }}
                           className="flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all"
@@ -194,13 +194,13 @@ export default function Navbar() {
         </div>
 
         {/* Action Icons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2.5">
           {/* Notifications */}
           <Link to="/notifications">
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="relative p-2 rounded-xl hover:bg-primary-50 transition-colors group"
+              className="relative rounded-2xl p-2.5 transition-colors hover:bg-indigo-50 group"
             >
               <Bell className="w-6 h-6 text-gray-600 group-hover:text-primary-600 transition-colors" />
               {/* Notification Badge */}
@@ -213,7 +213,7 @@ export default function Navbar() {
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="relative p-2 rounded-xl hover:bg-primary-50 transition-colors group"
+              className="relative rounded-2xl p-2.5 transition-colors hover:bg-indigo-50 group"
             >
               <MessagesSquare className="w-6 h-6 text-gray-600 group-hover:text-primary-600 transition-colors" />
               {/* Message Badge */}

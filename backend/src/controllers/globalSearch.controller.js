@@ -1,7 +1,7 @@
 import { globalPostSearch, globalUserSearch } from "../services/globalSearch.service.js";
 
 export const globalSearch = async (req, res) => {
-    const { search, type, page, limit = 10 } = req.query;
+    const { search, type = "all", page, limit = 10 } = req.query;
     const userId = req.user.id;
 
     const limitValue = parseInt(limit, 10) || 10;
@@ -21,14 +21,12 @@ export const globalSearch = async (req, res) => {
             globalPostSearch(searchTrim, type, limitValue, offset)
         ]);
 
-        console.log("Global Search Results:", { users, posts });
-
         return res.status(200).json({
             message: "Search results fetched successfully",
             data: {
                 users: users,
                 posts: posts,
-                totalResults: users?.length + posts?.length
+                totalResults: (users?.length || 0) + (posts?.length || 0)
             }
         });
     } catch (error) {

@@ -9,9 +9,10 @@ import Notifications from "./Notification";
 import { useSelector } from "react-redux";
 import StoryTray from "../components/Strories/StoryTray";
 import { motion } from "framer-motion";
+import { Camera, Loader2, Smile, Video } from "lucide-react";
 
 const PostShimmer = () => (
-  <div className="bg-white border border-gray-100 shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-[32px] p-6 mb-6">
+  <div className="mb-5 rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
     <div className="flex items-center gap-4 mb-5">
       <div className="w-12 h-12 rounded-full animate-shimmer bg-gray-200"></div>
       <div className="flex-1 space-y-2">
@@ -86,8 +87,6 @@ export default function FeedPage() {
     },
   });
 
-  console.log("FeedPost----->", feedPosts)
-
   const handleScroll = useCallback(() => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -108,54 +107,54 @@ export default function FeedPage() {
       <FeedLayout
         left={<Sidebar />}
         center={
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Create Post Composer */}
-            <div className="bg-white/80 backdrop-blur-xl p-5 rounded-[28px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.06)] mb-4 border border-white/70">
+            <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
               <div className="flex items-center gap-4">
                 <div className="relative flex-shrink-0">
                   {user?.profileImage ? (
                     <img
                       src={user?.profileImage}
                       alt="User Avatar"
-                      className="w-12 h-12 rounded-full object-cover shadow-md"
+                      className="h-11 w-11 rounded-full object-cover shadow-sm ring-1 ring-gray-100"
                     />
                   ) : (
                     <div
-                      className="w-12 h-12 rounded-full text-white font-black text-sm flex items-center justify-center shadow-md"
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-black text-white shadow-sm"
                       style={{ background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)' }}
                     >
                       {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </div>
                   )}
-                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white shadow-sm"></span>
+                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white shadow-sm"></span>
                 </div>
 
                 <motion.div
-                  whileHover={{ scale: 1.01 }}
+                  whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.99 }}
                   onClick={() => setIsModalOpen(true)}
-                  className="flex-1 bg-gray-50/80 hover:bg-gray-100/80 border border-gray-100 hover:border-primary-200 rounded-full px-5 py-3.5 cursor-pointer transition-all duration-200"
+                  className="flex-1 cursor-pointer rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 transition-all duration-200 hover:border-indigo-200 hover:bg-white hover:shadow-sm"
                 >
-                  <p className="text-gray-400 text-sm font-medium">
-                    What's on your mind, <span className="text-gray-600 font-semibold">{user?.name?.split(' ')[0] || 'there'}</span>?
+                  <p className="text-sm font-semibold text-gray-400">
+                    What's on your mind, <span className="font-black text-gray-700">{user?.name?.split(' ')[0] || 'there'}</span>?
                   </p>
                 </motion.div>
               </div>
 
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50">
+              <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3">
                 {[
-                  { emoji: '📷', label: 'Photo', color: 'hover:bg-green-50 hover:text-green-600 hover:border-green-100' },
-                  { emoji: '🎥', label: 'Video', color: 'hover:bg-red-50 hover:text-red-600 hover:border-red-100' },
-                  { emoji: '😊', label: 'Feeling', color: 'hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-100' },
-                ].map(({ emoji, label, color }) => (
+                  { icon: <Camera className="h-4 w-4" />, label: 'Photo', color: 'hover:bg-green-50 hover:text-green-700 hover:border-green-100' },
+                  { icon: <Video className="h-4 w-4" />, label: 'Video', color: 'hover:bg-red-50 hover:text-red-700 hover:border-red-100' },
+                  { icon: <Smile className="h-4 w-4" />, label: 'Feeling', color: 'hover:bg-amber-50 hover:text-amber-700 hover:border-amber-100' },
+                ].map(({ icon, label, color }) => (
                   <motion.button
                     key={label}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setIsModalOpen(true)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-gray-500 text-sm font-bold border border-transparent transition-all duration-200 ${color}`}
+                    className={`flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-extrabold text-gray-500 transition-all duration-200 ${color}`}
                   >
-                    <span className="text-base">{emoji}</span>
+                    {icon}
                     <span>{label}</span>
                   </motion.button>
                 ))}
@@ -187,9 +186,16 @@ export default function FeedPage() {
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="w-full py-3 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:shadow-indigo-200 transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-950 py-3 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-gray-200 transition-all hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-70"
                 >
-                  {isFetchingNextPage ? "Loading..." : "Load More"}
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading More
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
                 </button>
               )}
             </div>

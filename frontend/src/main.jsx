@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import SocketPresence from './SocketPresence.jsx';
 import { Buffer } from 'buffer';
 import process from 'process';
+import { AppLoader } from './components/UI/AppLoader.jsx';
 
 window.Buffer = Buffer;
 window.process = process;
@@ -19,7 +20,7 @@ const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate loading={<AppLoader label="Preparing your session" />} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
           <SocketPresence />
           <App/>

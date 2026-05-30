@@ -2,34 +2,43 @@ import React, { useState } from "react";
 import Button from "../UI/Button";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserPlus, UserMinus, Mail, ChevronRight } from "lucide-react";
+import { UserPlus, UserMinus, Mail, ChevronRight, Users, UserCheck } from "lucide-react";
 
 const FriendsTab = ({ activeTab, followers, following, isLoading, isError }) => {
-  if (activeTab !== "friends") return null;
   const [tab, setTab] = useState("following");
   const navigate = useNavigate();
 
+  if (activeTab !== "friends") return null;
+
   const handleOpenDetail = (userId) => {
-    navigate(`/friends/${userId}`);
-  }
+    navigate(`/user/${userId}`);
+  };
 
   const renderList = (list, loading, error, label) => {
     if (loading) return (
       <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-        <div className="w-12 h-12 bg-indigo-100 rounded-full mb-4"></div>
-        <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">Looking for friends...</p>
+        <div className="w-12 h-12 bg-primary-100 rounded-full mb-4 animate-bounce"></div>
+        <p className="text-gray-400 font-bold uppercase tracking-wider text-xs">Looking for friends...</p>
       </div>
     );
 
     if (error) return (
-      <div className="text-center py-12 bg-red-50 rounded-[32px] border border-red-100">
+      <div className="text-center py-12 bg-red-50 rounded-[32px] border border-red-100/50">
         <p className="text-red-500 font-black">Failed to load connection</p>
       </div>
     );
 
     if (!list || list.length === 0) return (
-      <div className="flex flex-col items-center justify-center py-20 bg-gray-50/50 rounded-[40px] border border-dashed border-gray-200">
-        <p className="text-gray-300 font-black uppercase tracking-[0.2em] italic opacity-60">No echoes yet</p>
+      <div className="flex flex-col items-center justify-center py-16 bg-gray-50/50 rounded-[32px] border-2 border-dashed border-gray-100 w-full max-w-lg mx-auto">
+        <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 text-gray-300">
+          <Users className="w-7 h-7" />
+        </div>
+        <p className="text-gray-600 font-bold text-base mb-1">No connections yet</p>
+        <p className="text-gray-400 text-xs text-center max-w-[240px] leading-relaxed">
+          {label === "followers"
+            ? "When other members follow this account, they will appear here."
+            : "When this account follows other members, they will appear here."}
+        </p>
       </div>
     );
 
@@ -38,22 +47,25 @@ const FriendsTab = ({ activeTab, followers, following, isLoading, isError }) => 
         {list.map((user, index) => (
           <motion.div
             key={user.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,1)" }}
-            className="flex items-center gap-5 p-5 bg-white/60 backdrop-blur-xl rounded-[28px] cursor-pointer shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] border border-white hover:border-indigo-100 transition-all group"
+            whileHover={{ y: -3 }}
+            className="flex items-center gap-4 p-4.5 bg-white/70 backdrop-blur-xl rounded-[28px] cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 hover:border-primary-100 hover:bg-white hover:shadow-[0_20px_40px_rgba(99,102,241,0.05)] transition-all group"
             onClick={() => handleOpenDetail(user?.id)}
           >
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               {user?.profileImage ? (
                 <img
                   src={user.profileImage}
                   alt={user.name}
-                  className="w-16 h-16 rounded-full object-cover shadow-lg border border-white"
+                  className="w-13 h-13 rounded-full object-cover shadow-sm border-2 border-white ring-2 ring-primary-50/50"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-black shadow-lg border border-white">
+                <div
+                  className="w-13 h-13 rounded-full flex items-center justify-center text-white text-base font-black shadow-sm border-2 border-white ring-2 ring-primary-50/50"
+                  style={{ background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)' }}
+                >
                   {user?.name
                     ?.split(" ")
                     .map((n) => n[0]?.toUpperCase())
@@ -61,23 +73,34 @@ const FriendsTab = ({ activeTab, followers, following, isLoading, isError }) => 
                     .join("")}
                 </div>
               )}
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+              {user.online && (
+                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>
+              )}
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="font-extrabold text-gray-900 group-hover:text-indigo-600 transition-colors truncate text-lg tracking-tight">{user.name}</p>
-              <div className="flex items-center gap-1.5 text-gray-400/80">
-                <Mail className="w-3.5 h-3.5" />
-                <p className="text-[10px] font-black uppercase tracking-wider truncate">{user.email || "Private Account"}</p>
+              <p className="font-extrabold text-gray-900 group-hover:text-primary-600 transition-colors truncate text-base tracking-tight">{user.name}</p>
+              <div className="flex items-center gap-1 mt-0.5 text-gray-400">
+                <Mail className="w-3 h-3 text-gray-300" />
+                <p className="text-[10px] font-bold truncate tracking-wide">{user.email || "Private Account"}</p>
               </div>
             </div>
 
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              className={`p-3 rounded-2xl transition-all ${tab === "followers" ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400 group-hover:bg-red-50 group-hover:text-red-500'}`}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDetail(user?.id);
+              }}
+              className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                tab === "followers"
+                  ? 'bg-primary-50 text-primary-600 hover:bg-primary-100 hover:text-primary-700'
+                  : 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600'
+              }`}
             >
-              {tab === "followers" ? <UserPlus className="w-5 h-5" /> : <UserMinus className="w-5 h-5" />}
-            </motion.div>
+              {tab === "followers" ? <UserPlus className="w-4.5 h-4.5" /> : <UserMinus className="w-4.5 h-4.5" />}
+            </motion.button>
           </motion.div>
         ))}
       </div>
@@ -86,17 +109,17 @@ const FriendsTab = ({ activeTab, followers, following, isLoading, isError }) => 
 
   return (
     <div className="w-full">
-      <div className="flex justify-center mb-10 p-1.5 bg-gray-100/50 backdrop-blur-md rounded-[24px] w-fit mx-auto border border-white/50">
+      <div className="flex justify-center mb-8 p-1 bg-gray-50 border border-gray-100 rounded-2xl w-fit mx-auto shadow-sm">
         <button
           onClick={() => setTab("followers")}
-          className={`px-10 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-[0.2em] transition-all ${tab === "followers" ? "bg-white text-indigo-600 shadow-xl" : "text-gray-400 hover:text-gray-600"
+          className={`px-8 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${tab === "followers" ? "bg-white text-primary-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
             }`}
         >
           Followers
         </button>
         <button
           onClick={() => setTab("following")}
-          className={`px-10 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-[0.2em] transition-all ${tab === "following" ? "bg-white text-indigo-600 shadow-xl" : "text-gray-400 hover:text-gray-600"
+          className={`px-8 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${tab === "following" ? "bg-white text-primary-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
             }`}
         >
           Following

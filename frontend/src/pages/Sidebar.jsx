@@ -7,15 +7,18 @@ export default function Sidebar() {
   const location = useLocation();
 
   return (
-    <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] p-8 space-y-3 sticky top-28 border border-white/60">
-      <div className="flex items-center gap-3 mb-10 px-2">
-        <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 shadow-sm border border-primary-100/50">
+    <div className="sticky top-24 rounded-3xl border border-white/80 bg-white/82 p-4 shadow-[0_24px_70px_-45px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+      <div className="mb-4 flex items-center gap-3 border-b border-gray-100 px-2 pb-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm">
           <Sparkles className="w-5 h-5" />
         </div>
-        <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-[0.25em]">Menu</h2>
+        <div>
+          <h2 className="text-xs font-black uppercase tracking-[0.22em] text-gray-400">Menu</h2>
+          <p className="text-sm font-extrabold text-gray-900">Explore</p>
+        </div>
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-1.5">
         {menuItems.map((item, index) => {
           const isActive = location.pathname === item.path;
 
@@ -23,22 +26,22 @@ export default function Sidebar() {
             <li key={index}>
               <Link to={item.path}>
                 <motion.div
-                  whileHover={{ scale: 1.02, x: 6 }}
+                  whileHover={{ x: 4 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 relative group ${isActive
-                    ? "bg-gray-900 text-white shadow-xl"
-                    : "hover:bg-indigo-50/50 text-gray-500 hover:text-indigo-600"
+                  className={`relative flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-200 group ${isActive
+                    ? "bg-gray-950 text-white shadow-lg shadow-gray-200"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-950"
                     }`}
                 >
                   <div
-                    className={`p-2 rounded-xl transition-all ${isActive
+                    className={`rounded-xl p-2 transition-all ${isActive
                       ? "bg-white/20"
-                      : "bg-gray-50 text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-600"
+                      : "bg-white text-gray-400 ring-1 ring-gray-100 group-hover:text-indigo-600"
                       }`}
                   >
                     {item.icon}
                   </div>
-                  <span className={`font-bold text-[13px] tracking-tight ${isActive ? "opacity-100" : "opacity-50 group-hover:opacity-80"}`}>
+                  <span className={`text-sm font-extrabold tracking-tight ${isActive ? "opacity-100" : "opacity-70 group-hover:opacity-100"}`}>
                     {item.label}
                   </span>
                   {isActive && (

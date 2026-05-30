@@ -1,5 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1" || 'https://1255d4169b8e.ngrok-free.app/api/v1';
-// const API_BASE_URL = ;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 const uploadImageToKit = async (attachments) => {
     const uploaded =[];

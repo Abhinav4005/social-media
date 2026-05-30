@@ -1,18 +1,18 @@
 import { prisma } from "../lib/prisma.js";
 import { storyQueue } from "../queues/storyQueue.js";
 
-export const createStory = async(req, res) => {
+export const createStory = async (req, res) => {
   const userId = req?.user?.id;
-  try{
-    const {mediaType, caption, songName, songType} = req.body;
+  try {
+    const { mediaType, caption, songName, songType } = req.body;
     const media = req?.files ? req?.files?.media[0] : null;
 
-    if(!userId){
+    if (!userId) {
       return res.status(401).json("Unauthorize access");
     }
 
-    if(!mediaType || !media) {
-      return res.status(400).json({error: "mediaType and media required" });
+    if (!mediaType || !media) {
+      return res.status(400).json({ error: "mediaType and media required" });
     }
 
     const story = await prisma.story.create({
@@ -22,12 +22,10 @@ export const createStory = async(req, res) => {
         caption,
         songName,
         songType,
-        mediaUrl:"",
+        mediaUrl: "",
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
-
-    console.log("story----", story);
 
     await storyQueue.add("upload-story", {
       storyId: story.id,
@@ -35,13 +33,11 @@ export const createStory = async(req, res) => {
       mediaType,
     });
 
-    console.log("Job added to queue:", story.id);
-
     return res.status(201).json({
       message: "Story created, processing in background",
       storyId: story.id
     })
-  } catch(error) {
+  } catch (error) {
     console.error("[create story] Error:", {
       userId,
       message: error.message,
@@ -50,11 +46,11 @@ export const createStory = async(req, res) => {
   }
 }
 
-export const getStories = async(req, res) => {
-  try{
+export const getStories = async (req, res) => {
+  try {
     const userId = req?.user?.id;
 
-    if(!userId) {
+    if (!userId) {
       return res.status(401).json({ error: "Unauthorized access" });
     }
 
@@ -81,11 +77,11 @@ export const getStories = async(req, res) => {
                 profileImage: true,
               },
             },
-            views:{
+            views: {
               where: {
                 viewerId: userId,
               },
-              select: {id : true }
+              select: { id: true }
             }
           },
         },
@@ -94,7 +90,7 @@ export const getStories = async(req, res) => {
       take: limit + 1
     };
 
-    if(cursor) {
+    if (cursor) {
       queryOption.cursor = { id: cursor };
       queryOption.skip = 1;
     }
@@ -102,24 +98,24 @@ export const getStories = async(req, res) => {
     const feed = await prisma.storyFeed.findMany(queryOption);
 
     let nextCursor = null;
-    if(feed.length > limit) {
-      const nextItem = feed[feed.length -1];
+    if (feed.length > limit) {
+      const nextItem = feed[feed.length - 1];
       nextCursor = nextItem.id;
       feed.pop();
     }
 
     const rawStories = feed.map((f) => f.story);
 
-    const grouped ={};
+    const grouped = {};
 
     for (const story of rawStories) {
       const uid = story.userId;
 
-      if(grouped[uid]){
+      if (grouped[uid]) {
         grouped[uid] = {
           userId: uid,
           user: story.user,
-          stories:[]
+          stories: []
         }
       }
 
@@ -134,7 +130,7 @@ export const getStories = async(req, res) => {
     }
 
     const groups = Object.values(grouped).map((g) => {
-      g.stories.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+      g.stories.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
       g.allSeen = g.stories.every((s) => s.isSeen)
 
@@ -147,18 +143,18 @@ export const getStories = async(req, res) => {
       count: groups.length,
       nextCursor: nextCursor
     })
-  } catch(error) {
+  } catch (error) {
     console.error("[getStories Error]:", error);
-    return res.status(500).json({error: "Error fetching stories"})
+    return res.status(500).json({ error: "Error fetching stories" })
   }
 }
 
 export const markStorySeen = async (req, res) => {
-  try{
+  try {
     const userId = req?.user?.id;
     const storyId = Number(req.query.storyId);
 
-    if(!userId) {
+    if (!userId) {
       return res.status(401).json({ error: "Unauthorized access" });
     }
 
@@ -166,7 +162,7 @@ export const markStorySeen = async (req, res) => {
       where: { id: storyId }
     });
 
-    if(!story) {
+    if (!story) {
       return res.status(404).json({ error: "Story not found" });
     };
 
@@ -177,7 +173,7 @@ export const markStorySeen = async (req, res) => {
       }
     });
 
-    if(!existingView) {
+    if (!existingView) {
       await prisma.storyView.create({
         data: {
           storyId,
@@ -187,20 +183,20 @@ export const markStorySeen = async (req, res) => {
     }
 
     return res.status(200).json({
-      message:"Story marked as seen",
+      message: "Story marked as seen",
     })
-  } catch(error) {
+  } catch (error) {
     console.error("[markStorySeen] Error:", error);
-    return res.status(500).json({ error: "Error marking story seen"})
+    return res.status(500).json({ error: "Error marking story seen" })
   }
 }
 
 export const getStoryAnalytics = async (req, res) => {
-  try{
+  try {
     const userId = req?.user?.id;
     const storyId = Number(req.params.storyId);
 
-    if(!userId){
+    if (!userId) {
       return res.status(401).json({ error: "Unauthorized access" });
     }
 
@@ -214,11 +210,11 @@ export const getStoryAnalytics = async (req, res) => {
       }
     });
 
-    if(!story) {
-      return res.status(404).json({error: "Story not found" })
+    if (!story) {
+      return res.status(404).json({ error: "Story not found" })
     }
 
-    if(story.id !== userId){
+    if (story.id !== userId) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -232,7 +228,7 @@ export const getStoryAnalytics = async (req, res) => {
       where: { storyId },
       include: {
         viewer: {
-          select:{
+          select: {
             id: true,
             name: true,
             profileImage: true
@@ -244,7 +240,7 @@ export const getStoryAnalytics = async (req, res) => {
     });
 
     return res.json({
-      story:{
+      story: {
         id: story.id,
         createAt: story.createdAt,
         expiresAt: story.expiresAt
@@ -256,17 +252,17 @@ export const getStoryAnalytics = async (req, res) => {
         viewedAt: v.viewedAt,
       }))
     })
-  } catch(error) {
+  } catch (error) {
     console.error("[getStoriesAnalytics] Error:", error);
     return res.status(500).json({ error: "Failed to fetch story analytics" })
   }
 }
 
 export const getStoriesSummaryAnalytics = async (req, res) => {
-  try{
+  try {
     const userId = req.user?.id;
     const summaryInterval = req.query.summaryInterval;
-    if(!userId){
+    if (!userId) {
       return res.status(401).json({ error: "Unauthorized access" })
     }
 
@@ -284,7 +280,7 @@ export const getStoriesSummaryAnalytics = async (req, res) => {
       }
     })
 
-    if(!stories.length) {
+    if (!stories.length) {
       return res.json({
         totalStories: 0,
         totalViews: 0,
@@ -296,13 +292,13 @@ export const getStoriesSummaryAnalytics = async (req, res) => {
     const storyIds = stories.map((s) => s.id);
 
     const totalViews = await prisma.storyView.count({
-      where: { storyId: { in: storyIds }},
+      where: { storyId: { in: storyIds } },
     })
 
     const uniqueViewers = await prisma.storyView.groupBy({
       by: ["viewerId"],
-      where: { storyId: { in: storyIds }},
-      _count: { _all: true}
+      where: { storyId: { in: storyIds } },
+      _count: { _all: true }
     })
 
     const reach = uniqueViewers.length;
@@ -315,26 +311,26 @@ export const getStoriesSummaryAnalytics = async (req, res) => {
       avgViewsPerStory,
       reach
     })
-  } catch(error){
+  } catch (error) {
     console.error("[getStoriesSummaryAnalytics] Error:", error);
     return res.status(500).json({ error: "Failed to fetch summary analytics" });
   }
 }
 
-export const getCombinedSummaryAnalytics = async(req, res) => {
-  try{
+export const getCombinedSummaryAnalytics = async (req, res) => {
+  try {
     const userId = req?.user?.id;
     const summaryInterval = Number(req.query.summaryInterval) || 24;
 
     const storyId = Number(req.query.storyId);
 
-    if(!userId){
+    if (!userId) {
       return res.status(401).json({ error: "Unauthorized access" });
     }
 
     const story = await prisma.story.findUnique({
       where: { id: storyId },
-      select:{
+      select: {
         id: true,
         userId: true,
         createdAt: true,
@@ -342,12 +338,12 @@ export const getCombinedSummaryAnalytics = async(req, res) => {
       }
     });
 
-    if (!story){
-      return res.status(404).json({ error: "Story not found"})
+    if (!story) {
+      return res.status(404).json({ error: "Story not found" })
     }
 
-    if(story.userId !== userId) {
-      return res.status(403).json({ error: "Forbidden"})
+    if (story.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden" })
     }
 
     const totalViews = await prisma.storyView.count({
@@ -357,7 +353,7 @@ export const getCombinedSummaryAnalytics = async(req, res) => {
     const lastViewers = await prisma.storyView.findMany({
       where: { storyId },
       include: {
-        viewer:{
+        viewer: {
           select: {
             id: true,
             name: true,
@@ -369,7 +365,7 @@ export const getCombinedSummaryAnalytics = async(req, res) => {
       take: 10
     });
 
-    const storyAnalytics ={
+    const storyAnalytics = {
       story: {
         id: story.id,
         createdAt: story.createdAt,
@@ -389,7 +385,7 @@ export const getCombinedSummaryAnalytics = async(req, res) => {
     const now = new Date();
     const summaryIntervalAgo = new Date(now.getTime() - summaryInterval * 24 * 60 * 60 * 1000);
 
-  } catch(error) {
+  } catch (error) {
 
   }
 }

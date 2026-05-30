@@ -1,72 +1,108 @@
-import React, { useState } from "react";
-import Button from "../UI/Button";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
+import { AlertCircle, CheckCircle2, Loader2, Mail, ShieldQuestion } from "lucide-react";
 import { forgotPassword } from "../../api";
-import { useNavigate } from "react-router-dom";
+import AuthLayout, { authItemVariants } from "./AuthLayout";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const navigate = useNavigate();
 
   const sendMutation = useMutation({
     mutationFn: () => forgotPassword(email),
     onSuccess: () => {
       setEmail("");
-      navigate("/signin")
     },
-    onError: (error) => {
-      console.error("Error in forgot password: ", error);
+    onError: () => {
       setEmail("");
     },
   });
 
-  const handleClick = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
     sendMutation.mutate();
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8 border border-gray-100">
-        <h1 className="text-2xl font-semibold text-gray-800 text-center mb-2">
-          Forgot Password
-        </h1>
-        <p className="text-sm text-gray-500 text-center mb-6">
-          Enter your registered email address and we’ll send you a reset link.
-        </p>
+    <AuthLayout
+      title="Recover access"
+      subtitle="Enter your email and we will send a secure password reset link."
+      icon={<ShieldQuestion className="w-6 h-6" />}
+      footerText="Remembered your password?"
+      footerLinkText="Sign in"
+      footerLinkTo="/signin"
+      eyebrow="Account recovery"
+    >
+      {sendMutation.isSuccess && (
+        <motion.div
+          variants={authItemVariants}
+          className="mb-5 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>Reset link sent. Check your inbox for the next step.</span>
+        </motion.div>
+      )}
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">Email</label>
+      {sendMutation.isError && (
+        <motion.div
+          variants={authItemVariants}
+          className="mb-5 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>We could not send the reset link. Please try again.</span>
+        </motion.div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <motion.label variants={authItemVariants} className="block">
+          <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-gray-400">Email</span>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              placeholder="Enter your email"
+              placeholder="you@example.com"
               type="email"
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              required
+              className="h-13 w-full rounded-2xl border border-gray-200 bg-white pl-12 pr-4 text-[15px] font-semibold text-gray-950 outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 placeholder:text-gray-400"
             />
           </div>
+        </motion.label>
 
-          <Button
-            onClick={handleClick}
-            className="w-full py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition cursor-pointer"
-          >
-            {sendMutation.isPending ? "Sending..." : "Send Reset Link"}
-          </Button>
+        <motion.p variants={authItemVariants} className="text-xs font-semibold leading-5 text-gray-400">
+          For your security, reset links expire after a short time. Use the newest email if you request more than one.
+        </motion.p>
 
-          {sendMutation.isSuccess && (
-            <p className="text-sm text-green-600 text-center">
-              Reset link sent successfully!
-            </p>
+        <motion.button
+          variants={authItemVariants}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={sendMutation.isPending}
+          className="mt-2 flex h-13 w-full items-center justify-center gap-3 rounded-2xl bg-gray-950 text-sm font-black uppercase tracking-[0.12em] text-white shadow-xl shadow-gray-200 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {sendMutation.isPending ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Sending
+            </>
+          ) : (
+            <>
+              <Mail className="h-5 w-5" />
+              Send reset link
+            </>
           )}
-          {sendMutation.isError && (
-            <p className="text-sm text-red-600 text-center">
-              Failed to send reset link. Try again.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+        </motion.button>
+      </form>
+
+      <motion.div variants={authItemVariants} className="mt-5 text-center">
+        <Link to="/signup" className="text-xs font-black uppercase tracking-[0.14em] text-gray-400 hover:text-indigo-600">
+          Need a new account?
+        </Link>
+      </motion.div>
+    </AuthLayout>
   );
 };
 

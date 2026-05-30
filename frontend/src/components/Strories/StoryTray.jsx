@@ -19,12 +19,12 @@ const StoryTray = () => {
     ];
 
     return (
-        <div className="w-full bg-white/40 backdrop-blur-xl rounded-[40px] p-6 border border-white/60 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] mb-8">
-            <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="mb-5 rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
+            <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
                 <motion.div
-                    whileHover={{ y: -4 }}
+                    whileHover={{ y: -3 }}
                     onClick={() => setIsModalOpen(true)}
-                    className="relative flex-shrink-0 w-32 h-44 rounded-3xl overflow-hidden group cursor-pointer shadow-lg"
+                    className="group relative h-36 w-25 flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100"
                 >
                     <div className="absolute inset-0 bg-gray-900">
                         {user?.profileImage ? (
@@ -41,10 +41,10 @@ const StoryTray = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
                     <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col items-center">
-                        <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-xl mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-lg transition-transform duration-300 group-hover:scale-110">
                             <Plus className="w-5 h-5 text-indigo-600" />
                         </div>
-                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Add story</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white">Add story</span>
                     </div>
                 </motion.div>
 
