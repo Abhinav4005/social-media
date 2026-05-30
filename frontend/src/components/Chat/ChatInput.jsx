@@ -1,4 +1,4 @@
-import { Send, Plus, X } from "lucide-react";
+import { Send, Paperclip, X, Smile, Image as ImageIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { socket } from "../../../socket";
 import { useSelector } from "react-redux";
@@ -13,8 +13,9 @@ const ChatInput = () => {
   const [attachments, setAttachments] = useState([]);
   const queryClient = useQueryClient();
   const { roomId } = useParams();
-  const typingTimeOutRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
 
   const mutation = useMutation({
     mutationFn: (newMessage) => {
@@ -23,110 +24,92 @@ const ChatInput = () => {
     },
     onMutate: async (newMessage) => {
       const tempId = `temp-${Date.now()}`;
-      const optimisticMsg = { ...newMessage, id: tempId, pending: true };
-
       queryClient.setQueryData(["messages", roomId], (old = []) => [
         ...old,
-        optimisticMsg,
+        { ...newMessage, id: tempId, pending: true },
       ]);
-
       return { tempId };
     },
-    onError: (err, newMessage, context) => {
-      console.error("Error sending message:", err);
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["messages", roomId], context.previousMessages);
-      }
+    onError: (err, msg, ctx) => {
+      if (ctx?.previousMessages)
+        queryClient.setQueryData(["messages", roomId], ctx.previousMessages);
     },
   });
 
-  const handleSendMessage = async () => {
-    if (message.trim() || attachments.length > 0) {
+  const handleSend = async () => {
+    if (!message.trim() && attachments.length === 0) return;
 
-      let uploadedFile = [];
-      if(attachments.length > 0) {
-        uploadedFile = await uploadImageToKit(attachments);
-      }
-
-      console.log("Uploaded Files:", uploadedFile);
-
-
-      mutation.mutate({
-        text: message,
-        senderId: user?.id,
-        roomId: parseInt(roomId),
-        type: uploadedFile.length > 0 ? "MIXED" : "TEXT",
-        attachments: uploadedFile,
-        replyTo: null,
-      });
-      setMessage("");
-      setAttachments([]);
+    let uploadedFiles = [];
+    if (attachments.length > 0) {
+      uploadedFiles = await uploadImageToKit(attachments);
     }
+
+    mutation.mutate({
+      text: message,
+      senderId: user?.id,
+      roomId: parseInt(roomId),
+      type: uploadedFiles.length > 0 ? "MIXED" : "TEXT",
+      attachments: uploadedFiles,
+      replyTo: null,
+    });
+
+    setMessage("");
+    setAttachments([]);
     socket.emit("stopTyping", { roomId: parseInt(roomId), userId: user?.id });
+    inputRef.current?.focus();
   };
 
   const handleTyping = (e) => {
     setMessage(e.target.value);
     socket.emit("isTyping", { roomId: parseInt(roomId), userId: user?.id });
-
-    clearTimeout(typingTimeOutRef.current);
-    typingTimeOutRef.current = setTimeout(() => {
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
       socket.emit("stopTyping", { roomId: parseInt(roomId), userId: user?.id });
     }, 2000);
   };
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    const filePreviews = files.map((file) => ({
+    const previews = files.map((file) => ({
       url: URL.createObjectURL(file),
       type: file.type.startsWith("image/") ? "image" : "video",
       name: file.name,
       rawFile: file,
     }));
-    setAttachments((prev) => [...prev, ...filePreviews]);
+    setAttachments((prev) => [...prev, ...previews]);
   };
 
-  const handlePlusClick = () => {
-    fileInputRef.current.click();
-  };
+  const canSend = message.trim().length > 0 || attachments.length > 0;
 
   return (
-    <div className="p-4 border-t border-gray-200 bg-white">
-      {/* Attachments Section */}
+    <div className="px-5 py-4 bg-white border-t border-gray-100/80">
+      {/* Attachment previews */}
       <AnimatePresence>
         {attachments.length > 0 && (
           <motion.div
-            className="flex gap-3 overflow-x-auto pb-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-hide"
           >
-            {attachments.map((file, index) => (
+            {attachments.map((file, i) => (
               <motion.div
-                key={index}
-                className="relative group rounded-xl overflow-hidden shadow-md"
-                whileHover={{ scale: 1.05 }}
+                key={i}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="relative group flex-shrink-0 rounded-xl overflow-hidden shadow-sm border border-gray-100"
               >
                 {file.type === "image" ? (
-                  <img
-                    src={file.url}
-                    alt={file.name}
-                    className="w-24 h-24 object-cover"
-                  />
+                  <img src={file.url} alt={file.name} className="w-20 h-20 object-cover" />
                 ) : (
-                  <video
-                    src={file.url}
-                    className="w-24 h-24 object-cover"
-                    controls
-                  />
+                  <video src={file.url} className="w-20 h-20 object-cover" />
                 )}
                 <button
-                  className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
-                  onClick={() =>
-                    setAttachments(attachments.filter((_, i) => i !== index))
-                  }
+                  onClick={() => setAttachments(attachments.filter((_, idx) => idx !== i))}
+                  className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
                 >
-                  <X size={14} />
+                  <X className="w-3 h-3" />
                 </button>
               </motion.div>
             ))}
@@ -134,47 +117,54 @@ const ChatInput = () => {
         )}
       </AnimatePresence>
 
-      {/* Input Section */}
-      <div className="flex items-center gap-3 mt-2 bg-gray-100 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition">
-        {/* Plus Button */}
-        <button
-          className="p-2 text-gray-500 hover:text-blue-500 transition"
-          onClick={handlePlusClick}
+      {/* Input row */}
+      <div className="flex items-center gap-2.5">
+        {/* Attach */}
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.93 }}
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-all cursor-pointer"
         >
-          <Plus size={22} />
-        </button>
+          <Paperclip className="w-4.5 h-4.5" />
+        </motion.button>
+        <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple hidden onChange={handleFileChange} />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*"
-          multiple
-          hidden
-          onChange={handleFileChange}
-        />
+        {/* Text input */}
+        <div className="flex-1 flex items-center gap-2 bg-gray-50/80 border border-gray-200/80 rounded-2xl px-4 py-2.5 focus-within:bg-white focus-within:border-primary-200 focus-within:ring-4 focus-within:ring-primary-500/8 transition-all">
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Type a message..."
+            value={message}
+            onChange={handleTyping}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            className="flex-1 bg-transparent outline-none text-[13px] text-gray-800 placeholder-gray-400 font-medium"
+          />
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex-shrink-0 text-gray-400 hover:text-amber-500 transition-colors cursor-pointer"
+          >
+            <Smile className="w-4.5 h-4.5" />
+          </motion.button>
+        </div>
 
-        {/* Message Input */}
-        <input
-          type="text"
-          placeholder="Type a message..."
-          value={message}
-          onChange={handleTyping}
-          onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-          className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400"
-        />
-
-        {/* Send Button */}
-        <button
-          className={`p-2 rounded-full transition ${
-            message.trim() || attachments.length > 0
-              ? "bg-blue-500 text-white hover:bg-blue-600"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+        {/* Send */}
+        <motion.button
+          whileHover={canSend ? { scale: 1.08 } : {}}
+          whileTap={canSend ? { scale: 0.93 } : {}}
+          onClick={handleSend}
+          disabled={!canSend}
+          className={`flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all cursor-pointer ${
+            canSend
+              ? "text-white shadow-md shadow-primary-200"
+              : "bg-gray-100 text-gray-300 cursor-not-allowed"
           }`}
-          onClick={handleSendMessage}
-          disabled={!message.trim() && attachments.length === 0}
+          style={canSend ? { background: "var(--gradient-primary)" } : {}}
         >
-          <Send size={20} />
-        </button>
+          <Send className="w-4 h-4" />
+        </motion.button>
       </div>
     </div>
   );

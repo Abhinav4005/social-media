@@ -7,8 +7,8 @@ const StoryCircle = ({ story }) => {
 
     return (
         <motion.div
-            whileHover={{ y: -4 }}
-            className="relative flex-shrink-0 w-32 h-44 rounded-3xl overflow-hidden group cursor-pointer shadow-lg border border-white/50"
+            whileHover={{ y: -3 }}
+            className="group relative h-36 w-25 flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/70 shadow-sm"
         >
             <div className="absolute inset-0">
                 <img
@@ -21,17 +21,17 @@ const StoryCircle = ({ story }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             {/* User Avatar Badge - Using the same image for mock */}
-            <div className="absolute top-4 left-4">
+            <div className="absolute top-3 left-3">
                 <div className="p-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full overflow-hidden shadow-lg border border-white/20">
                     <img
                         src={story.image}
                         alt={story.name}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="h-7 w-7 rounded-full object-cover"
                     />
                 </div>
             </div>
 
-            <div className="absolute bottom-4 left-4 right-4">
+            <div className="absolute bottom-3 left-3 right-3">
                 <span className="text-[11px] font-black text-white truncate block tracking-tighter shadow-sm uppercase">
                     {story.name}
                 </span>

@@ -1,14 +1,7 @@
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
-
-const getAuthToken = () => {
-    const token = localStorage.getItem('token');
-    return token ? `Bearer ${token}` : '';
-}
+import apiClient from "./client";
 
 export const signUp = async (userData) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/signup`, userData);
+    const response = await apiClient.post("/auth/signup", userData);
     
     if (!response.data.user) {
         throw new Error(response.data.message || "Sign Up failed");
@@ -17,7 +10,7 @@ export const signUp = async (userData) => {
 }
 
 export const signIn = async (data) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
+    const response = await apiClient.post("/auth/login", data);
     if (response.data.token) {
         localStorage.setItem('token', response.data.token);
     }
@@ -28,7 +21,7 @@ export const signIn = async (data) => {
 }
 
 export const logout = async () => {
-    const response = await axios.post(`${API_BASE_URL}/auth/logout`, {},)
+    const response = await apiClient.post("/auth/logout", {})
     if (response.status !== 200) {
         throw new Error("Logout failed");
     }
@@ -38,7 +31,7 @@ export const logout = async () => {
 }
 
 export const forgotPassword = async (email) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+    const response = await apiClient.post("/auth/forgot-password", {
         email
     })
 
@@ -49,7 +42,7 @@ export const forgotPassword = async (email) => {
 }
 
 export const resetPassword = async (token, newPassword, confirmPassword) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+    const response = await apiClient.post("/auth/reset-password", {
         token,
         newPassword,
         confirmPassword
@@ -61,9 +54,8 @@ export const resetPassword = async (token, newPassword, confirmPassword) => {
 }
 
 export const updateUserProfile = async (userData) => {
-    const response = await axios.put(`${API_BASE_URL}/user/profile/update`, userData, {
+    const response = await apiClient.put("/user/profile/update", userData, {
         headers: {
-            Authorization: getAuthToken(),
             'Content-Type': 'multipart/form-data',
         }
     });
@@ -75,11 +67,7 @@ export const updateUserProfile = async (userData) => {
 }
 
 export const getUserProfile = async () => {
-    const response = await axios.get(`${API_BASE_URL}/user/profile`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/user/profile");
     if (response.status !== 200) {
         throw new Error("Failed to fetch user profile");
     }
@@ -87,11 +75,7 @@ export const getUserProfile = async () => {
 }
 
 export const getUserById = async ({ userId }) => {
-    const response = await axios.get(`${API_BASE_URL}/user/profile/${userId}`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get(`/user/profile/${userId}`);
     if (response.status !== 200) {
         throw new Error("Failed to fetch user profile by ID");
     }
@@ -99,11 +83,7 @@ export const getUserById = async ({ userId }) => {
 }
 
 export const getUserPosts = async () => {
-    const response = await axios.get(`${API_BASE_URL}/post/postByUser`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/post/postByUser");
     if (response.status !== 200) {
         throw new Error("Failed to fetch user posts");
     }
@@ -112,9 +92,8 @@ export const getUserPosts = async () => {
 
 export const createPost = async (postData) => {
     console.log("Creating Post with Data:", postData);
-    const response = await axios.post(`${API_BASE_URL}/post/create`, postData, {
+    const response = await apiClient.post("/post/create", postData, {
         headers: {
-            Authorization: getAuthToken(),
             'Content-Type': 'multipart/form-data',
         }
     });
@@ -126,9 +105,8 @@ export const createPost = async (postData) => {
 }
 
 export const updatePost = async (postId, postData) => {
-    const response = await axios.put(`${API_BASE_URL}/post/update`, postData, {
+    const response = await apiClient.put("/post/update", postData, {
         headers: {
-            Authorization: getAuthToken(),
             'Content-Type': 'multipart/form-data',
         },
         params: { postId }
@@ -140,10 +118,7 @@ export const updatePost = async (postId, postData) => {
 }
 
 export const deletePost = async (postId) => {
-    const response = await axios.delete(`${API_BASE_URL}/post/delete`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.delete("/post/delete", {
         params: { postId }
     });
     if (response.status !== 200) {
@@ -153,11 +128,7 @@ export const deletePost = async (postId) => {
 }
 
 export const followUser = async (followingId) => {
-    const response = await axios.post(`${API_BASE_URL}/user/follow`, { followingId }, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.post("/user/follow", { followingId });
     if (response.status !== 200) {
         throw new Error("Failed to follow/unfollow user");
     }
@@ -165,11 +136,7 @@ export const followUser = async (followingId) => {
 }
 
 export const getUserFollowers = async () => {
-    const response = await axios.get(`${API_BASE_URL}/user/followers`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/user/followers");
     if (response.status !== 200) {
         throw new Error("Failed to fetch user followers");
     }
@@ -177,11 +144,7 @@ export const getUserFollowers = async () => {
 }
 
 export const getUserFollowing = async () => {
-    const response = await axios.get(`${API_BASE_URL}/user/following`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/user/following");
     if (response.status !== 200) {
         throw new Error("Failed to fetch user following");
     }
@@ -190,10 +153,7 @@ export const getUserFollowing = async () => {
 
 export const getPostById = async (postId) => {
     // console.log("Fetching Post by ID:", postId);
-    const response = await axios.get(`${API_BASE_URL}/post/postById`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.get("/post/postById", {
         params: { postId: postId }
     });
     if (response.status !== 200) {
@@ -204,10 +164,7 @@ export const getPostById = async (postId) => {
 
 export const likePost = async (postId) => {
     console.log("Liking Post with ID:", postId);
-    const response = await axios.post(`${API_BASE_URL}/post/like`, { status: "LIKE" }, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.post("/post/like", { status: "LIKE" }, {
         params: { postId: postId }
     });
     if (response.status !== 200) {
@@ -218,12 +175,9 @@ export const likePost = async (postId) => {
 
 export const commentOnPost = async (postId, commentData) => {
     console.log("Commenting on Post with ID:", postId, "Comment Data:", commentData);
-    const response = await axios.post(`${API_BASE_URL}/post/comment`, {
+    const response = await apiClient.post("/post/comment", {
         content: commentData.content,
     }, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
         params: { postId: postId }
     });
     if (response.status !== 201) {
@@ -233,12 +187,9 @@ export const commentOnPost = async (postId, commentData) => {
 }
 
 export const commentLike = async (postId, commentId) => {
-    const response = await axios.post(`${API_BASE_URL}/post/comment/like`, {
+    const response = await apiClient.post("/post/comment/like", {
         status: "LIKE",
     }, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
         params: { postId, commentId }
     });
     if (response.status !== 200) {
@@ -248,10 +199,7 @@ export const commentLike = async (postId, commentId) => {
 }
 
 export const getCommentLikes = async (postId, commentId) => {
-    const response = await axios.get(`${API_BASE_URL}/post/comment/like`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.get("/post/comment/like", {
         params: { postId, commentId }
     });
     if (response.status !== 200) {
@@ -261,11 +209,7 @@ export const getCommentLikes = async (postId, commentId) => {
 }
 
 export const getNotifications = async () => {
-    const response = await axios.get(`${API_BASE_URL}/notification`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/notification");
     if (response.status !== 200) {
         throw new Error("Failed to fetch notifications");
     }
@@ -273,11 +217,7 @@ export const getNotifications = async () => {
 }
 
 export const getPostFeed = async (page) => {
-    const response = await axios.get(`${API_BASE_URL}/post/feed`, {
-        headers: {
-            Authorization: getAuthToken(),
-            'Content-Type': 'application/json'
-        },
+    const response = await apiClient.get("/post/feed", {
         params: { page }
     });
     // console.log("Post Feed Response:", response);
@@ -288,11 +228,7 @@ export const getPostFeed = async (page) => {
 }
 
 export const getRooms = async () => {
-    const response = await axios.get(`${API_BASE_URL}/chat/rooms`, {
-        headers: {
-            Authorization: getAuthToken(),
-        }
-    });
+    const response = await apiClient.get("/chat/rooms");
     if (response.status !== 200) {
         throw new Error("Failed to fetch chat rooms");
     }
@@ -300,14 +236,10 @@ export const getRooms = async () => {
 }
 
 export const createOrGetRoom = async (name = null, type, memberIds = []) => {
-    const response = await axios.post(`${API_BASE_URL}/chat/create/room`, {
+    const response = await apiClient.post("/chat/create/room", {
         name,
         type,
         memberIds
-    }, {
-        headers: {
-            Authorization: getAuthToken(),
-        }
     });
     if (![200, 201].includes(response.status)) {
         throw new Error("Failed to create or get chat room");
@@ -316,23 +248,16 @@ export const createOrGetRoom = async (name = null, type, memberIds = []) => {
 }
 
 export const getMessages = async (roomId) => {
-    const response = await axios.get(`${API_BASE_URL}/chat/room/${roomId}/messages`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get(`/chat/room/${roomId}/messages`);
     if (response.status !== 200) {
         throw new Error("Failed to fetch messages");
     }
     return response.data.messages || [];
 }
 
-export const globalSearch = async (search, type = 'all', limit = 10, offset = 1) => {
-    const response = await axios.get(`${API_BASE_URL}/global/search`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-        params: { search, type, limit, offset }
+export const globalSearch = async (search, type = 'all', limit = 10, page = 1) => {
+    const response = await apiClient.get("/global/search", {
+        params: { search, type, limit, page }
     });
     if (response.status !== 200) {
         throw new Error("Failed to perform global search");
@@ -341,10 +266,7 @@ export const globalSearch = async (search, type = 'all', limit = 10, offset = 1)
 }
 
 export const sendFriendRequest = async (addresseeId) => {
-    const response = await axios.post(`${API_BASE_URL}/friend/request`, {}, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.post("/friend/request", {}, {
         params: { addresseeId: addresseeId }
     });
     if (response.status !== 201) {
@@ -353,10 +275,7 @@ export const sendFriendRequest = async (addresseeId) => {
 }
 
 export const cancelFriendRequest = async (requestId) => {
-    const response = await axios.post(`${API_BASE_URL}/friend/cancel`, {}, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.post("/friend/cancel", {}, {
         params: { requestId }
     });
     if (response.status !== 200) {
@@ -366,11 +285,7 @@ export const cancelFriendRequest = async (requestId) => {
 }
 
 export const getFriendRequests = async () => {
-    const response = await axios.get(`${API_BASE_URL}/friend`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/friend");
     if (response.status !== 200) {
         throw new Error("Failed to fetch friend requests");
     }
@@ -379,10 +294,7 @@ export const getFriendRequests = async () => {
 
 export const respondToFriendRequest = async (requestId, action) => {
     console.log("Responding to Friend Request ID:", requestId, "with Action:", action);
-    const response = await axios.post(`${API_BASE_URL}/friend/respond`, {},{
-        headers: {
-            Authorization: getAuthToken(),
-        },
+    const response = await apiClient.post("/friend/respond", {},{
         params: { requestId, action }
     });
     if (response.status !== 200) {
@@ -392,11 +304,7 @@ export const respondToFriendRequest = async (requestId, action) => {
 }
 
 export const getAllPhotosOfUser = async () => {
-    const response = await axios.get(`${API_BASE_URL}/user/photos`, {
-        headers: {
-            Authorization: getAuthToken(),
-        },
-    });
+    const response = await apiClient.get("/user/photos");
     if (response.status !== 200) {
         throw new Error("Failed to fetch user photos");
     }
@@ -404,12 +312,7 @@ export const getAllPhotosOfUser = async () => {
 }
 
 export const deleteMessage = async (messageId) => {
-    const response = await axios.delete(`${API_BASE_URL}/chat/message/delete`, {},{
-        headers: {
-            Authorization: getAuthToken(),
-        },
-        params: { messageId },
-    });
+    const response = await apiClient.delete(`/chat/message/${messageId}/delete`);
 
     if (response.status !== 200) {
         throw new Error("Failed to delete message");

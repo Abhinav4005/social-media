@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { MessageCircle, Search, Pin, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Search, Plus, X, MessageSquare, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getRooms } from "../../api";
 import { useSelector } from "react-redux";
@@ -11,7 +11,7 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
   const [search, setSearch] = useState("");
   const [openCreateGroupModal, setOpenCreateGroupModal] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const { onlineUsers, lastSeen } = useSelector((state) => state.presence);
+  const { onlineUsers } = useSelector((state) => state.presence);
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
@@ -22,25 +22,24 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
 
   const rooms = data || [];
 
-  // Transform API data -> usable chat list
   const chatList = useMemo(() => {
-    return (rooms || []).map((room) => {
-      const otherMember = room.members?.find((m) => m?.user?.id !== user?.id)
+    return rooms.map((room) => {
+      const otherMember = room.members?.find((m) => m?.user?.id !== user?.id);
       return {
         id: room.id,
-        name: (otherMember && room.type === "DM") ? otherMember?.user?.name || "Unknown User" : room.name || "Unnamed Group",
+        name:
+          otherMember && room.type === "DM"
+            ? otherMember?.user?.name || "Unknown User"
+            : room.name || "Unnamed Group",
         profileImage: room.type === "DM" ? otherMember?.user?.profileImage : null,
         lastMessage: room.messages[0]?.text || "No messages yet",
-        userId: otherMember?.user?.id || null
-      }
-    })
+        userId: otherMember?.user?.id || null,
+        type: room.type,
+      };
+    });
   }, [rooms, user]);
 
-  const userList = useMemo(() => {
-    return chatList.filter(chat => chat.userId);
-  }, [chatList]);
-
-  // Filter by search
+  const userList = useMemo(() => chatList.filter((c) => c.userId), [chatList]);
   const filteredChats = chatList.filter((chat) =>
     chat.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -48,166 +47,230 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
   const handleChatClick = (chatId) => {
     setActiveChat(chatId);
     navigate(`/chat/${chatId}`);
-  }
+  };
 
-  const handleCloseModal = useCallback(() => {
-    setOpenCreateGroupModal(false);
-  }, [])
+  const handleCloseModal = useCallback(() => setOpenCreateGroupModal(false), []);
 
-  if (isLoading) return <div>Loading rooms...</div>;
-  if (isError) return <div>Error fetching rooms</div>;
+  const getInitials = (name = "") =>
+    name.split(" ").map((n) => n[0]?.toUpperCase()).join("").slice(0, 2);
 
-  // Chat Item Component
-  const ChatItem = ({ chat, isPinned = false }) => (
-    <motion.div
-      whileHover={{ scale: 1.02, x: 4 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => handleChatClick(chat.id)}
-      className={`p-3 rounded-xl cursor-pointer flex items-center gap-3 transition backdrop-blur-lg 
-        ${activeChat === chat.id
-          ? "bg-primary-600/90 text-white shadow-md border-l-4 border-primary-800"
-          : "bg-white/70 hover:bg-white shadow-sm hover:shadow-md"
-        }`}
-    >
-      {/* Profile Image / Avatar */}
-      <div className="relative w-10 h-10">
-        {chat.profileImage ? (
-          <img
-            src={chat.profileImage}
-            alt={chat.name}
-            className="w-10 h-10 rounded-full object-cover shadow"
-          />
-        ) : (
-          <motion.div
-            whileHover={{ rotate: 10 }}
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shadow capitalize 
-        ${activeChat === chat.id
-                ? "bg-white text-primary-600"
-                : "bg-gradient-to-r from-primary-500 to-secondary-500 text-white"
-              }`}
-          >
-            {chat.name?.charAt(0)}
-          </motion.div>
-        )}
-
-        {/* ✅ Online Indicator */}
-        {chat.userId && onlineUsers.includes(chat.userId) && (
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full shadow-sm"></span>
-        )}
-      </div>
-
-
-      {/* Name + Last Message */}
-      <div className="flex-1">
-        <p
-          className={`font-medium ${activeChat === chat.id
-            ? "text-white"
-            : "text-gray-800 dark:text-gray-200"
-            }`}
-        >
-          {chat.name}
-        </p>
-        <p
-          className={`text-xs truncate ${activeChat === chat.id
-            ? "text-primary-100"
-            : "text-gray-500"
-            }`}
-        >
-          {chat.lastMessage}
-        </p>
-      </div>
-
-      {isPinned && (
-        <Pin
-          className={`w-4 h-4 ${activeChat === chat.id
-            ? "text-white"
-            : "text-gray-400 dark:text-gray-500"
-            }`}
-        />
-      )}
-    </motion.div>
-  );
-
-  return (
-    <div className="w-1/4 border-r border-gray-200 bg-gradient-to-b from-primary-50 to-primary-100 p-4 flex flex-col">
-      {/* Logo / Branding */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex items-center gap-2 mb-6 cursor-pointer"
-        onClick={() => navigate("/")}
-      >
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg">
-          <MessageCircle className="text-white w-6 h-6" />
+  // ── Loading skeleton ──────────────────────────────────────────────────────────
+  if (isLoading)
+    return (
+      <div className="w-[280px] flex-shrink-0 flex flex-col h-full" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #1a1744 100%)" }}>
+        <div className="px-5 pt-6 pb-5 border-b border-white/8">
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-white/10 animate-pulse" />
+            <div className="h-4 w-20 rounded-lg bg-white/10 animate-pulse" />
+          </div>
+          <div className="h-10 rounded-xl bg-white/8 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-secondary-500 text-transparent bg-clip-text">
-          MySocial
-        </h1>
-      </motion.div>
+        <div className="px-4 pt-4 space-y-1">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl animate-pulse" style={{ opacity: 1 - i * 0.13 }}>
+              <div className="w-10 h-10 rounded-full bg-white/10 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 rounded-md bg-white/10" style={{ width: `${50 + (i % 3) * 20}%` }} />
+                <div className="h-2.5 rounded-md bg-white/6" style={{ width: `${35 + (i % 2) * 25}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
 
-      {/* Search + New Group Wrapper */}
+  if (isError)
+    return (
+      <div className="w-[280px] flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #1a1744 100%)" }}>
+        <p className="text-sm text-white/40 font-medium">Failed to load chats</p>
+      </div>
+    );
+
+  // ── Chat item ─────────────────────────────────────────────────────────────────
+  const ChatItem = ({ chat }) => {
+    const isActive = activeChat === chat.id;
+    const isOnline = chat.userId && onlineUsers.includes(chat.userId);
+
+    return (
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        className="flex flex-col md:flex-row gap-3 mb-4"
+        whileHover={{ x: 2 }}
+        whileTap={{ scale: 0.985 }}
+        onClick={() => handleChatClick(chat.id)}
+        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+          isActive
+            ? "bg-white/15 shadow-sm"
+            : "hover:bg-white/8"
+        }`}
       >
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" />
+        {/* Active left bar */}
+        {isActive && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full bg-white" />
+        )}
+
+        {/* Avatar */}
+        <div className="relative flex-shrink-0">
+          {chat.profileImage ? (
+            <img
+              src={chat.profileImage}
+              alt={chat.name}
+              className={`w-10 h-10 rounded-full object-cover transition-all ${
+                isActive ? "ring-2 ring-white/40 ring-offset-1 ring-offset-transparent" : "ring-1 ring-white/10"
+              }`}
+            />
+          ) : (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black text-white shadow-md"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              {getInitials(chat.name)}
+            </div>
+          )}
+          {isOnline && (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#1e1b4b] rounded-full shadow-sm" />
+          )}
+        </div>
+
+        {/* Text */}
+        <div className="flex-1 min-w-0">
+          <p className={`text-[13px] font-bold truncate leading-tight ${isActive ? "text-white" : "text-white/75"}`}>
+            {chat.name}
+          </p>
+          <p className={`text-[11px] truncate mt-0.5 font-medium ${isActive ? "text-white/55" : "text-white/35"}`}>
+            {chat.lastMessage}
+          </p>
+        </div>
+
+        {/* Type badge for groups */}
+        {chat.type === "GROUP" && (
+          <div className="flex-shrink-0 w-5 h-5 rounded-md bg-white/10 flex items-center justify-center">
+            <Users className="w-3 h-3 text-white/40" />
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  // ── Main render ───────────────────────────────────────────────────────────────
+  return (
+    <div
+      className="w-[280px] flex-shrink-0 flex flex-col h-full"
+      style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #1a1744 60%, #16133d 100%)" }}
+    >
+      {/* ── Header ── */}
+      <div className="px-5 pt-5 pb-4 border-b border-white/8">
+        {/* Brand row */}
+        <div className="flex items-center justify-between mb-4">
+          <motion.button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 group"
+            whileHover={{ x: -1 }}
+          >
+            <motion.div
+              whileHover={{ rotate: 180 }}
+              transition={{ duration: 0.5 }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-black/30"
+              style={{ background: "var(--gradient-vibrant)" }}
+            >
+              <Sparkles className="w-4 h-4 text-white" />
+            </motion.div>
+            <span className="text-[17px] font-black text-white tracking-tight">
+              mysocial.
+            </span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => setOpenCreateGroupModal(true)}
+            className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-black text-white shadow-md shadow-black/20 cursor-pointer border border-white/15 bg-white/10 hover:bg-white/15 transition-all"
+          >
+            <Plus className="w-3 h-3" />
+            New
+          </motion.button>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search chats..."
+            placeholder="Search conversations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-white/70
-                 border border-gray-200
-                 focus:outline-none focus:ring-2 focus:ring-primary-400
-                 text-gray-800 placeholder-gray-400 shadow-sm"
+            className="w-full pl-9 pr-8 py-2.5 text-[13px] rounded-xl bg-white/8 border border-white/10 hover:bg-white/12 focus:bg-white/15 focus:border-white/25 outline-none text-white placeholder-white/30 font-medium transition-all"
           />
+          <AnimatePresence>
+            {search && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.7 }}
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-white/15 text-white/40 hover:text-white/70 transition cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
-        {/* Sidebar New Group Button (Desktop/Laptop) */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setOpenCreateGroupModal(true)}
-          className="hidden md:flex items-center justify-center cursor-pointer gap-2 px-3 py-2 text-sm font-medium 
-             rounded-xl bg-gradient-to-r from-primary-500 to-secondary-500 
-             text-white shadow-md hover:shadow-lg md:w-auto"
-        >
-          <Plus className="w-5 h-5" />
-          <span>New Group</span>
-        </motion.button>
+      </div>
 
-        {/* Floating FAB (Mobile Only) */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setOpenCreateGroupModal(true)}
-          className="fixed bottom-6 right-6 md:hidden w-12 h-12 rounded-full cursor-pointer
-             bg-gradient-to-r from-primary-500 to-secondary-500 text-white 
-             flex items-center justify-center shadow-lg"
-        >
-          <Plus className="w-6 h-6" />
-        </motion.button>
+      {/* ── List ── */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 scrollbar-hide">
+        <p className="px-3 pb-2 text-[10px] font-black text-white/30 uppercase tracking-[0.18em]">
+          Conversations · {filteredChats.length}
+        </p>
 
-      </motion.div>
-
-
-      {/* All Chats */}
-      <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
-        All Chats
-      </h2>
-      <div className="space-y-3 overflow-y-auto scrollbar-hide">
         {filteredChats.length > 0 ? (
-          filteredChats.map((chat) => <ChatItem key={chat.id} chat={chat} />)
+          <div className="space-y-0.5">
+            {filteredChats.map((chat) => (
+              <ChatItem key={chat.id} chat={chat} />
+            ))}
+          </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
-            No chats found
-          </p>
+          <div className="flex flex-col items-center justify-center py-14 text-center px-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/8 flex items-center justify-center mb-3">
+              <MessageSquare className="w-6 h-6 text-white/20" />
+            </div>
+            <p className="text-[13px] font-bold text-white/50">
+              {search ? `No results for "${search}"` : "No conversations yet"}
+            </p>
+            <p className="text-[11px] text-white/30 mt-1 font-medium leading-relaxed">
+              {search ? "Try a different name" : "Start a new chat or create a group"}
+            </p>
+          </div>
         )}
       </div>
+
+      {/* ── User profile strip at bottom ── */}
+      <div className="px-4 py-3 border-t border-white/8 flex items-center gap-3">
+        <div className="relative flex-shrink-0">
+          {user?.profileImage ? (
+            <img src={user.profileImage} alt={user.name} className="w-8 h-8 rounded-full object-cover ring-1 ring-white/20" />
+          ) : (
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black text-white" style={{ background: "var(--gradient-primary)" }}>
+              {getInitials(user?.name || "")}
+            </div>
+          )}
+          <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-400 border-[1.5px] border-[#1e1b4b] rounded-full" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-bold text-white/80 truncate">{user?.name}</p>
+          <p className="text-[10px] text-white/35 font-medium">Active now</p>
+        </div>
+      </div>
+
+      {/* ── Mobile FAB ── */}
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
+        onClick={() => setOpenCreateGroupModal(true)}
+        className="fixed bottom-6 right-6 md:hidden w-12 h-12 rounded-2xl cursor-pointer text-white flex items-center justify-center shadow-xl shadow-indigo-900/50"
+        style={{ background: "var(--gradient-primary)" }}
+      >
+        <Plus className="w-5 h-5" />
+      </motion.button>
+
       <CreateGroupModal
         isOpen={openCreateGroupModal}
         onClose={handleCloseModal}

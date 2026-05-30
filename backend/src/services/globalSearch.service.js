@@ -40,6 +40,7 @@ export const globalUserSearch = async (search, type, limit, offset, userId) => {
         }
         return users;
     }
+    return [];
     } catch (error) {
       console.error("User Search error:", error)
       return [];
@@ -50,7 +51,12 @@ export const globalPostSearch = async (search, type, limit, offset) => {
   const cacheKey = `search:posts:${search}:${type}:${limit}:${offset}`;
 
   try {
-    const cachedResults = await redisClient.get(cacheKey);
+    let cachedResults;
+    try {
+      cachedResults = await redisClient.get(cacheKey);
+    } catch (error) {
+      console.error("Redis get error: ", error);
+    }
 
     if(cachedResults) {
       console.log("Returning cached post search results");
@@ -60,11 +66,32 @@ export const globalPostSearch = async (search, type, limit, offset) => {
     if (type === GLOBALSEARCHTYPE.POSTS || type === GLOBALSEARCHTYPE.ALL) {
       const posts = await prisma.$queryRaw`
         SELECT "Post".*,
+          json_build_object(
+            'id', "User".id,
+            'name', "User".name,
+            'email', "User".email,
+            'profileImage', "User"."profileImage"
+          ) AS "user",
+          json_build_object(
+            'post_likes', (
+              SELECT COUNT(*)::int
+              FROM "PostLike"
+              WHERE "PostLike"."postId" = "Post".id
+                AND "PostLike".status = 'LIKE'
+            ),
+            'comments', (
+              SELECT COUNT(*)::int
+              FROM "Comment"
+              WHERE "Comment"."postId" = "Post".id
+                AND "Comment"."isDeleted" = false
+            )
+          ) AS "_count",
           ts_rank(
             to_tsvector('english', "Post".title || ' ' || "Post".description),
             plainto_tsquery('english', ${search})
           ) AS rank
         FROM "Post" 
+        JOIN "User" ON "User".id = "Post"."userId"
         WHERE to_tsvector('english', "Post".title || ' ' || "Post".description)
         @@ plainto_tsquery('english', ${search})
         ORDER BY rank DESC
@@ -79,6 +106,7 @@ export const globalPostSearch = async (search, type, limit, offset) => {
       console.log("Returning Post Search Results from DB:", posts);
       return posts;
   }
+  return [];
 
   } catch (error) {
     console.error("Post Search error:", error);
