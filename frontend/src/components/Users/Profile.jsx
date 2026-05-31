@@ -14,6 +14,7 @@ import CoverModal from "../../Modal/CoverModal";
 import { updateUserProfile } from "../../api";
 import Photos from "../Photos/Photos";
 import { formatJoinDate } from "../../utils/formatTime.js";
+import { isUserOnline } from "../../utils/messageStatus.js";
 
 export default function Profile({ user }) {
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -33,8 +34,6 @@ export default function Profile({ user }) {
     queryFn: getUserProfile,
     enabled: !!user
   });
-
-  console.log("userprofile: ", userProfile)
 
   const getInitials = (name = "") =>
     name
@@ -185,7 +184,7 @@ export default function Profile({ user }) {
                 </div>
 
                 {/* Online Indicator */}
-                <div className="absolute bottom-1 right-3 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg z-10" />
+                {isUserOnline(user?.id) && <div className="absolute bottom-1 right-3 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg z-10" />}
 
                 {/* Edit Avatar Overlay */}
                 <motion.button

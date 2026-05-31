@@ -7,6 +7,7 @@ import { formatTime } from "../../utils/formatTime";
 import { likePost, savePost } from "../../api";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import CommentsModal from "../../Modal/CommentModal";
+import { isUserOnline } from "../../utils/messageStatus";
 
 export default function PostCard({ post_likes = [], comments = [], ...props }) {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
   useEffect(() => {
     const isLiked = post_likes.some((like) => user?.id === like.userId);
     setLiked(isLiked);
-    const isPostSaved = props?.savedPost.some((data) => data?.userId === user?.id);
+    const isPostSaved = props?.savedPost?.some((data) => data?.userId === user?.id);
     setSaved(isPostSaved);
   }, [post_likes, user]);
 
@@ -96,7 +97,7 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
                 {initials}
               </div>
             )}
-            <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white shadow-sm" />
+            { isUserOnline(props.user?.id) &&<span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white shadow-sm" />}
           </div>
           <div className="min-w-0">
             <h4

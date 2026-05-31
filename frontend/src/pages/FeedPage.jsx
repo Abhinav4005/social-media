@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import StoryTray from "../components/Strories/StoryTray";
 import { motion } from "framer-motion";
 import { Camera, Loader2, Smile, Video } from "lucide-react";
+import { isUserOnline } from "../utils/messageStatus";
 
 const PostShimmer = () => (
   <div className="mb-5 rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
@@ -126,7 +127,7 @@ export default function FeedPage() {
                       {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </div>
                   )}
-                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white shadow-sm"></span>
+                  {isUserOnline(user?.id) &&<span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white shadow-sm"></span> }
                 </div>
 
                 <motion.div

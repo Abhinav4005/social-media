@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { globalSearch } from "../api";
 import useDebounce from "../utils/useDebounce";
+import { isUserOnline } from "../utils/messageStatus";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -246,7 +247,7 @@ export default function Navbar() {
                   )}
                 </div>
                 {/* Online Indicator */}
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></span>
+                {isUserOnline(user?.id) && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></span>}
               </motion.div>
             ) : (
               <motion.div

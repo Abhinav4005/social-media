@@ -1,3 +1,5 @@
+import { useSelector } from "react-redux";
+
 export function getMessageStatus(message, currentUserId, roomMembers) {
     if(message.senderId !== currentUserId) return null;
 
@@ -20,4 +22,11 @@ export function getMessageStatus(message, currentUserId, roomMembers) {
     if(allRead) return "read";
     if(allDelivered) return "delivered";
     return "sent";
+}
+
+export const isUserOnline = (userId) => {
+    const { onlineUsers } = useSelector((state) => state.presence);
+    
+    const isOnline = userId === onlineUsers.find(id => id === userId)
+    return isOnline;
 }
