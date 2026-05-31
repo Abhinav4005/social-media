@@ -1,6 +1,6 @@
 import express from "express";
 import authenticateToken from "../middleware/authenticateToken.js";
-import { changePostStatus, commentLike, commentOnPost, createPost, deleteComment, deletePost, getAllPosts, getCommentLikes, getPostById, getPostFeed, getPostsBySearch, getPostsByUser, reactOnPost, updateComment, updatePost } from "../controllers/post.controller.js";
+import { changePostStatus, commentLike, commentOnPost, createPost, deleteComment, deletePost, getAllPosts, getCommentLikes, getPostById, getPostFeed, getPostsBySearch, getPostsByUser, reactOnPost, savePostBookmark, updateComment, updatePost } from "../controllers/post.controller.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -36,5 +36,7 @@ router.get("/comment/like", authenticateToken, getCommentLikes);
 router.get("/feed", authenticateToken, getPostFeed);
 
 router.post("/change/status", authenticateToken, changePostStatus);
+
+router.post("/save", authenticateToken, savePostBookmark);
 
 export default router;

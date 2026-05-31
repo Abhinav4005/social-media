@@ -721,7 +721,8 @@ export const getPostFeed = async (req, res) => {
                         name: true,
                         profileImage: true,
                     }
-                }
+                },
+                savedPost: true
             },
             orderBy: {
                 createdAt: 'desc',
@@ -822,5 +823,62 @@ export const changePostStatus = async (req, res) => {
     } catch (error) {
         console.error("Error in changing post status", error);
         return res.status(500).json({ error: "Error in changing post status" })
+    }
+}
+
+export const savePostBookmark = async (req, res) => {
+    try {
+        const { postId } = req.body;
+
+        const userId = req?.user?.id;
+
+        if (!postId) {
+            return res.status(400).json({ message: "Post id is missing and it is required" });
+        }
+
+        if (!userId) {
+            return res.status(400).json({ message: "UserId is missing" });
+        }
+
+        const existingSavedPost = await prisma.savedPost.findUnique({
+            where: {
+                userId_postId: {
+                    userId,
+                    postId
+                }
+            }
+        });
+
+        if (existingSavedPost) {
+            await prisma.savedPost.delete({
+                where: {
+                    userId_postId: {
+                        userId: userId,
+                        postId: postId
+                    }
+                }
+            })
+
+            return res.status(200).json({
+                message: "Post unsave successfully",
+                isSaved: false
+            })
+        }
+
+        const savePost = await prisma.savedPost.create({
+            data: {
+                postId: postId,
+                userId: userId,
+            }
+        })
+
+        return res.status(201).json({
+            message: "Post saved successfully",
+            savedPost: savePost
+        })
+
+    } catch (error) {
+        console.error("Error in saving post: ", error);
+        return res.status(500).json({ message: error.message || "Error in saving post" })
     }
 }

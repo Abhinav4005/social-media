@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTime } from "../../utils/formatTime";
-import { likePost } from "../../api";
+import { likePost, savePost } from "../../api";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import CommentsModal from "../../Modal/CommentModal";
 
@@ -20,6 +20,8 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
   useEffect(() => {
     const isLiked = post_likes.some((like) => user?.id === like.userId);
     setLiked(isLiked);
+    const isPostSaved = props?.savedPost.some((data) => data?.userId === user?.id);
+    setSaved(isPostSaved);
   }, [post_likes, user]);
 
   const likeMutation = useMutation({
@@ -42,7 +44,27 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
     },
   });
 
+  const saveMutation = useMutation({
+    mutationFn: (postId) => savePost(postId),
+    onMutate: async (postId) => {
+      await queryClient.cancelQueries(["post", postId]);
+      const previousData = queryClient.getQueriesData(["post", postId]);
+      setSaved(prev => !prev);
+      return { previousData };
+    },
+    onError: (err, postId, context) => {
+      if(context?.previouData){
+        setSaved(context.previousData.saved || false);
+      }
+    },
+    onSettled: (data, error, postId) => {
+      queryClient.invalidateQueries(["post", postId]);
+    }
+  })
+
   const handleLike = () => likeMutation.mutate(props.id);
+
+  const handleSave = () => saveMutation.mutate(props?.id);
 
   const initials = props?.user?.name
     ? props.user.name.split(" ").map((n) => n[0]?.toUpperCase()).slice(0, 2).join("")
@@ -221,7 +243,7 @@ export default function PostCard({ post_likes = [], comments = [], ...props }) {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => setSaved(!saved)}
+          onClick={handleSave}
           className={`p-2.5 rounded-2xl transition-all cursor-pointer duration-200 ${saved ? "text-primary-600 bg-primary-50" : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
             }`}
         >
