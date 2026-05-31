@@ -87,8 +87,8 @@ export default function Settings() {
                                     key={cat.id}
                                     onClick={() => setActiveTab(cat.id)}
                                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all group ${activeTab === cat.id
-                                            ? "bg-primary-50 text-primary-600 shadow-sm"
-                                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                        ? "bg-primary-50 text-primary-600 shadow-sm"
+                                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export default function Settings() {
                         </nav>
 
                         <div className="mt-8 pt-8 border-t border-gray-50">
-                            <button className="w-full flex items-center gap-3 p-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all font-bold text-sm">
+                            <button className="w-full flex items-center gap-3 p-3 cursor-pointer rounded-2xl text-red-500 hover:bg-red-50 transition-all font-bold text-sm">
                                 <span className="p-2 rounded-xl bg-red-50">
                                     <LogOut className="w-5 h-5" />
                                 </span>
@@ -126,8 +126,8 @@ export default function Settings() {
                                 description="Update your personal details and how others see you on the platform."
                             >
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="Full Name" icon={<User className="w-5 h-5" />} placeholder="Abhinav" />
-                                    <InputGroup label="Email Address" icon={<Mail className="w-5 h-5" />} placeholder="abhinav@example.com" />
+                                    <InputGroup label="Full Name" icon={<User className="w-5 h-5" />} placeholder="Your name" />
+                                    <InputGroup label="Email Address" icon={<Mail className="w-5 h-5" />} placeholder="Your email" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-gray-700 ml-1">About Bio</label>
@@ -135,6 +135,18 @@ export default function Settings() {
                                         className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50/50 transition-all font-medium text-gray-900 placeholder:text-gray-400 min-h-[120px]"
                                         placeholder="Tell the world about yourself..."
                                     />
+                                </div>
+                                <div className="mt-10 flex items-center justify-end gap-4">
+                                    <button className="px-8 py-3.5 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                    >
+                                        Save Changes
+                                    </motion.button>
                                 </div>
                             </SettingSection>
                         )}
@@ -157,6 +169,18 @@ export default function Settings() {
                                             Enable
                                         </button>
                                     </div>
+                                </div>
+                                <div className="mt-10 flex items-center justify-end gap-4">
+                                    <button className="px-8 py-3.5 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                    >
+                                        Save Changes
+                                    </motion.button>
                                 </div>
                             </SettingSection>
                         )}
@@ -184,6 +208,18 @@ export default function Settings() {
                                             />
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-10 flex items-center justify-end gap-4">
+                                    <button className="px-8 py-3.5 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                    >
+                                        Save Changes
+                                    </motion.button>
                                 </div>
                             </SettingSection>
                         )}
@@ -220,6 +256,18 @@ export default function Settings() {
                                         <Toggle enabled={true} />
                                     </div>
                                 </div>
+                                <div className="mt-10 flex items-center justify-end gap-4">
+                                    <button className="px-8 py-3.5 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                    >
+                                        Save Changes
+                                    </motion.button>
+                                </div>
                             </SettingSection>
                         )}
 
@@ -232,7 +280,7 @@ export default function Settings() {
                                 <div className="flex items-center justify-between p-6 bg-gray-900 rounded-3xl shadow-xl shadow-gray-200">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-gray-800 rounded-xl">
-                                        {darkMode ? <Moon className="w-6 h-6 text-primary-400" /> : <Sun className="w-6 h-6 text-secondary-400" />}
+                                            {darkMode ? <Moon className="w-6 h-6 text-primary-400" /> : <Sun className="w-6 h-6 text-secondary-400" />}
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-white text-base">Dark Mode</h4>
@@ -241,23 +289,21 @@ export default function Settings() {
                                     </div>
                                     <Toggle enabled={darkMode} onChange={() => setDarkMode(!darkMode)} />
                                 </div>
+                                <div className="mt-10 flex items-center justify-end gap-4">
+                                    <button className="px-8 py-3.5 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                    >
+                                        Save Changes
+                                    </motion.button>
+                                </div>
                             </SettingSection>
                         )}
                     </AnimatePresence>
-
-                    {/* Action Footer */}
-                    <div className="mt-10 flex items-center justify-end gap-4">
-                        <button className="px-8 py-3.5 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
-                            Cancel
-                        </button>
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
-                        >
-                            Save Changes
-                        </motion.button>
-                    </div>
                 </div>
             </main>
         </div>
