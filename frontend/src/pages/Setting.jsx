@@ -45,8 +45,6 @@ export default function Settings() {
         }))
     }
 
-    console.log("profileData: ", profile)
-
     const saveMutation = useMutation({
         mutationFn: (userData) => {
             console.log("userData", userData)
