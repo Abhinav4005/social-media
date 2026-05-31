@@ -319,3 +319,13 @@ export const deleteMessage = async (messageId) => {
     }
     return response.data;
 }
+
+export const savePost = async (postId) => {
+    const response = await apiClient.post('/post/save', {postId});
+
+    if(response.status !== 200){
+        throw new Error("Failed to save post");
+    }
+
+    return response.data;
+}
