@@ -27,7 +27,7 @@ export const getUserProfile = async (req, res) => {
                         }
                     }
                 },
-                receivedFriendShips:true,
+                receivedFriendShips: true,
                 requestedFriendShips: true,
                 posts: {
                     select: {
@@ -102,11 +102,25 @@ export const updateUserProfile = async (req, res) => {
 
         const dataToUpdate = {};
         if (name) dataToUpdate.name = name;
-        if (email) dataToUpdate.email = email;
+        if (email && email !== existingUser.email) {
+            const lastModified = new Date(existingUser.emailLastModified);
+
+            const sixtyDayLater = new Date(lastModified);
+            sixtyDayLater.setDate(sixtyDayLater.getDate() + 60);
+
+            if (new Date() < sixtyDayLater) {
+                return res.status(400).json({
+                    error: "You can change email only once every 60 days"
+                })
+            }
+            dataToUpdate.email = email;
+            dataToUpdate.emailLastModified = new Date();
+        }
+
         if (bio) dataToUpdate.bio = bio;
         if (about) dataToUpdate.about = about;
         if (profileImage) {
-            if( existingUser?.profileImage ){
+            if (existingUser?.profileImage) {
                 await replaceImageInImageKit(existingUser.profileImage, profileImage, "social-hub/users", existingUser?.profileImageId);
             }
             const uploadedImage = await uploadImageToImageKit(profileImage, "social-hub/users");
@@ -114,7 +128,7 @@ export const updateUserProfile = async (req, res) => {
             dataToUpdate.profileImageId = uploadedImage.fileId;
         }
         if (coverImage) {
-            if( existingUser?.coverImage ){
+            if (existingUser?.coverImage) {
                 await replaceImageInImageKit(existingUser.coverImage, coverImage, "social-hub/users/cover", existingUser?.coverImageId);
             }
             const uploadedCoverImage = await uploadImageToImageKit(coverImage, "social-hub/users/cover");
@@ -390,7 +404,7 @@ export const getAllPhotosOfUser = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        if(!userId) {
+        if (!userId) {
             return res.status(401).json({ error: "Unauthorized access" });
         }
 
@@ -401,7 +415,7 @@ export const getAllPhotosOfUser = async (req, res) => {
         });
 
         const userPhotos = await prisma.user.findMany({
-            where: { id: parseInt(userId, 10), NOT: { profileImage: null , coverImage: null } },
+            where: { id: parseInt(userId, 10), NOT: { profileImage: null, coverImage: null } },
             select: { profileImage: true, coverImage: true, profileImageId: true, coverImageId: true }
         });
 
@@ -414,9 +428,9 @@ export const getAllPhotosOfUser = async (req, res) => {
                 profileAndCoverImages.push({ id: 'cover-image', image: user.coverImage, fileId: user?.coverImageId });
             }
         });
-        
-        res.status(200).json({ 
-            message: "Photos fetched successfully", 
+
+        res.status(200).json({
+            message: "Photos fetched successfully",
             userImage: profileAndCoverImages,
             postImages: photos
         });
