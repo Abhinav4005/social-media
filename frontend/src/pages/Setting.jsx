@@ -6,6 +6,10 @@ import {
 } from "lucide-react";
 import Navbar from "./Navbar";
 import { motion, AnimatePresence } from "framer-motion";
+import { QueryClient, useMutation } from "@tanstack/react-query";
+import { updateUserProfile } from "../api";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../store/slices/authSlice";
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState("profile");
@@ -15,6 +19,8 @@ export default function Settings() {
         push: true,
         sms: false
     });
+    const queryclient = new QueryClient();
+    const dispatch = useDispatch();
 
     const categories = [
         { id: "profile", name: "Profile", icon: <User className="w-5 h-5" />, color: "text-primary-500" },
@@ -23,6 +29,45 @@ export default function Settings() {
         { id: "privacy", name: "Privacy", icon: <Shield className="w-5 h-5" />, color: "text-secondary-600" },
         { id: "preferences", name: "Preferences", icon: <Sun className="w-5 h-5" />, color: "text-primary-500" },
     ];
+
+    const [profile, setProfile] = useState({
+        name: "",
+        email: "",
+        bio: "",
+    })
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        setProfile((prev) => ({
+            ...prev,
+            [name]: value
+        }))
+    }
+
+    console.log("profileData: ", profile)
+
+    const saveMutation = useMutation({
+        mutationFn: (userData) => {
+            console.log("userData", userData)
+            return updateUserProfile(userData)
+        },
+        onSuccess: (data) =>{
+            queryclient.invalidateQueries("userProfile"),
+            dispatch(setCredentials({ user: data?.user }))
+            setProfile(" ");
+        },
+        onError: (error) => {
+            console.error(`Error: Failed to save profile {error}`);
+        }
+    })
+
+    const handleSaveProfile = (e) => {
+        e.preventDefault();
+        console.log("profile: ", profile)
+        saveMutation.mutate(profile);
+        setProfile(" ");
+    }
 
     const Toggle = ({ enabled, onChange }) => (
         <button
@@ -126,14 +171,31 @@ export default function Settings() {
                                 description="Update your personal details and how others see you on the platform."
                             >
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="Full Name" icon={<User className="w-5 h-5" />} placeholder="Your name" />
-                                    <InputGroup label="Email Address" icon={<Mail className="w-5 h-5" />} placeholder="Your email" />
+                                    <InputGroup
+                                        label="Full Name"
+                                        icon={<User className="w-5 h-5" />}
+                                        placeholder="Your name"
+                                        name="name"
+                                        value={profile.name}
+                                        onChange={handleChange}
+                                    />
+                                    <InputGroup
+                                        label="Email Address"
+                                        icon={<Mail className="w-5 h-5" />}
+                                        placeholder="Your email"
+                                        name="email"
+                                        value={profile.email}
+                                        onChange={handleChange}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-gray-700 ml-1">About Bio</label>
                                     <textarea
                                         className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-primary-100 focus:ring-4 focus:ring-primary-50/50 transition-all font-medium text-gray-900 placeholder:text-gray-400 min-h-[120px]"
                                         placeholder="Tell the world about yourself..."
+                                        name="bio"
+                                        value={profile.bio}
+                                        onChange={handleChange}
                                     />
                                 </div>
                                 <div className="mt-10 flex items-center justify-end gap-4">
@@ -143,7 +205,8 @@ export default function Settings() {
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="px-10 py-3.5 bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                        className="px-10 py-3.5 bg-primary-600 cursor-pointer text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all"
+                                        onClick={handleSaveProfile}
                                     >
                                         Save Changes
                                     </motion.button>

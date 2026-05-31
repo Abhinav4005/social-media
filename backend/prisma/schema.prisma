@@ -89,6 +89,8 @@ model User {
   isVerified     Boolean   @default(false)
   isDeleted      Boolean   @default(false)
 
+  emailLastModified    DateTime  @default(now())
+
   posts        Post[]
   comments     Comment[]
   postLikes    PostLike[]

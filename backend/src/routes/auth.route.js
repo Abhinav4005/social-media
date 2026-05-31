@@ -12,6 +12,7 @@ router.post("/login", loginLimit, signIn);
 router.post("/forgot-password", forgotPassword);
 
 router.post("/reset-password", resetPassword);
+
 router.post("/logout", authenticateToken, logout);
 
 export default router;
