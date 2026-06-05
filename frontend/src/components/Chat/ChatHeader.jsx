@@ -31,11 +31,6 @@ const ChatHeader = ({ roomId, data, isLoading, isError }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user?.id) socket.emit("userOnline", user.id);
-    return () => { if (user?.id) socket.emit("userOffline", user.id); };
-  }, [user?.id]);
-
-  useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setIsMenuOpen(false);
     };
@@ -87,13 +82,13 @@ const ChatHeader = ({ roomId, data, isLoading, isError }) => {
   const menuItems = [
     ...(room.type === "GROUP"
       ? [
-          { label: "Edit Group Info", action: () => {}, className: "text-gray-700" },
-          { label: "Leave Group", action: () => {}, className: "text-red-500" },
-        ]
+        { label: "Edit Group Info", action: () => { }, className: "text-gray-700" },
+        { label: "Leave Group", action: () => { }, className: "text-red-500" },
+      ]
       : []),
-    { label: room.type === "DM" ? "Delete Chat" : "Delete Group", action: () => {}, className: "text-red-500" },
-    { label: room.type === "DM" ? "Archive Chat" : "Archive Group", action: () => {}, className: "text-gray-700" },
-    { label: "More Settings", action: () => {}, className: "text-gray-700" },
+    { label: room.type === "DM" ? "Delete Chat" : "Delete Group", action: () => { }, className: "text-red-500" },
+    { label: room.type === "DM" ? "Archive Chat" : "Archive Group", action: () => { }, className: "text-gray-700" },
+    { label: "More Settings", action: () => { }, className: "text-gray-700" },
   ];
 
   return (
