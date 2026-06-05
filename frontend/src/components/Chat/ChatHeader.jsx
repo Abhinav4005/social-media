@@ -154,7 +154,7 @@ const ChatHeader = ({ roomId, data, isLoading, isError }) => {
         <motion.button
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.93 }}
-          onClick={() => navigate(`/video-call/${roomId}`, { state: { targetUserId: otherMember?.user?.id } })}
+          onClick={() => navigate(`/video-call/${roomId}`, { state: { targetUserId: otherMember?.user?.id, targetName: otherMember?.user?.name } })}
           className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-all cursor-pointer"
         >
           <Video className="w-[18px] h-[18px]" />

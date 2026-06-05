@@ -5,7 +5,9 @@ const registerChatHandler = (socket) => {
     const io = getIo();
     socket.on("joinRoom", ({ roomId }) => {
         const userId = socket.userId;
-        socket.join(roomId);
+        // Join both string and integer versions so emit always reaches the room
+        socket.join(String(roomId));
+        socket.join(parseInt(roomId));
         console.log(`User ${userId} joined room ${roomId}`);
     });
 
@@ -13,11 +15,23 @@ const registerChatHandler = (socket) => {
         const senderId = socket.userId;
         const { roomId } = data;
 
-        const newMessage = await createMessage(senderId, data);
+        try {
+            const newMessage = await createMessage(senderId, data);
 
-        io.to(roomId).emit("newMessage", newMessage);
+            if (!newMessage) {
+                socket.emit("messageError", { error: "Invalid message data" });
+                return;
+            }
 
-        console.log("New message sent:", newMessage);
+            // Emit to string and number versions of roomId to avoid type mismatch
+            io.to(String(roomId)).emit("newMessage", newMessage);
+            io.to(parseInt(roomId)).emit("newMessage", newMessage);
+
+            console.log("New message sent:", newMessage.id);
+        } catch (err) {
+            console.error("sendMessage error:", err);
+            socket.emit("messageError", { error: err.message });
+        }
     });
 
     socket.on("messageReadByUser", async ({ messageId, userId, roomId }) => {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import SocketPresence from './SocketPresence.jsx';
 import Notifications from './pages/Notification';
 import SignUpPage from './pages/SignUpPage';
 import SignInPage from './pages/SignInPage';
@@ -24,6 +25,7 @@ import VideoCall from './components/Chat/VideoCall';
 const App = () => {
   return (
     <Router>
+      <SocketPresence />
       <Routes>
         <Route
           path="/signin"
@@ -171,6 +173,14 @@ const App = () => {
         />
         <Route
           path="/video-call/:roomId"
+          element={
+            <PrivateRoute>
+              <VideoCall />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/video-call/incoming"
           element={
             <PrivateRoute>
               <VideoCall />
