@@ -101,7 +101,19 @@ const SocketPresence = () => {
 
   /* ── presence ─────────────────────────────────────────────── */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      if (socket.connected) socket.disconnect();
+      return;
+    }
+
+    // Dynamic socket authentication token sync
+    const token = localStorage.getItem("token");
+    if (socket.auth?.token !== token) {
+      socket.auth = { token };
+      socket.disconnect().connect();
+    } else if (socket.disconnected) {
+      socket.connect();
+    }
 
     const handleConnect     = () => socket.emit("userOnline", user.id);
     const handleOnlineUsers = (data) => dispatch(setOnlineUsers(data));
