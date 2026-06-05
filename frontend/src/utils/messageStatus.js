@@ -27,6 +27,6 @@ export function getMessageStatus(message, currentUserId, roomMembers) {
 export const isUserOnline = (userId) => {
     const { onlineUsers } = useSelector((state) => state.presence);
     
-    const isOnline = userId === onlineUsers.find(id => id === userId)
+    const isOnline = onlineUsers.some(id => String(id) === String(userId));
     return isOnline;
 }

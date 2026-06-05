@@ -12,6 +12,7 @@ const ChatMessages = ({ roomId }) => {
   const [typingUsers, setTypingUsers] = useState([]);
   const queryClient = useQueryClient();
   const bottomRef = useRef(null);
+  const prevLengthRef = useRef(0);
 
   const { data: messages = [], isLoading, isError } = useQuery({
     queryKey: ["messages", roomId],
@@ -38,8 +39,27 @@ const ChatMessages = ({ roomId }) => {
   }, [roomId, user?.id]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messages.length > prevLengthRef.current) {
+      const lastMessage = messages[messages.length - 1];
+      const sentByMe = lastMessage?.senderId === user?.id;
+
+      if (sentByMe) {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        const container = bottomRef.current?.parentElement;
+        if (container) {
+          const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 180;
+          if (isNearBottom) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      }
+    } else if (messages.length > 0 && prevLengthRef.current === 0) {
+      // Initial load scroll
+      bottomRef.current?.scrollIntoView({ behavior: "auto" });
+    }
+    prevLengthRef.current = messages.length;
+  }, [messages, user?.id]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -176,9 +196,9 @@ const ChatMessages = ({ roomId }) => {
                     roomMembers={otherMembers}
                     handleMessageRead={handleMessageRead}
                     onDelete={(m) => deleteMutation.mutate(m.id)}
-                    onReply={() => {}}
-                    onReact={() => {}}
-                    onEdit={() => {}}
+                    onReply={() => { }}
+                    onReact={() => { }}
+                    onEdit={() => { }}
                   />
                 </motion.div>
               );

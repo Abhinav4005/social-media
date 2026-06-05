@@ -89,7 +89,7 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
   // ── Chat item ─────────────────────────────────────────────────────────────────
   const ChatItem = ({ chat }) => {
     const isActive = activeChat === chat.id;
-    const isOnline = chat.userId && onlineUsers.includes(chat.userId);
+    const isOnline = chat.userId && onlineUsers.some((id) => String(id) === String(chat.userId));
 
     return (
       <motion.div
