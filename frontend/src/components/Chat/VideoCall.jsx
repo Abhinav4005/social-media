@@ -128,6 +128,15 @@ const VideoCall = (props) => {
   const location     = useLocation();
   const targetUserId = props.targetUserId || location.state?.targetUserId;
   const targetName   = location.state?.targetName || (targetUserId ? `User ${targetUserId}` : "Unknown");
+  // When navigated here from the global banner, the offer is pre-loaded
+  const preloadedCall = location.state?.incomingCall || null;
+
+  /* ── if navigated here from global banner, pre-populate call ── */
+  useEffect(() => {
+    if (preloadedCall && !incomingCall) {
+      setIncomingCall(preloadedCall);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── acquire camera ──────────────────────────────────────── */
   useEffect(() => {
@@ -555,27 +564,9 @@ const VideoCall = (props) => {
               label={camOn ? "Camera" : "No cam"}
             />
 
-            {/* ── Primary call / end button ── */}
-            {!callAccepted ? (
-              <Btn
-                onClick={() => callUser(targetUserId)}
-                disabled={!hasCamera || !targetUserId || calling}
-                className="flex flex-col items-center gap-1.5"
-              >
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-                    boxShadow: "0 8px 32px rgba(34,197,94,0.45), 0 0 0 6px rgba(34,197,94,0.12)"
-                  }}
-                >
-                  <Phone className="w-7 h-7 text-white" />
-                </div>
-                <span className="text-[10px] text-gray-400 font-semibold">
-                  {calling ? "Calling…" : "Call"}
-                </span>
-              </Btn>
-            ) : (
+            {/* ── Primary call / end / cancel button ── */}
+            {callAccepted ? (
+              /* Active call — red End button */
               <Btn
                 onClick={() => endCall(true)}
                 className="flex flex-col items-center gap-1.5"
@@ -590,6 +581,41 @@ const VideoCall = (props) => {
                   <PhoneOff className="w-7 h-7 text-white" />
                 </div>
                 <span className="text-[10px] text-gray-400 font-semibold">End</span>
+              </Btn>
+            ) : calling ? (
+              /* Outgoing ringing — red Cancel button */
+              <Btn
+                onClick={() => endCall(true)}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                    boxShadow: "0 8px 32px rgba(239,68,68,0.45), 0 0 0 6px rgba(239,68,68,0.12)"
+                  }}
+                >
+                  <PhoneOff className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-[10px] text-gray-400 font-semibold">Cancel</span>
+              </Btn>
+            ) : (
+              /* Idle — green Call button */
+              <Btn
+                onClick={() => callUser(targetUserId)}
+                disabled={!hasCamera || !targetUserId}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg,#22c55e,#16a34a)",
+                    boxShadow: "0 8px 32px rgba(34,197,94,0.45), 0 0 0 6px rgba(34,197,94,0.12)"
+                  }}
+                >
+                  <Phone className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-[10px] text-gray-400 font-semibold">Call</span>
               </Btn>
             )}
 
