@@ -124,11 +124,6 @@ const VideoCall = (props) => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (hasCamera && targetUserId && !incomingCall && !calling && !callAccepted && !callEnded) {
-      callUser(targetUserId);
-    }
-  }, [hasCamera, targetUserId, incomingCall, calling, callAccepted, callEnded, callUser]);
 
   useEffect(() => {
     let mounted = true;
@@ -223,6 +218,12 @@ const VideoCall = (props) => {
     peer.on("error", (e) => { console.error(e); setCalling(false); });
     connectionRef.current = peer;
   }, []);
+
+  useEffect(() => {
+    if (hasCamera && targetUserId && !incomingCall && !calling && !callAccepted && !callEnded) {
+      callUser(targetUserId);
+    }
+  }, [hasCamera, targetUserId, incomingCall, calling, callAccepted, callEnded, callUser]);
 
   const answerCall = useCallback(() => {
     if (!incomingCall) return;
