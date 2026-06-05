@@ -26,7 +26,7 @@ const ChatInput = () => {
       const tempId = `temp-${Date.now()}`;
       queryClient.setQueryData(["messages", roomId], (old = []) => [
         ...old,
-        { ...newMessage, id: tempId, pending: true },
+        { ...newMessage, id: tempId, pending: true, createdAt: new Date().toISOString() },
       ]);
       return { tempId };
     },

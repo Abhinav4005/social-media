@@ -61,7 +61,7 @@ const ChatHeader = ({ roomId, data, isLoading, isError }) => {
             id: otherMember.user.id,
             type: currentRoom.type,
           };
-          isOtherUserOnline = onlineUsers.includes(otherMember.user.id);
+          isOtherUserOnline = onlineUsers.some((id) => String(id) === String(otherMember.user.id));
         }
       } else {
         room = {
