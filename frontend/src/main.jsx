@@ -1,3 +1,9 @@
+import { Buffer } from 'buffer';
+import process from 'process';
+
+window.Buffer = Buffer;
+window.process = process;
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
@@ -7,12 +13,7 @@ import store from './store/index.js';
 import { persistor } from "./store/index.js";
 import { PersistGate } from 'redux-persist/integration/react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Buffer } from 'buffer';
-import process from 'process';
 import { AppLoader } from './components/UI/AppLoader.jsx';
-
-window.Buffer = Buffer;
-window.process = process;
 
 const queryClient = new QueryClient();
 
