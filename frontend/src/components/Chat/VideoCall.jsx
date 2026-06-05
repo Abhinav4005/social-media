@@ -9,9 +9,6 @@ import {
   Volume2, VolumeX, ArrowLeft, FlipHorizontal,
 } from "lucide-react";
 
-/* ─────────────────────────────────────────────────────────────
-   Reusable animated button — always cursor-pointer
-───────────────────────────────────────────────────────────── */
 const Btn = ({ onClick, disabled, children, className = "", style, title }) => (
   <motion.button
     onClick={onClick}
@@ -27,7 +24,6 @@ const Btn = ({ onClick, disabled, children, className = "", style, title }) => (
   </motion.button>
 );
 
-/* ── pulsing rings ────────────────────────────────────────── */
 const PulseRings = ({ color = "#6366f1" }) => (
   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
     {[1, 1.45, 1.85].map((scale, i) => (
@@ -42,7 +38,6 @@ const PulseRings = ({ color = "#6366f1" }) => (
   </div>
 );
 
-/* ── equalizer bars ───────────────────────────────────────── */
 const EqBars = () => (
   <div className="flex items-end gap-[3px] h-[18px]">
     {[0.55, 1, 0.7, 0.85, 0.45].map((h, i) => (
@@ -57,13 +52,12 @@ const EqBars = () => (
   </div>
 );
 
-/* ── avatar initials ──────────────────────────────────────── */
 const Avatar = ({ name = "?", size = "lg" }) => {
   const initials = name.split(" ").map((n) => n[0]?.toUpperCase()).join("").slice(0, 2);
   const dim =
     size === "lg" ? "w-28 h-28 text-4xl"
-    : size === "md" ? "w-16 h-16 text-xl"
-    : "w-11 h-11 text-sm";
+      : size === "md" ? "w-16 h-16 text-xl"
+        : "w-11 h-11 text-sm";
   return (
     <div
       className={`${dim} rounded-full flex items-center justify-center font-black text-white shadow-2xl select-none flex-shrink-0`}
@@ -74,9 +68,6 @@ const Avatar = ({ name = "?", size = "lg" }) => {
   );
 };
 
-/* ─────────────────────────────────────────────────────────────
-   Secondary control button with label
-───────────────────────────────────────────────────────────── */
 const ControlBtn = ({ onClick, disabled, icon, label, active }) => (
   <motion.button
     onClick={onClick}
@@ -89,8 +80,8 @@ const ControlBtn = ({ onClick, disabled, icon, label, active }) => (
       className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors"
       style={{
         background: active ? "rgba(255,255,255,0.1)" : "rgba(239,68,68,0.2)",
-        border:     active ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(239,68,68,0.3)",
-        color:      active ? "rgba(255,255,255,0.85)" : "#f87171",
+        border: active ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(239,68,68,0.3)",
+        color: active ? "rgba(255,255,255,0.85)" : "#f87171",
       }}
     >
       {icon}
@@ -99,50 +90,50 @@ const ControlBtn = ({ onClick, disabled, icon, label, active }) => (
   </motion.button>
 );
 
-/* ═════════════════════════════════════════════════════════════
-   Main VideoCall component
-═════════════════════════════════════════════════════════════ */
 const VideoCall = (props) => {
   const { user } = useSelector((state) => state.auth);
-  const myVideo       = useRef(null);
-  const userVideo     = useRef(null);
+  const myVideo = useRef(null);
+  const userVideo = useRef(null);
   const connectionRef = useRef(null);
-  const streamRef     = useRef(null);
-  const durationRef   = useRef(null);
-  const navigate      = useNavigate();
+  const streamRef = useRef(null);
+  const durationRef = useRef(null);
+  const navigate = useNavigate();
 
-  const [hasCamera,    setHasCamera]    = useState(false);
-  const [cameraError,  setCameraError]  = useState(false);
+  const [hasCamera, setHasCamera] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [callAccepted, setCallAccepted] = useState(false);
-  const [callEnded,    setCallEnded]    = useState(false);
-  const [calling,      setCalling]      = useState(false);
+  const [callEnded, setCallEnded] = useState(false);
+  const [calling, setCalling] = useState(false);
 
-  const [micOn,     setMicOn]     = useState(true);
-  const [camOn,     setCamOn]     = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
   const [speakerOn, setSpeakerOn] = useState(true);
-  const [duration,  setDuration]  = useState(0);
+  const [duration, setDuration] = useState(0);
   // pip ↔ main swap
-  const [swapped,   setSwapped]   = useState(false);
+  const [swapped, setSwapped] = useState(false);
 
-  const location     = useLocation();
+  const location = useLocation();
   const targetUserId = props.targetUserId || location.state?.targetUserId;
-  const targetName   = location.state?.targetName || (targetUserId ? `User ${targetUserId}` : "Unknown");
-  // When navigated here from the global banner, the offer is pre-loaded
+  const targetName = location.state?.targetName || (targetUserId ? `User ${targetUserId}` : "Unknown");
   const preloadedCall = location.state?.incomingCall || null;
 
-  /* ── if navigated here from global banner, pre-populate call ── */
   useEffect(() => {
     if (preloadedCall && !incomingCall) {
       setIncomingCall(preloadedCall);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── acquire camera ──────────────────────────────────────── */
+  useEffect(() => {
+    if (hasCamera && targetUserId && !incomingCall && !calling && !callAccepted && !callEnded) {
+      callUser(targetUserId);
+    }
+  }, [hasCamera, targetUserId, incomingCall, calling, callAccepted, callEnded, callUser]);
+
   useEffect(() => {
     let mounted = true;
     let localStream = null;
-    let retryTimer  = null;
+    let retryTimer = null;
 
     const acquire = (attempt = 1) => {
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -173,16 +164,15 @@ const VideoCall = (props) => {
       const s = localStream || streamRef.current;
       s?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
-      if (myVideo.current)   myVideo.current.srcObject   = null;
+      if (myVideo.current) myVideo.current.srcObject = null;
       if (userVideo.current) userVideo.current.srcObject = null;
     };
   }, []);
 
-  /* ── socket listeners ────────────────────────────────────── */
   useEffect(() => {
     socket.on("incoming-call", ({ from, offer }) => setIncomingCall({ from, offer }));
-    socket.on("call-accepted", ({ answer })       => connectionRef.current?.signal(answer));
-    socket.on("call-ended",    ()                 => endCall(false));
+    socket.on("call-accepted", ({ answer }) => connectionRef.current?.signal(answer));
+    socket.on("call-ended", () => endCall(false));
 
     return () => {
       socket.off("incoming-call");
@@ -193,16 +183,14 @@ const VideoCall = (props) => {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── duration timer — starts the moment call is connected ── */
   useEffect(() => {
     if (callAccepted && !callEnded) {
-      setDuration(0); // always reset to 0 when a new call connects
+      setDuration(0);
       durationRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
     }
     return () => clearInterval(durationRef.current);
   }, [callAccepted, callEnded]);
 
-  /* ── speaker sync ────────────────────────────────────────── */
   useEffect(() => {
     if (userVideo.current) userVideo.current.muted = !speakerOn;
   }, [speakerOn]);
@@ -220,7 +208,6 @@ const VideoCall = (props) => {
     setCamOn((p) => !p);
   }, []);
 
-  /* swap which feed goes in the PIP vs the main area */
   const flipVideos = useCallback(() => setSwapped((s) => !s), []);
 
   const callUser = useCallback((tid) => {
@@ -259,7 +246,7 @@ const VideoCall = (props) => {
     connectionRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-    if (myVideo.current)   myVideo.current.srcObject   = null;
+    if (myVideo.current) myVideo.current.srcObject = null;
     if (userVideo.current) userVideo.current.srcObject = null;
     clearInterval(durationRef.current);
     setCallEnded(true);
@@ -267,21 +254,16 @@ const VideoCall = (props) => {
     setIncomingCall(null);
     setCalling(false);
     setHasCamera(false);
-    // NOTE: keep `duration` so the "Call Ended" screen can show total time
   }, [targetUserId]);
 
-  /* ═══════════════════════════════════════════════════════════
-     RENDER
-  ═══════════════════════════════════════════════════════════ */
   return (
     <div className="fixed inset-0 z-40 overflow-hidden" style={{ background: "#0a0a0f" }}>
 
-      {/* ── ambient background ────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none">
         <svg className="absolute inset-0 w-full h-full opacity-[0.03]">
           <filter id="noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
-            <feColorMatrix type="saturate" values="0"/>
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
           </filter>
           <rect width="100%" height="100%" filter="url(#noise)" />
         </svg>
@@ -291,7 +273,6 @@ const VideoCall = (props) => {
           style={{ background: "radial-gradient(circle, #14b8a6 0%, transparent 70%)" }} />
       </div>
 
-      {/* ════ CALL ENDED SCREEN ═════════════════════════════════ */}
       <AnimatePresence>
         {callEnded && (
           <motion.div
@@ -469,10 +450,10 @@ const VideoCall = (props) => {
                   {cameraError
                     ? <span className="text-red-400">Camera / mic unavailable</span>
                     : calling
-                    ? <span className="text-indigo-400">Ringing…</span>
-                    : hasCamera
-                    ? <span className="text-gray-400">Ready to call</span>
-                    : <span className="text-gray-500">Initialising…</span>}
+                      ? <span className="text-indigo-400">Ringing…</span>
+                      : hasCamera
+                        ? <span className="text-gray-400">Ready to call</span>
+                        : <span className="text-gray-500">Initialising…</span>}
                 </p>
               </div>
               <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-72 pointer-events-none"
