@@ -12,7 +12,7 @@ let io;
 export const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: [process.env.FRONTEND_BASE_URL, /https:\/\/.*\.ngrok-free\.app/],
+            origin: [process.env.FRONTEND_BASE_URL],
             methods: ['GET', "POST"],
             credentials: true
         }

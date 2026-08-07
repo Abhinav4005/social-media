@@ -33,7 +33,7 @@ const ChatPage = () => {
   }, [roomId]);
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: "#f9fafb" }}>
+    <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 transition-colors duration-200">
       <ChatSidebar activeChat={activeChat} setActiveChat={setActiveChat} />
 
       {/* Right Chat Window */}
@@ -46,11 +46,10 @@ const ChatPage = () => {
           </>
         ) : (
           <div
-            className="flex-1 flex flex-col items-center justify-center gap-4"
-            style={{ background: "linear-gradient(160deg, #f8f9ff 0%, #f3f4fb 50%, #f0f1fa 100%)" }}
+            className="flex-1 flex flex-col items-center justify-center gap-4 bg-gradient-to-b from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
           >
             <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100"
+              className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 dark:shadow-none"
               style={{ background: "var(--gradient-vibrant)" }}
             >
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -58,8 +57,8 @@ const ChatPage = () => {
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-[15px] font-black text-gray-800 tracking-tight">Your messages</p>
-              <p className="text-[12px] text-gray-400 font-medium mt-1">Select a conversation to start chatting</p>
+              <p className="text-[15px] font-black text-gray-800 dark:text-gray-100 tracking-tight">Your messages</p>
+              <p className="text-[12px] text-gray-400 dark:text-gray-400 font-medium mt-1">Select a conversation to start chatting</p>
             </div>
           </div>
         )}

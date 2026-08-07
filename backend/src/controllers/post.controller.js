@@ -1,884 +1,260 @@
-import { prisma } from "../lib/prisma.js";
-import { nestComments } from "../helper/formatComment.js";
-import { FRIENDSHIPSTATUS, LIKESTATUS, POSTVISIBLITYSTATUS } from "../lib/type.js";
-import uploadImageToImageKit from "../utils/uploadImage.js";
+import { defaultPostService } from "../services/post.service.js";
+import { ApiResponse } from "../utils/apiResponse.js";
 
-export const createPost = async (req, res) => {
+export const createPost = async (req, res, next) => {
     try {
-        const { title, description, comments, status } = req.body;
-        const image = req?.files?.image ? req.files.image[0] : null;
-        const video = req?.files?.video ? req.files.video[0] : null;
-        const userId = req.user.id;
-
-        const imageUrl = image ? await uploadImageToImageKit(image, "social-hub/images").catch(() => null) : "";
-        const videoUrl = video ? await uploadImageToImageKit(video, "social-hub/videos").catch(() => null) : "";
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
-        if (!title || !description) {
-            return res.status(400).json({ error: "Title and description are required" });
-        }
-
-        const newPost = await prisma.post.create({
-            data: {
-                title,
-                description,
-                image: imageUrl?.url ? imageUrl.url : "",
-                video: videoUrl ? videoUrl?.url : "",
-                userId,
-                ...(comments?.length ?
-                    { comments: { create: comments.map(content => ({ content, userId })) } }
-                    : {})
-            },
-            include: {
-                comments: true,
-            }
+        const post = await defaultPostService.createPost({
+            userId: req.user.id,
+            title: req.body.title,
+            description: req.body.description,
+            comments: req.body.comments,
+            status: req.body.status,
+            files: req.files,
         });
-
-        if (!newPost) {
-            return res.status(500).json({ error: "Failed to create post" });
-        }
-        let postStatus;
-        if (status === POSTVISIBLITYSTATUS.CUSTOM) {
-            postStatus = POSTVISIBLITYSTATUS.CUSTOM
-        }
-        else if (status === POSTVISIBLITYSTATUS.PRIVATE) {
-            postStatus = POSTVISIBLITYSTATUS.PRIVATE
-        }
-        else if (status === POSTVISIBLITYSTATUS.FRIENDS) {
-            postStatus = POSTVISIBLITYSTATUS.FRIENDS;
-        }
-        else {
-            postStatus = POSTVISIBLITYSTATUS.PUBLIC;
-        }
-
-        await prisma.postPrivacy.create({
-            data: {
-                postId: newPost.id,
-                visibility: postStatus,
-            }
-        })
-        return res.status(201).json({ message: "Post created successfully", post: newPost });
+        return ApiResponse.success(res, { post }, "Post created successfully", 201);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while creating the post" });
+        return next(error);
     }
-}
+};
 
-export const updatePost = async (req, res) => {
+export const updatePost = async (req, res, next) => {
     try {
-        const postId = parseInt(req.query.postId, 10);
-        // console.log("Post ID from query:", postId);
-        const userId = req.user.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-        if (isNaN(postId)) {
-            return res.status(400).json({ error: "Post ID is required" });
-        }
-
-        const { title, description } = req.body;
-        const image = req.files.image ? req.files.image[0] : null;
-        const video = req.files.video ? req.files.video[0] : null;
-        const postToUpdate = {};
-        if (title) postToUpdate.title = title;
-        if (description) postToUpdate.description = description;
-        if (image) postToUpdate.image = image ? image.originalname : null;
-        if (video) postToUpdate.video = video ? video.originalname : null;
-
-        if (Object.keys(postToUpdate).length === 0) {
-            return res.status(400).json({ error: "No valid fields to update" });
-        }
-
-        const updatedPost = await prisma.post.updateMany({
-            where: { id: postId, userId: userId },
-            data: postToUpdate,
+        const postId = parseInt(req.params.id || req.query.postId || req.body.postId, 10);
+        const post = await defaultPostService.updatePost({
+            postId,
+            userId: req.user.id,
+            title: req.body.title,
+            description: req.body.description,
+            files: req.files,
         });
-
-        if (updatedPost.count === 0) {
-            return res.status(404).json({ error: "Post not found or you do not have permission to update this post" });
-        }
-
-        return res.status(200).json({ message: "Post updated successfully", post: { id: postId, ...postToUpdate } });
+        return ApiResponse.success(res, { post }, "Post updated successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while updating the post" });
+        return next(error);
     }
-}
+};
 
-export const getPostById = async (req, res) => {
+export const getPostById = async (req, res, next) => {
     try {
-        const postId = parseInt(req.query.postId, 10);
-        // console.log("Post ID from query:", postId);
-        if (isNaN(postId)) {
-            return res.status(400).json({ error: "Post ID is required" });
-        }
-
-        const post = await prisma.post.findUnique({
-            where: { id: postId },
-            include: {
-                comments: true,
-                post_likes: true,
-                user: true
-            },
-        })
-
-        if (!post) {
-            return res.status(404).json({ error: "Post not found" });
-        }
-        return res.status(200).json({ post: post });
+        const postId = parseInt(req.params.id || req.query.postId, 10);
+        const post = await defaultPostService.getPostById(postId);
+        return ApiResponse.success(res, { post }, "Post retrieved successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while retrieving the post" });
+        return next(error);
     }
-}
+};
 
-export const deletePost = async (req, res) => {
+export const deletePost = async (req, res, next) => {
     try {
-        const postId = parseInt(req.query.postId, 10);
-        // console.log("Post ID from query:", postId);
-        if (isNaN(postId)) {
-            return res.status(400).json({ error: "Post ID is required" });
-        }
-
-        const userId = req.user.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
-        const deletedPost = await prisma.post.delete({
-            where: { id: postId, userId: userId },
+        const postId = parseInt(req.params.id || req.query.postId, 10);
+        const deletedPost = await defaultPostService.deletePost({
+            postId,
+            userId: req.user.id,
         });
-
-        return res.status(200).json({ message: "Post deleted successfully", postId: postId, post: deletedPost });
+        return ApiResponse.success(res, { postId, post: deletedPost }, "Post deleted successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while deleting the post" });
+        return next(error);
     }
-}
+};
 
-export const getPostsByUser = async (req, res) => {
+export const getPostsByUser = async (req, res, next) => {
     try {
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
+        const posts = await defaultPostService.getPostsByUser(req.user.id);
+        return ApiResponse.success(res, { posts }, "User posts retrieved successfully", 200);
+    } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error(error);
+        return next(error);
+    }
+};
 
-        const posts = await prisma.post.findMany({
-            where: { userId: userId },
-            include: {
-                comments: true,
-                post_likes: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
+export const getAllPosts = async (req, res, next) => {
+    try {
+        const posts = await defaultPostService.getAllPosts();
+        return ApiResponse.success(res, { posts }, "All posts retrieved successfully", 200);
+    } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error(error);
+        return next(error);
+    }
+};
+
+export const commentOnPost = async (req, res, next) => {
+    try {
+        const postId = parseInt(req.params.id || req.query.postId || req.body.postId, 10);
+        const comment = await defaultPostService.addComment({
+            postId,
+            userId: req.user.id,
+            content: req.body.content,
+            parentId: req.body.parentId,
         });
-
-        if (!posts || posts.length === 0) {
-            return res.status(404).json({ error: "No posts found for this user" });
-        }
-
-        return res.status(200).json({ posts: posts });
+        return ApiResponse.success(res, { comment }, "Comment added successfully", 201);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while retrieving posts" });
+        return next(error);
     }
-}
+};
 
-export const getAllPosts = async (req, res) => {
+export const deleteComment = async (req, res, next) => {
     try {
-        const posts = await prisma.post.findMany({
-            include: {
-                comments: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
+        const commentId = parseInt(req.params.commentId || req.query.commentId, 10);
+        await defaultPostService.deleteComment({
+            commentId,
+            userId: req.user.id,
         });
-
-        if (!posts || posts.length === 0) {
-            return res.status(404).json({ error: "No posts found" });
-        }
-
-        console.log(`Retrieved ${posts.length} posts`);
-
-        return res.status(200).json({ posts: posts });
+        return ApiResponse.success(res, { commentId }, "Comment deleted successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while retrieving all posts" });
+        return next(error);
     }
-}
+};
 
-export const commentOnPost = async (req, res) => {
+export const updateComment = async (req, res, next) => {
     try {
-        const postId = parseInt(req.query.postId, 10);
-        if (isNaN(postId)) {
-            return res.status(400).json({ error: "Post ID is required" });
-        }
-
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
+        const commentId = parseInt(req.params.commentId || req.query.commentId, 10);
         const { content, parentId } = req.body;
-        if (!content) {
-            return res.status(400).json({ error: "Comment content is required" });
-        }
-
-        let parsedParentId = null;
-        if (parentId) {
-            parsedParentId = parseInt(parentId, 10);
-            if (isNaN(parsedParentId)) {
-                return res.status(400).json({ error: "Parent Comment ID must be a number" });
-            }
-            if (parsedParentId <= 0) {
-                return res.status(400).json({ error: "Parent Comment ID must be a positive number" });
-            }
-            const parentComment = await prisma.comment.findUnique({
-                where: { id: parsedParentId },
-            });
-
-            if (!parentComment) {
-                return res.status(404).json({ error: "Parent comment not found" });
-            }
-        }
-
-        const newComment = await prisma.comment.create({
-            data: {
-                content,
-                postId,
-                userId,
-                parentId: parsedParentId
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        profileImage: true,
-                    }
-                },
-                replies: {
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                name: true,
-                                profileImage: true,
-                            }
-                        }
-                    }
-                },
-                post: { select: { userId: true } }
-            }
+        const comment = await defaultPostService.updateComment({
+            commentId,
+            userId: req.user.id,
+            content,
+            parentId,
         });
-
-        if (newComment.post.userId !== userId) {
-            await prisma.notification.create({
-                data: {
-                    type: "COMMENT",
-                    senderId: userId,
-                    receiverId: newComment.post.userId,
-                    postId: postId,
-                    commentId: newComment.id,
-                }
-            });
-        }
-        return res.status(201).json({ message: "Comment added successfully", comment: newComment });
+        return ApiResponse.success(res, { comment }, "Comment updated successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while adding the comment" });
+        return next(error);
     }
-}
+};
 
-export const deleteComment = async (req, res) => {
+export const commentLike = async (req, res, next) => {
     try {
-        const commentId = parseInt(req.query.commentId, 10);
-        if (isNaN(commentId)) {
-            return res.status(400).json({ error: "Comment ID is required" });
-        }
-
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
-        const comment = await prisma.comment.findFirst({
-            where: { id: commentId, userId: userId },
-        })
-
-        if (!comment) {
-            return res.status(404).json({ error: "Comment not found or you do not have permission to delete this comment" });
-        }
-
-        if (comment.parentId) {
-            const deletedNestedComment = await prisma.comment.delete({
-                where: { id: commentId },
-            });
-            return res.status(200).json({ message: "Nested comment deleted successfully", comment: deletedNestedComment });
-        }
-
-        await prisma.comment.deleteMany({
-            where: { parentId: commentId },
-        });
-
-        await prisma.comment.delete({
-            where: { id: commentId },
-        });
-
-        // If the comment is deleted successfully, return a success message
-        return res.status(200).json({ message: "Comment deleted successfully", commentId: commentId });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "An error occurred while deleting the comment" });
-    }
-}
-
-export const updateComment = async (req, res) => {
-    try {
-        const commentId = parseInt(req.query.commentId, 10);
-        const postId = parseInt(req.query.postId, 10);
-        if (isNaN(commentId)) {
-            return res.status(400).json({ error: "Comment ID is required" });
-        }
-        const userId = req.user.id;
-
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
-        const { content, parentId } = req.body;
-
-        if (!content) {
-            return res.status(400).json({ error: "Comment content is required" });
-        }
-
-        let parsedParentId = null;
-        if (parentId) {
-            parsedParentId = parseInt(parentId, 10);
-            if (isNaN(parsedParentId)) {
-                return res.status(400).json({ error: "Parent Comment ID must be a number" });
-            }
-            if (parsedParentId <= 0) {
-                return res.status(400).json({ error: "Parent Comment ID must be a positive number" });
-            }
-            const parentComment = await prisma.comment.findUnique({
-                where: { id: parsedParentId },
-            });
-            if (!parentComment) {
-                return res.status(404).json({ error: "Parent comment not found" });
-            }
-        };
-
-        const updatedComment = await prisma.comment.update({
-            where: { id: commentId, userId: userId },
-            data: {
-                content,
-                parentId: parsedParentId,
-                postId: postId,
-                userId: userId
-            }
-        });
-        return res.status(200).json({ message: "Comment updated successfully", comment: updatedComment });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "An error occurred while updating the comment" });
-    }
-}
-
-export const commentLike = async (req, res) => {
-    try {
-        const postId = parseInt(req.query.postId, 10);
-        const commentId = parseInt(req.query.commentId, 10);
-        if (isNaN(postId) || isNaN(commentId)) {
-            return res.status(400).json({ error: "Post ID and Comment ID are required" });
-        }
-
+        const commentId = parseInt(req.params.commentId || req.query.commentId, 10);
         const { status } = req.body;
-
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
-        const existingLike = await prisma.commentLike.findUnique({
-            where: {
-                commentId_userId: {
-                    commentId: commentId,
-                    userId: userId,
-                }
-            }
-        })
-        let reaction;
-        if (!existingLike) {
-            reaction = await prisma.commentLike.create({
-                data: {
-                    commentId: commentId,
-                    userId: userId,
-                    status: LIKESTATUS.LIKE
-                },
-                include: {
-                    comment: { select: { userId: true } }
-                }
-            });
-            if (status === LIKESTATUS.LIKE && reaction.userId !== userId) {
-                await createNotification("LIKE", userId, reaction.userId, postId);
-            }
-        } else if (existingLike.status === status) {
-            await prisma.commentLike.delete({
-                where: {
-                    commentId_userId: {
-                        commentId: commentId,
-                        userId: userId,
-                    }
-                }
-            });
-            reaction = null;
-        } else {
-            reaction = await prisma.commentLike.update({
-                where: {
-                    commentId_userId: {
-                        commentId: commentId,
-                        userId: userId,
-                    }
-                },
-                data: {
-                    status: status,
-                },
-                include: {
-                    comment: { select: { userId: true } }
-                }
-            });
-            if (status === LIKESTATUS.LIKE && reaction.userId !== userId) {
-                await createNotification("LIKE", userId, reaction.userId, postId);
-            }
-        }
-
-        const likeCount = await prisma.commentLike.count({
-            where: {
-                commentId: commentId,
-            }
+        const { reaction, likeCount } = await defaultPostService.toggleCommentLike({
+            commentId,
+            userId: req.user.id,
+            status,
         });
-        return res.status(200).json({
-            message: "Comment liked successfully",
-            reaction: reaction,
-            likeCount: likeCount
-        });
+        return ApiResponse.success(res, { reaction, likeCount }, "Comment liked successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while liking the comment" });
+        return next(error);
     }
-}
+};
 
-export const getCommentLikes = async (req, res) => {
+export const getCommentLikes = async (req, res, next) => {
     try {
-        const { commentId } = req.query;
-        if (!commentId) {
-            return res.status(400).json({ error: "Comment ID is required" });
-        }
-
-        const likes = await prisma.commentLike.findMany({
-            where: {
-                commentId: parseInt(commentId, 10),
-            },
-        });
-
-        if (!likes.length) {
-            return res.status(404).json({ error: "No likes found for this comment" });
-        }
-
-        return res.status(200).json({ message: "Comment Likes fetched successfully", commentLikes: likes });
+        const commentId = parseInt(req.params.commentId || req.query.commentId, 10);
+        const likes = await defaultPostService.getCommentLikes(commentId);
+        return ApiResponse.success(res, { commentLikes: likes }, "Comment likes fetched successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while fetching comment likes" });
+        return next(error);
     }
-}
+};
 
-export const getPostsBySearch = async (req, res) => {
+export const getPostsBySearch = async (req, res, next) => {
     try {
-        const { search } = req.query;
-        if (!search) {
-            return res.status(400).json({ error: "Search query is required" });
-        }
-
-        const searchTerm = search && search.trim();
-
-        if (searchTerm.length < 3) {
-            return res.status(400).json({ error: "Search query must be at least 3 characters long" });
-        }
-
-        const posts = await prisma.post.findMany({
-            where: {
-                OR: [
-                    { title: { contains: searchTerm, mode: 'insensitive' } },
-                    { description: { contains: searchTerm, mode: 'insensitive' } },
-                    { user: { name: { contains: searchTerm, mode: 'insensitive' } } },
-                    { user: { email: { contains: searchTerm, mode: 'insensitive' } } },
-                    { comments: { some: { content: { contains: searchTerm, mode: 'insensitive' } } } }
-                ]
-            }
-        });
-        return res.status(200).json({ posts: posts });
+        const posts = await defaultPostService.searchPosts(req.query.search);
+        return ApiResponse.success(res, { posts }, "Posts search completed", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while fetching posts" });
+        return next(error);
     }
-}
+};
 
-const createNotification = async (type, senderId, receiverId, postId) => {
+export const reactOnPost = async (req, res, next) => {
     try {
-        const existingNotification = await prisma.notification.findFirst({
-            where: {
-                type: type,
-                senderId: senderId,
-                receiverId: receiverId,
-                postId: postId
-            }
-        });
-        if (!existingNotification) {
-            await prisma.notification.create({
-                data: {
-                    type: type,
-                    senderId: senderId,
-                    receiverId: receiverId,
-                    postId: postId
-                }
-            });
-        }
-    } catch (error) {
-        console.error("Error creating notification:", error);
-        throw new Error("Failed to create notification");
-    }
-}
-
-export const reactOnPost = async (req, res) => {
-    try {
-        const postId = parseInt(req.query.postId, 10);
-        if (isNaN(postId)) {
-            return res.status(400).json({ error: "Post ID is required" });
-        }
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
+        const postId = parseInt(req.params.id || req.query.postId || req.body.postId, 10);
         const { status } = req.body;
-        if (!status || !Object.values(LIKESTATUS).includes(status)) {
-            return res.status(400).json({ error: "Valid reaction status is required (LIKE/DISLIKE)" });
-        }
-
-        const existingReaction = await prisma.postLike.findUnique({
-            where: {
-                postId_userId: {
-                    postId: postId,
-                    userId: userId
-                }
-            }
+        const { reaction, likeCount, dislikeCount } = await defaultPostService.togglePostReaction({
+            postId,
+            userId: req.user.id,
+            status,
         });
-        let reaction;
-        if (!existingReaction) {
-            reaction = await prisma.postLike.create({
-                data: {
-                    postId,
-                    userId,
-                    status
-                },
-                include: {
-                    post: { select: { userId: true } }
-                }
-            });
-            if (status === LIKESTATUS.LIKE && reaction.post.userId !== userId) {
-                await createNotification("LIKE", userId, reaction.post.userId, postId);
-            }
-        } else if (existingReaction.status === status) {
-            await prisma.postLike.delete({
-                where: {
-                    postId_userId: {
-                        postId: postId,
-                        userId: userId
-                    }
-                }
-            });
-            reaction = null;
-        } else {
-            reaction = await prisma.postLike.update({
-                where: {
-                    postId_userId: {
-                        postId: postId,
-                        userId: userId
-                    }
-                },
-                data: {
-                    status: status
-                },
-                include: {
-                    post: { select: { userId: true } }
-                }
-            });
-            if (status === LIKESTATUS.LIKE && reaction.post.userId !== userId) {
-                await createNotification("LIKE", userId, reaction.post.userId, postId);
-            }
-        }
-
-        const likeCount = await prisma.postLike.count({
-            where: {
-                postId: postId,
-                status: LIKESTATUS.LIKE
-            }
-        });
-        const dislikeCount = await prisma.postLike.count({
-            where: {
-                postId: postId,
-                status: LIKESTATUS.DISLIKE
-            }
-        });
-
-        return res.status(201).json({
-            message: "Reaction created successfully",
-            reaction: reaction,
-            likeCount: likeCount,
-            dislikeCount: dislikeCount
-        });
+        return ApiResponse.success(res, { reaction, likeCount, dislikeCount }, "Reaction updated successfully", 201);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while reacting to the post" });
+        return next(error);
     }
-}
+};
 
-export const getPostLikes = async (req, res) => {
+export const getPostLikes = async (req, res, next) => {
     try {
-        const postId = parseInt(req.query.postId, 10);
-        if (isNaN(postId)) {
-            return res.status(400).json({ error: "Post ID is required" });
-        }
-
-        const likes = await prisma.postLike.count({
-            where: {
-                postId: postId,
-                status: LIKESTATUS.LIKE,
-            }
-        });
-
-        return res.status(200).json({ message: "Likes retrieved successfully", likes: likes })
+        const postId = parseInt(req.params.id || req.query.postId, 10);
+        const likes = await defaultPostService.getPostLikes(postId);
+        return ApiResponse.success(res, { likes }, "Likes retrieved successfully", 200);
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while retrieving likes" });
+        return next(error);
     }
-}
+};
 
-export const getPostFeed = async (req, res) => {
+export const getPostFeed = async (req, res, next) => {
     try {
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
         const { limit = 10, page = 1 } = req.query;
-
-        const followingLimit = Math.floor(limit * 0.7);
-        const topLimit = limit - followingLimit;
-
-        const following = await prisma.follower.findMany({
-            where: { followerId: userId },
-            select: { followingId: true }
-        });
-
-        const followingIds = following.map(f => f.followingId);
-
-        const friends = await prisma.friendShip.findMany({
-            where: {
-                OR: [
-                    { requesterId: userId, status: FRIENDSHIPSTATUS.ACCEPTED },
-                    { addresseeId: userId, status: FRIENDSHIPSTATUS.ACCEPTED },
-                ]
-            },
-            include: {
-                requester: true,
-                addressee: true,
-            }
-        })
-
-        const friendIds = friends.map(f => (f.requesterId === userId ? f.addresseeId : f.requesterId));
-
-        const uniqueIds = Array.from(new Set([...followingIds, ...friendIds]));
-
-        const posts = await prisma.post.findMany({
-            where: { userId: { in: uniqueIds } },
-            take: followingLimit,
-            skip: (page - 1) * followingLimit,
-
-            include: {
-                post_likes: true,
-                comments: true,
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        profileImage: true,
-                    }
-                },
-                savedPost: true
-            },
-            orderBy: {
-                createdAt: 'desc',
-            }
-        });
-
-        posts.forEach(post => {
-            post.comments = nestComments(post.comments);
-        })
-
-        const topPosts = await prisma.post.findMany({
-            take: topLimit,
-            skip: (page - 1) * topLimit,
-            include: {
-                post_likes: true,
-                comments: true,
-                user: { select: { id: true, name: true, profileImage: true } }
-            },
-            orderBy: {
-                post_likes: { _count: 'desc' }
-            }
-        });
-
-        topPosts.forEach(post => {
-            post.comments = nestComments(post.comments);
-        })
-
-        const seenIds = new Set();
-        const uniquePosts = [...posts, ...topPosts].filter(post => {
-            if (seenIds.has(post.id)) return false;
-            seenIds.add(post.id);
-            return true;
-        });
-
-        const allPosts = uniquePosts.sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-
-        const totalPosts = await prisma.post.count();
-        const hasMore = Number(page) * Number(limit) < totalPosts;
-
-        if (!allPosts || allPosts.length === 0) {
-            return res.status(404).json({ error: "No posts found" });
-        }
-
-        return res.status(200).json({
-            message: "Posts retrieved successfully",
-            posts: allPosts,
-            hasMore: hasMore,
-            page: Number(page),
-            totalPosts: totalPosts
-        });
+        const feed = await defaultPostService.getPostFeed({ limit, page });
+        return ApiResponse.paginate(res, feed.posts || feed, page, limit, feed.total || 0, "Posts retrieved successfully");
     } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
         console.error(error);
-        return res.status(500).json({ error: "An error occurred while retrieving posts" });
+        return next(error);
     }
-}
+};
 
-export const changePostStatus = async (req, res) => {
+export const changePostStatus = async (req, res, next) => {
     try {
-        const { postId, status } = req.body;
-
-        if (!postId || !status) {
-            return res.status(400).json({ error: "Post ID and status are required" });
-        }
-
-        const userId = req.user.id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized access" });
-        }
-
-        let postStatus;
-        if (status === POSTVISIBLITYSTATUS.CUSTOM) {
-            postStatus = POSTVISIBLITYSTATUS.CUSTOM
-        }
-        else if (status === POSTVISIBLITYSTATUS.PRIVATE) {
-            postStatus = POSTVISIBLITYSTATUS.PRIVATE
-        }
-        else if (status === POSTVISIBLITYSTATUS.FRIENDS) {
-            postStatus = POSTVISIBLITYSTATUS.FRIENDS;
-        }
-        else {
-            postStatus = POSTVISIBLITYSTATUS.PUBLIC;
-        }
-
-        const updatePostStatus = await prisma.postPrivacy.update({
-            where: { postId: parseInt(postId, 10) },
-            data: {
-                postId: parseInt(postId, 10),
-                visibility: postStatus
-            }
-        })
-
-        return res.status(200).json({
-            message: "Post status changes successfully",
-            status: updatePostStatus
-        })
-    } catch (error) {
-        console.error("Error in changing post status", error);
-        return res.status(500).json({ error: "Error in changing post status" })
-    }
-}
-
-export const savePostBookmark = async (req, res) => {
-    try {
-        const { postId } = req.body;
-
-        const userId = req?.user?.id;
-
-        if (!postId) {
-            return res.status(400).json({ message: "Post id is missing and it is required" });
-        }
-
-        if (!userId) {
-            return res.status(400).json({ message: "UserId is missing" });
-        }
-
-        const existingSavedPost = await prisma.savedPost.findUnique({
-            where: {
-                userId_postId: {
-                    userId,
-                    postId
-                }
-            }
+        const postId = parseInt(req.params.id || req.body.postId, 10);
+        const status = req.body.status;
+        const updatePostStatus = await defaultPostService.changePostVisibility({
+            postId,
+            status,
         });
-
-        if (existingSavedPost) {
-            await prisma.savedPost.delete({
-                where: {
-                    userId_postId: {
-                        userId: userId,
-                        postId: postId
-                    }
-                }
-            })
-
-            return res.status(200).json({
-                message: "Post unsave successfully",
-                isSaved: false
-            })
-        }
-
-        const savePost = await prisma.savedPost.create({
-            data: {
-                postId: postId,
-                userId: userId,
-            }
-        })
-
-        return res.status(201).json({
-            message: "Post saved successfully",
-            savedPost: savePost
-        })
-
+        return ApiResponse.success(res, { status: updatePostStatus }, "Post status changed successfully", 200);
     } catch (error) {
-        console.error("Error in saving post: ", error);
-        return res.status(500).json({ message: error.message || "Error in saving post" })
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error("Error in changing post status", error);
+        return next(error);
     }
-}
+};
+
+export const savePostBookmark = async (req, res, next) => {
+    try {
+        const postId = parseInt(req.params.id || req.body.postId, 10);
+        const result = await defaultPostService.toggleSavedPost({
+            postId,
+            userId: req.user.id,
+        });
+        return ApiResponse.success(res, result, "Post bookmark toggled successfully", 200);
+    } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error("Error in saving post: ", error);
+        return next(error);
+    }
+};
+
+export const getSavedPosts = async (req, res, next) => {
+    try {
+        const posts = await defaultPostService.getSavedPosts(req.user.id);
+        return ApiResponse.success(res, { posts }, "Saved posts retrieved successfully", 200);
+    } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error("Error in fetching saved posts: ", error);
+        return next(error);
+    }
+};

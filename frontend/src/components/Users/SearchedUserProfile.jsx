@@ -1,369 +1,424 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import {
-    UserRoundCheck, UserRoundPlus, MessageSquare,
-    MapPin, Calendar, Heart, Users, ImageIcon,
-    Share2, Shield, Globe, Info
+  UserRoundCheck,
+  UserRoundPlus,
+  MessageSquare,
+  MapPin,
+  Calendar,
+  Shield,
+  Globe,
+  Info,
+  Grid2X2,
+  UsersRound,
+  CheckCircle2,
+  ShieldCheck,
+  Share2,
+  Sparkles,
 } from "lucide-react";
 import Navbar from "../../pages/Navbar";
 import Button from "../UI/Button";
-import { createOrGetRoom, followUser, getUserById, sendFriendRequest } from "../../api";
+import PostCard from "../Posts/PostCard";
+import { createOrGetRoom, getUserById, sendFriendRequest } from "../../api";
+import { privacyService } from "../../services/privacy.service";
+import { BRAND_THEME } from "../../constant/constant";
+
+const formatJoined = (date) => {
+  if (!date) return "Recently";
+  return new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(date));
+};
+
+const EmptyPanel = ({ icon, title, text }) => (
+  <div className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-xs transition-colors duration-200">
+    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+      {icon}
+    </div>
+    <h3 className="font-black text-base text-gray-900 dark:text-gray-100">{title}</h3>
+    <p className="mx-auto mt-1.5 max-w-sm text-xs font-semibold leading-relaxed text-gray-400 dark:text-gray-400">{text}</p>
+  </div>
+);
 
 const SearchedUserProfile = () => {
-    const { user: currentUser } = useSelector((state) => state.auth);
-    const { userId } = useParams();
-    const navigate = useNavigate();
-    const [isFollower, setIsFollower] = useState(false);
-    const [requestSent, setRequestSent] = useState(false);
-    const [isFriend, setIsFriend] = useState(false);
-    const [activeTab, setActiveTab] = useState("posts");
+  const { user: currentUser } = useSelector((state) => state.auth);
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const [requestSent, setRequestSent] = useState(false);
+  const [isFriend, setIsFriend] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
 
-    const { data: user, isLoading, isError } = useQuery({
-        queryKey: ["userDetail", userId],
-        queryFn: ({ queryKey }) => {
-            const [_key, id] = queryKey;
-            return getUserById({ userId: id });
-        },
-        enabled: !!userId,
-    });
+  const { data: user, isLoading, isError } = useQuery({
+    queryKey: ["userDetail", userId],
+    queryFn: ({ queryKey }) => {
+      const [_key, id] = queryKey;
+      return getUserById({ userId: id });
+    },
+    enabled: !!userId,
+  });
 
-    useEffect(() => {
-        if (!user || !currentUser) return;
+  useEffect(() => {
+    if (!user || !currentUser) return;
 
-        user.followers?.forEach(follower => {
-            if (follower.followerId === currentUser.id) setIsFollower(true);
-        });
+    const requestSentCheck =
+      user.requestedFriendShips?.some(
+        (request) =>
+          request?.addresseeId === currentUser.id && request?.status === "PENDING"
+      ) ||
+      user.receivedFriendShips?.some(
+        (request) =>
+          request?.requesterId === currentUser.id && request?.status === "PENDING"
+      );
+    setRequestSent(requestSentCheck || false);
 
-        const requestSentCheck =
-            user.requestedFriendShips?.some(
-                (request) =>
-                    request?.addresseeId === currentUser.id && request?.status === "PENDING"
-            ) ||
-            user.receivedFriendShips?.some(
-                (request) =>
-                    request?.requesterId === currentUser.id && request?.status === "PENDING"
-            );
-        setRequestSent(requestSentCheck || false);
+    const checkIsFriend =
+      user.receivedFriendShips?.some(
+        (request) => request?.requesterId === currentUser?.id && request?.status === "ACCEPTED"
+      ) ||
+      user.requestedFriendShips?.some(
+        (request) => request?.addresseeId === currentUser?.id && request?.status === "ACCEPTED"
+      );
+    setIsFriend(checkIsFriend || false);
+  }, [userId, user, currentUser]);
 
-        const checkIsFriend =
-            user.receivedFriendShips?.some(
-                (request) => request?.requesterId === currentUser?.id && request?.status === "ACCEPTED"
-            ) ||
-            user.requestedFriendShips?.some(
-                (request) => request?.addresseeId === currentUser?.id && request?.status === "ACCEPTED"
-            );
-        setIsFriend(checkIsFriend || false);
+  const mutation = useMutation({
+    mutationFn: () => createOrGetRoom(null, "DM", [userId]),
+    onSuccess: (room) => {
+      navigate(`/chat/${room?.id}`);
+    },
+    onError: (err) => {
+      console.error("Room creation failed:", err);
+    },
+  });
 
-    }, [userId, user, currentUser]);
+  const handleMessage = () => {
+    mutation.mutate();
+  };
 
-    const mutation = useMutation({
-        mutationFn: () => createOrGetRoom(null, "DM", [userId]),
-        onSuccess: (room) => {
-            navigate(`/chat/${room?.id}`)
-        },
-        onError: (err) => {
-            console.error("Room creation failed:", err)
-        }
-    })
+  const sentRequestMutation = useMutation({
+    mutationFn: (addresseeId) => sendFriendRequest(addresseeId),
+    onMutate: () => {
+      setRequestSent(true);
+    },
+    onError: (err) => {
+      console.error("Error sending friend request:", err);
+      setRequestSent(false);
+    },
+  });
 
-    const handleMessage = () => {
-        mutation.mutate();
+  const handleFriendRequest = (addresseeId) => {
+    sentRequestMutation.mutate(addresseeId);
+  };
+
+  const initials = useMemo(() => {
+    if (!user?.name) return "U";
+    return user.name
+      .split(" ")
+      .map((part) => part[0]?.toUpperCase())
+      .slice(0, 2)
+      .join("");
+  }, [user?.name]);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${user?.name || "Profile"} on Social Hub`,
+        url: window.location.href,
+      });
+      return;
     }
+    await navigator.clipboard?.writeText(window.location.href);
+  };
 
-    const sentRequestMutation = useMutation({
-        mutationFn: (addresseeId) => sendFriendRequest(addresseeId),
-        onMutate: () => {
-            setRequestSent(true);
-        },
-        onError: (err) => {
-            console.error("Error sending friend request:", err);
-            setRequestSent(false);
-        }
-    })
-
-    const handleFriendRequest = (addresseeId) => {
-        sentRequestMutation.mutate(addresseeId);
-    }
-
-    const getInitials = (name = "") =>
-        name
-            .split(" ")
-            .map((n) => n[0]?.toUpperCase())
-            .join("")
-            .slice(0, 2);
-
-    if (isLoading) return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <Navbar />
-            <div className="flex-1 flex items-center justify-center">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center gap-4 text-gray-400"
-                >
-                    <div className="w-16 h-16 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin" />
-                    <p className="font-bold text-lg">Loading Profile...</p>
-                </motion.div>
-            </div>
-        </div>
-    );
-
-    if (isError || !user) return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <Navbar />
-            <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                    <Shield className="w-16 h-16 text-red-100 mx-auto mb-4" />
-                    <p className="text-2xl font-bold text-gray-800">User Not Found</p>
-                    <p className="text-gray-500 mt-2">The profile you are looking for doesn't exist.</p>
-                    <Button onClick={() => navigate(-1)} className="mt-6 bg-primary-600 text-white px-8 py-3 rounded-xl">Go Back</Button>
-                </div>
-            </div>
-        </div>
-    );
-
-    const tabs = [
-        { id: "posts", label: "Posts", icon: <ImageIcon className="w-4 h-4" /> },
-        { id: "about", label: "About", icon: <Info className="w-4 h-4" /> }
-    ];
-
+  if (isLoading) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100/70 via-indigo-50/40 to-purple-50/30 flex flex-col">
-            <Navbar />
-
-            <main className="max-w-4xl mx-auto w-full pt-8 pb-20 px-4 flex-1">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white/90 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] overflow-hidden border border-white/40"
-                >
-                    {/* Cover Photo Header */}
-                    <div className="relative h-40 md:h-52 overflow-hidden">
-                        <div className="w-full h-full" style={{ background: 'var(--gradient-hero)' }} />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
-
-                        {/* Share button */}
-                        <button className="absolute top-6 right-6 p-2.5 bg-white/90 backdrop-blur-md hover:bg-white text-gray-800 hover:text-primary-600 rounded-2xl transition-all active:scale-95 shadow-lg cursor-pointer border border-white/40">
-                            <Share2 size={18} />
-                        </button>
-                    </div>
-
-                    {/* Profile Section */}
-                    <div className="relative px-6 md:px-12 pb-10">
-                        {/* Avatar Overlay */}
-                        <div className="absolute -top-20 left-1/2 md:left-12 transform -translate-x-1/2 md:translate-x-0">
-                            <div className="relative group">
-                                <div className="p-1.5 bg-white rounded-full shadow-2xl border border-white/80">
-                                    {user.profileImage ? (
-                                        <img
-                                            src={user.profileImage}
-                                            alt={user.name}
-                                            className="w-28 h-28 md:w-32 md:h-32 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div
-                                            className="w-28 h-28 md:w-32 md:h-32 rounded-full text-white text-3xl md:text-4xl font-extrabold flex items-center justify-center shadow-inner"
-                                            style={{ background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)' }}
-                                        >
-                                            {getInitials(user.name)}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="absolute bottom-1 right-2 w-5.5 h-5.5 bg-green-500 border-4 border-white rounded-full shadow-lg" />
-                            </div>
-                        </div>
-
-                        {/* Top Content Row */}
-                        <div className="pt-20 md:pt-4 md:pl-40 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            <div>
-                                <h1 className="font-extrabold text-2xl md:text-3xl text-gray-900 capitalize flex items-center gap-2">
-                                    {user.name}
-                                    <div className="p-1 px-3 bg-primary-100 text-primary-600 rounded-full text-[10px] font-black uppercase tracking-wider">PRO</div>
-                                </h1>
-                                <div className="flex items-center gap-4 text-gray-400 mt-1 font-bold text-xs">
-                                    <div className="flex items-center gap-1.5 border-r pr-4 border-gray-100">
-                                        <Globe size={14} className="text-primary-400" />
-                                        <span>Global Member</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <p className="text-primary-600">@{user.name.replace(/\s+/g, '').toLowerCase()}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                {isFriend ? (
-                                    <Button className="bg-primary-50 text-primary-600 hover:bg-primary-100 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 transition-all cursor-pointer text-sm border border-primary-100/50">
-                                        <UserRoundCheck size={18} /> Friends
-                                    </Button>
-                                ) : requestSent ? (
-                                    <div className="bg-slate-100 text-slate-500 border border-slate-200/60 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 text-sm select-none shadow-sm">
-                                        <UserRoundCheck size={18} className="text-slate-400" />
-                                        <span>Request Sent</span>
-                                    </div>
-                                ) : (
-                                    <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={() => handleFriendRequest(user?.id)}
-                                        className="bg-primary-600 text-white px-6 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary-200/50 hover:bg-primary-700 hover:shadow-xl flex items-center gap-2 transition-all cursor-pointer text-sm"
-                                    >
-                                        <UserRoundPlus size={18} /> Add Friend
-                                    </motion.button>
-                                )}
-
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={handleMessage}
-                                    className="p-3 bg-green-500 text-white rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 transition-all flex items-center justify-center cursor-pointer"
-                                >
-                                    <MessageSquare size={18} />
-                                </motion.button>
-                            </div>
-                        </div>
-
-                        {/* Stats & About Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-12 pb-8 border-b border-gray-50">
-                            <div className="lg:col-span-1 space-y-8">
-                                {/* Detailed Stats */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-primary-50/50 rounded-2xl border border-primary-100/50">
-                                        <div className="flex items-center justify-between mb-2 text-primary-600">
-                                            <ImageIcon size={16} />
-                                            <span className="text-xs font-black">FILES</span>
-                                        </div>
-                                        <p className="text-xl font-black text-primary-900">{user.posts?.length || 0}</p>
-                                        <p className="text-[10px] text-primary-400 font-bold tracking-widest mt-0.5">POSTS</p>
-                                    </div>
-                                    <div className="p-4 bg-secondary-50/50 rounded-2xl border border-secondary-100/50">
-                                        <div className="flex items-center justify-between mb-2 text-secondary-600">
-                                            <Users size={16} />
-                                            <span className="text-xs font-black">TEAM</span>
-                                        </div>
-                                        <p className="text-xl font-black text-secondary-900">{user.followers?.length || 0}</p>
-                                        <p className="text-[10px] text-secondary-400 font-bold tracking-widest mt-0.5">FOLLOWERS</p>
-                                    </div>
-                                </div>
-
-                                {/* Side Meta */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-100/50">
-                                        <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-primary-500 shadow-sm border border-gray-100">
-                                            <MapPin size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 font-bold">LOCATION</p>
-                                            <p className="text-xs font-black text-gray-900">{user.location || "Ayodhya, India"}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-100/50">
-                                        <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-primary-500 shadow-sm border border-gray-100">
-                                            <Calendar size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-gray-400 font-bold">JOINED</p>
-                                            <p className="text-xs font-black text-gray-900">Member Since 2024</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="lg:col-span-2">
-                                {/* Tabs Selector */}
-                                <div className="flex gap-1.5 p-1 bg-gray-50 rounded-2xl w-fit mb-6 border border-gray-100/80">
-                                    {tabs.map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === tab.id
-                                                ? "bg-white text-primary-600 shadow-sm"
-                                                : "text-gray-400 hover:text-gray-600"
-                                                }`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={activeTab}
-                                        initial={{ opacity: 0, x: 10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -10 }}
-                                        transition={{ duration: 0.2 }}
-                                    >
-                                        {activeTab === "about" ? (
-                                            <div className="bg-gray-50 rounded-3xl p-8 border border-gray-100/60">
-                                                <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                                                    <span className="w-1.5 h-5 bg-primary-500 rounded-full" />
-                                                    Bio & Information
-                                                </h3>
-                                                <p className="text-gray-500 text-sm leading-relaxed font-medium italic">
-                                                    "{user.bio || "This user is keeping their life a mystery... No bio available yet."}"
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-6">
-                                                {user.posts && user.posts.length > 0 ? (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        {user.posts.map((post) => (
-                                                            <motion.div
-                                                                key={post.id}
-                                                                whileHover={{ y: -4 }}
-                                                                className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all overflow-hidden group cursor-pointer"
-                                                            >
-                                                                <div className="relative aspect-square overflow-hidden">
-                                                                    <img
-                                                                        src={post.image}
-                                                                        alt={post.title}
-                                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                                                    />
-                                                                    <div className="absolute top-4 left-4 p-2 px-3 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-black shadow-lg">
-                                                                        {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="p-5">
-                                                                    <h3 className="text-base font-black text-gray-900 truncate mb-4">{post.title}</h3>
-                                                                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                                                                        <div className="flex items-center gap-4">
-                                                                            <div className="flex items-center gap-1.5 text-red-500 font-bold text-xs">
-                                                                                <Heart size={14} fill="currentColor" />
-                                                                                <span>{post.post_likes?.length || 0}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1.5 text-primary-500 font-bold text-xs">
-                                                                                <MessageSquare size={14} />
-                                                                                <span>{post.comments?.length || 0}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <button className="p-2 text-gray-400 hover:text-primary-600 transition-colors cursor-pointer">
-                                                                            <Share2 size={16} />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                                                        <ImageIcon size={40} className="mx-auto text-gray-200 mb-3" />
-                                                        <p className="text-gray-400 font-bold text-sm">No posts to show yet</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-            </main>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col">
+        <Navbar />
+        <div className="mx-auto max-w-6xl w-full px-4 sm:px-6 py-6 space-y-6">
+          <div className="h-80 rounded-3xl animate-shimmer" />
+          <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+            <div className="h-48 rounded-3xl animate-shimmer" />
+            <div className="h-96 rounded-3xl animate-shimmer" />
+          </div>
         </div>
+      </div>
     );
+  }
+
+  if (isError || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="text-center max-w-md bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xs">
+            <Shield className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">User Not Found</h2>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-2">
+              The user profile you are looking for does not exist or has been removed.
+            </p>
+            <Button onClick={() => navigate(-1)} className="mt-6 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-xs">
+              Go Back
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const postsList = user.posts || [];
+
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 sm:px-6 py-6 transition-colors duration-200">
+        <div className="mx-auto max-w-6xl space-y-6">
+
+          {/* ── User Profile Header Card ── */}
+          <div className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden transition-colors duration-200">
+            {/* Cover Image Banner */}
+            <div className="relative h-56 sm:h-64 overflow-hidden">
+              {user.coverImage ? (
+                <img
+                  src={user.coverImage}
+                  alt="Cover"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            </div>
+
+            {/* Profile Info Section */}
+            <div className="px-6 pb-6 pt-0 sm:px-8">
+              {/* Row 1: Avatar on Left, Actions on Right */}
+              <div className="flex items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-4 relative z-10">
+                {/* Circular Avatar */}
+                <div className="relative h-28 w-28 sm:h-36 sm:w-36 flex-shrink-0 rounded-full border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className={`flex h-full w-full items-center justify-center ${BRAND_THEME.avatarGradient} text-3xl font-black text-white`}>
+                      {initials}
+                    </div>
+                  )}
+                  <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500 shadow-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                  </span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2.5 pb-1 flex-wrap">
+                  {isFriend ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold text-xs rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+                      <UserRoundCheck className="h-4 w-4" />
+                      Friends
+                    </div>
+                  ) : requestSent ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-bold text-xs rounded-xl border border-gray-200 dark:border-slate-700">
+                      <UserRoundCheck className="h-4 w-4 text-gray-400" />
+                      Request Sent
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleFriendRequest(user?.id)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <UserRoundPlus className="h-4 w-4" />
+                      Add Friend
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleMessage}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                    title="Message User"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Message
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 font-bold text-xs rounded-xl border border-gray-200 dark:border-slate-700 transition-all cursor-pointer"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm(`Are you sure you want to block ${user.name}?`)) {
+                        try {
+                          await privacyService.blockUser(user.id);
+                          alert(`${user.name} has been blocked.`);
+                          navigate("/");
+                        } catch (err) {
+                          alert(err.message || "Failed to block user");
+                        }
+                      }
+                    }}
+                    className="p-2.5 bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-xl border border-rose-100 dark:border-rose-900/50 transition-all cursor-pointer"
+                    title="Block User"
+                  >
+                    <Shield className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 2: User Name, Bio, Location & Joined details */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-black text-2xl sm:text-3xl text-gray-900 dark:text-gray-100 tracking-tight">
+                    {user.name}
+                  </h1>
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-xs">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="px-2.5 py-0.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase rounded-full">
+                    Member
+                  </span>
+                </div>
+
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
+                  {user.bio || "Connecting with people and sharing ideas on Social Hub."}
+                </p>
+
+                <div className="flex flex-wrap gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400 pt-1">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-indigo-500" />
+                    {user.location || "Location not set"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-indigo-500" />
+                    Joined {formatJoined(user.createdAt)}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
+                    <Globe className="h-3.5 w-3.5" />
+                    @{user.name.replace(/\s+/g, "").toLowerCase()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Navigation Tabs Bar */}
+              <div className="flex items-center gap-2 border-t border-gray-100 dark:border-slate-800 mt-6 pt-3 overflow-x-auto scrollbar-hide">
+                {[
+                  { id: "posts", label: "Posts", count: postsList.length, icon: <Grid2X2 className="h-4 w-4" /> },
+                  { id: "about", label: "About", count: null, icon: <Info className="h-4 w-4" /> },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                      activeTab === tab.id
+                        ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 shadow-xs"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                    {tab.count !== null && (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                        activeTab === tab.id
+                          ? "bg-indigo-600 text-white"
+                          : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400"
+                      }`}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Main 2-Column Content Grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+
+            {/* ── Left Sidebar Cards ── */}
+            <aside className="space-y-5">
+              
+              {/* Activity Overview Card */}
+              <section className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors duration-200">
+                <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-4">Activity Overview</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-800/40 p-4 text-center transition-all">
+                    <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs">
+                      <Grid2X2 className="h-3.5 w-3.5" />
+                    </div>
+                    <p className="font-black text-lg text-gray-900 dark:text-gray-100">{postsList.length}</p>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mt-0.5">Posts</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-800/40 p-4 text-center transition-all">
+                    <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs">
+                      <UsersRound className="h-3.5 w-3.5" />
+                    </div>
+                    <p className="font-black text-lg text-gray-900 dark:text-gray-100">{user.followers?.length || 0}</p>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mt-0.5">Followers</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* About Card */}
+              <section className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors duration-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">About</h3>
+                </div>
+                <p className="text-xs font-medium leading-relaxed text-gray-600 dark:text-gray-300">
+                  {user.about || user.bio || "No detailed bio added yet."}
+                </p>
+              </section>
+            </aside>
+
+            {/* ── Right Main Area (Tab Content) ── */}
+            <main className="space-y-4">
+              {activeTab === "posts" && (
+                postsList.length > 0 ? (
+                  <div className="space-y-4">
+                    {postsList.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        {...post}
+                        user={post.user || { id: user.id, name: user.name, profileImage: user.profileImage }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyPanel
+                    icon={<Grid2X2 className="h-6 w-6" />}
+                    title="No posts yet"
+                    text={`${user.name} hasn't published any posts yet.`}
+                  />
+                )
+              )}
+
+              {activeTab === "about" && (
+                <div className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs transition-colors duration-200">
+                  <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                    <span className="w-1.5 h-4 bg-indigo-600 rounded-full" />
+                    Bio & Information
+                  </h3>
+                  <p className="text-xs font-medium leading-relaxed text-gray-600 dark:text-gray-300">
+                    {user.about || user.bio || "No additional information provided."}
+                  </p>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      </main>
+    </>
+  );
 };
+
 export default SearchedUserProfile;

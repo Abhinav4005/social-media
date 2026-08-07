@@ -22,23 +22,16 @@ const uploadImageToImageKit = async (file, folder="social-hub") => {
 
 export default uploadImageToImageKit;
 
-export const replaceImageInImageKit = async (oldImageUrl, newFile, folder="social-hub", profileImageId) => {
-    if(!newFile) return oldImageUrl;
+export const replaceImageInImageKit = async (oldImageUrl, newFile, folder = "social-hub", profileImageId) => {
+    if (!newFile) return oldImageUrl;
     try {
-        const oldImagePath = oldImageUrl.replace(
-            process.env.IMAGEKIT_URL_ENDPOINT + "/", ""
-        );
-
-        console.log("Old image path to delete:", oldImagePath);
-
-        await imagekit.deleteFile(profileImageId);
-        console.log("Old image deleted successfully");
-        
-        // const newImageUrl = await uploadImageToImageKit(newFile, folder="social-hub");
-
-        // return newImageUrl;
+        if (profileImageId) {
+            await imagekit.deleteFile(profileImageId);
+        }
+        const newImageData = await uploadImageToImageKit(newFile, folder);
+        return newImageData?.url || oldImageUrl;
     } catch (error) {
         console.error("Error replacing image in ImageKit:", error);
         return oldImageUrl;
     }
-}
+};

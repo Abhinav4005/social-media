@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
 import connection from "../queues/queueConnection.js";
 import uploadImageToImageKit from "../utils/uploadImage.js";
-import { prisma } from "../lib/prisma.js";
+import { defaultStoryRepository } from "../repositories/story.repository.js";
 
 const storyWorker = new Worker(
   "story-processing",
@@ -18,7 +18,7 @@ const storyWorker = new Worker(
 
     let url;
 
-    if (mediaType === "image") {
+    if (String(mediaType).toLowerCase() === "image") {
       url = await uploadTimeout(
         uploadImageToImageKit(media, "social-hub/imageMedia")
       );
@@ -30,45 +30,17 @@ const storyWorker = new Worker(
 
     console.log("url in storyworker", url);
 
-    let mediaUrl = media === "image" ? url : url.url;
+    let mediaUrl = url?.url || url;
 
-    const story = await prisma.story.update({
-      where: { id: storyId },
-      data: {
-        mediaUrl: mediaUrl,
-      },
-    });
+    const story = await defaultStoryRepository.updateStoryMediaUrl(storyId, mediaUrl);
 
     console.log("Story processed", storyId);
 
-    const relations = await prisma.user.findUnique({
-      where: { id: story.userId},
-      select: {
-        following: { select: {
-          followingId: true,
-        }},
-        requestedFriendShips: {
-          where: {
-            status: "ACCEPTED"
-          },
-          select: {
-            requesterId: true,
-          }
-        },
-        receivedFriendShips: {
-          where: {
-            status: "ACCEPTED",
-          },
-          select: {
-            addresseeId: true,
-          },
-        },
-      },
-    });
+    const relations = await defaultStoryRepository.findUserConnectionsForFanout(story.userId);
 
     const feedUserIds = new Set([
       story.userId,
-      ...relations.following.map(f => f.followingId),
+      ...relations.followers.map(f => f.followerId),
       ...relations.receivedFriendShips.map(rf => rf.addresseeId),
       ...relations.requestedFriendShips.map(rf => rf.requesterId),
     ]);
@@ -79,11 +51,8 @@ const storyWorker = new Worker(
       createdAt: story.createdAt,
     }));
 
-    if(rows.length > 0){
-      await prisma.storyFeed.createMany({
-        data: rows,
-        skipDuplicates: true,
-      })
+    if (rows.length > 0) {
+      await defaultStoryRepository.createManyStoryFeedRows(rows);
     }
 
     console.log("Story feed fan-out done for story: ", story.id);
@@ -98,3 +67,4 @@ storyWorker.on("completed", (job) => {
 storyWorker.on("failed", (job, error) => {
   console.error(`Job ${job.id} failed`, error);
 });
+

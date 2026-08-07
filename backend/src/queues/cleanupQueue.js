@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import connection from "./queueConnection.js";
 
-export const cleanupQueue = new Queue("story-cleaup", {
+export const cleanupQueue = new Queue("story-cleanup", {
     connection
 });

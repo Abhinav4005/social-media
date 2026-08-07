@@ -1,10 +1,47 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Image, Wand2, Type, Sparkles } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createStory } from "../api";
+import { useToast } from "../context/ToastContext";
 
 const CreateStoryModal = ({ isOpen, onClose }) => {
+    const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [caption, setCaption] = useState("");
+    const queryClient = useQueryClient();
+    const { showSuccess, showError } = useToast();
+
+    const storyMutation = useMutation({
+        mutationFn: async () => {
+            if (!file) throw new Error("Please select an image or video file");
+            const formData = new FormData();
+            const isVideo = file.type.startsWith("video/");
+            formData.append("mediaType", isVideo ? "VIDEO" : "IMAGE");
+            formData.append("caption", caption);
+            formData.append("media", file);
+            return await createStory(formData);
+        },
+        onSuccess: () => {
+            showSuccess("Story created! Processing background upload...");
+            queryClient.invalidateQueries({ queryKey: ["stories"] });
+            setFile(null);
+            setPreview(null);
+            setCaption("");
+            onClose();
+        },
+        onError: (err) => {
+            showError(err.message || "Failed to upload story");
+        }
+    });
+
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files?.[0];
+        if (selectedFile) {
+            setFile(selectedFile);
+            setPreview(URL.createObjectURL(selectedFile));
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -64,16 +101,20 @@ const CreateStoryModal = ({ isOpen, onClose }) => {
                                         <span className="text-sm font-black text-gray-900 uppercase tracking-widest mb-2">Upload Visuals</span>
                                         <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tight opacity-60">Photos or Videos preferred</span>
                                     </div>
-                                    <input type="file" className="hidden" accept="image/*,video/*" onChange={(e) => setPreview(URL.createObjectURL(e.target.files[0]))} />
+                                    <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileChange} />
                                 </label>
                             ) : (
                                 <div className="relative h-[420px] rounded-[40px] overflow-hidden group shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)]">
-                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                    {file?.type?.startsWith("video/") ? (
+                                        <video src={preview} controls className="w-full h-full object-cover" />
+                                    ) : (
+                                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-                                    <div className="absolute top-6 right-6 flex gap-2">
+                                    <div className="absolute top-6 right-6 flex gap-2 z-10">
                                         <button
-                                            onClick={() => setPreview(null)}
+                                            onClick={() => { setFile(null); setPreview(null); }}
                                             className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-xl text-white hover:bg-red-500 transition-all cursor-pointer flex items-center justify-center border border-white/20"
                                         >
                                             <X className="w-5 h-5" />
@@ -112,15 +153,23 @@ const CreateStoryModal = ({ isOpen, onClose }) => {
                             Cancel
                         </button>
                         <motion.button
-                            whileHover={preview ? { scale: 1.02, y: -2 } : {}}
-                            whileTap={preview ? { scale: 0.98 } : {}}
-                            className={`flex-1 py-5 rounded-[22px] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${preview
+                            onClick={() => storyMutation.mutate()}
+                            disabled={!file || storyMutation.isPending}
+                            whileHover={file && !storyMutation.isPending ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={file && !storyMutation.isPending ? { scale: 0.98 } : {}}
+                            className={`flex-1 py-5 rounded-[22px] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${file && !storyMutation.isPending
                                 ? "bg-gray-900 text-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] hover:bg-black cursor-pointer"
                                 : "bg-gray-100 text-gray-300 cursor-not-allowed"
                                 }`}
                         >
-                            {preview && <Sparkles className="w-4 h-4" />}
-                            Create Story
+                            {storyMutation.isPending ? (
+                                "Uploading..."
+                            ) : (
+                                <>
+                                    {preview && <Sparkles className="w-4 h-4" />}
+                                    Create Story
+                                </>
+                            )}
                         </motion.button>
                     </div>
                 </motion.div>

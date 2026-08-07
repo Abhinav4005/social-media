@@ -1,6 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, ImageIcon, Trash2 } from "lucide-react";
+import { BRAND_THEME } from "../constant/constant";
 
 const CoverModal = ({
   isOpen,
@@ -34,7 +35,7 @@ const CoverModal = ({
               {/* Header */}
               <div className="flex items-center justify-between px-8 pt-8 pb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                  <div className={`w-10 h-10 rounded-2xl ${BRAND_THEME.avatarGradient} flex items-center justify-center shadow-lg ${BRAND_THEME.shadowPrimary}`}>
                     <ImageIcon className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -54,7 +55,7 @@ const CoverModal = ({
 
               <div className="px-8 pb-8 space-y-5">
                 {/* Upload zone */}
-                <label className={`flex flex-col items-center justify-center w-full cursor-pointer rounded-[24px] border-2 border-dashed transition-all group ${coverPreview ? "border-transparent p-0" : "border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 py-10"}`}>
+                <label className={`flex flex-col items-center justify-center w-full cursor-pointer rounded-[24px] border-2 border-dashed transition-all group ${coverPreview ? "border-transparent p-0" : `border-gray-200 hover:${BRAND_THEME.focusBorder} hover:${BRAND_THEME.bgLight} py-10`}`}>
                   {coverPreview ? (
                     <div className="relative w-full h-44 rounded-[24px] overflow-hidden">
                       <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
@@ -65,8 +66,8 @@ const CoverModal = ({
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-14 h-14 rounded-2xl bg-gray-100 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
-                        <Upload className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                      <div className="w-14 h-14 rounded-2xl bg-gray-100 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
+                        <Upload className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 transition-colors" />
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-bold text-gray-700">Click to upload</p>
@@ -99,7 +100,7 @@ const CoverModal = ({
                     whileTap={coverPreview ? { scale: 0.97 } : {}}
                     onClick={handleUpload}
                     disabled={!coverPreview}
-                    className="flex-1 py-3.5 rounded-2xl text-sm font-bold text-white bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-indigo-200 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                    className={`flex-1 py-3.5 rounded-2xl text-sm font-bold text-white ${BRAND_THEME.avatarGradient} shadow-lg ${BRAND_THEME.shadowPrimary} disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed`}
                   >
                     <Upload className="w-4 h-4" />
                     Upload

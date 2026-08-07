@@ -1,6 +1,7 @@
 import { globalPostSearch, globalUserSearch } from "../services/globalSearch.service.js";
+import { ApiResponse } from "../utils/apiResponse.js";
 
-export const globalSearch = async (req, res) => {
+export const globalSearch = async (req, res, next) => {
     const { search, type = "all", page, limit = 10 } = req.query;
     const userId = req.user.id;
 
@@ -12,7 +13,7 @@ export const globalSearch = async (req, res) => {
     const searchTrim = search ? search.trim() : "";
 
     if (!searchTrim || searchTrim.length < 3) {
-        return res.status(400).json({ message: "Search query must be at least 3 characters long" });
+        return ApiResponse.error(res, "Search query must be at least 3 characters long", 400);
     }
 
     try {
@@ -21,16 +22,14 @@ export const globalSearch = async (req, res) => {
             globalPostSearch(searchTrim, type, limitValue, offset)
         ]);
 
-        return res.status(200).json({
-            message: "Search results fetched successfully",
-            data: {
-                users: users,
-                posts: posts,
-                totalResults: (users?.length || 0) + (posts?.length || 0)
-            }
-        });
+        return ApiResponse.success(res, {
+            users,
+            posts,
+            totalResults: (users?.length || 0) + (posts?.length || 0)
+        }, "Search results fetched successfully", 200);
     } catch (error) {
         console.error("Error performing global search:", error);
-        return res.status(500).json({ message: "An error occurred", error: error.message });
+        return next(error);
     }
-}
+};
+

@@ -1,46 +1,42 @@
-import React from "react";
 import { motion } from "framer-motion";
 
 const StoryCircle = ({ story }) => {
-    // If no story is passed (safeguard for development)
-    if (!story) return null;
+  if (!story) return null;
 
-    return (
-        <motion.div
-            whileHover={{ y: -3 }}
-            className="group relative h-36 w-25 flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/70 shadow-sm"
-        >
-            <div className="absolute inset-0">
-                <img
-                    src={story.image}
-                    alt={story.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-            </div>
+  const storyItem = story.story || story;
+  const user = storyItem.user || {};
+  const mediaUrl = storyItem.mediaUrl || story.image || "/default-avatar.png";
+  const name = user.name || story.name || "Story";
+  const profileImage = user.profileImage || mediaUrl;
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-            {/* User Avatar Badge - Using the same image for mock */}
-            <div className="absolute top-3 left-3">
-                <div className="p-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full overflow-hidden shadow-lg border border-white/20">
-                    <img
-                        src={story.image}
-                        alt={story.name}
-                        className="h-7 w-7 rounded-full object-cover"
-                    />
-                </div>
-            </div>
-
-            <div className="absolute bottom-3 left-3 right-3">
-                <span className="text-[11px] font-black text-white truncate block tracking-tighter shadow-sm uppercase">
-                    {story.name}
-                </span>
-            </div>
-
-            {/* View Pulse Effect Overlay */}
-            <div className="absolute inset-0 border-2 border-transparent group-hover:border-white/30 rounded-3xl transition-colors duration-500" />
-        </motion.div>
-    );
+  return (
+    <motion.button
+      whileHover={{ scale: 1.04, y: -2 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+      type="button"
+      className="group relative h-44 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-900 text-left text-white shadow-md hover:shadow-xl dark:hover:shadow-indigo-950/40 focus:outline-none transition-shadow duration-300 cursor-pointer"
+    >
+      {storyItem.mediaType === "VIDEO" ? (
+        <video src={mediaUrl} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+      ) : (
+        <img
+          src={mediaUrl}
+          alt={name}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity group-hover:opacity-90" />
+      <motion.span
+        whileHover={{ scale: 1.1 }}
+        className="absolute left-3 top-3 rounded-full border-2 border-indigo-500 bg-white p-0.5 shadow-md transition-transform"
+      >
+        <img src={profileImage} alt="" className="h-8 w-8 rounded-full object-cover" />
+      </motion.span>
+      <span className="absolute bottom-4 left-3 right-3 truncate text-xs font-bold">{name}</span>
+    </motion.button>
+  );
 };
 
 export default StoryCircle;
+

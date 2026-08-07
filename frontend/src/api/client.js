@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getApiErrorMessage } from "../utils/apiResponse";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
@@ -30,8 +31,12 @@ apiClient.interceptors.response.use(
             window.location.assign("/signin");
         }
 
+        const message = getApiErrorMessage(error);
+        error.message = message;
+
         return Promise.reject(error);
     }
 );
 
 export default apiClient;
+

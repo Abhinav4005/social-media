@@ -1,265 +1,325 @@
-"use client";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { QueryClient, useMutation } from "@tanstack/react-query";
-import { updateUserProfile } from "../../api";
-import Navbar from "../../pages/Navbar";
-import { setCredentials } from "../../store/slices/authSlice";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, FileText, Info, MapPin, Lock, Camera, X, Check, ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  Check,
+  ImagePlus,
+  Info,
+  Loader2,
+  Lock,
+  Mail,
+  MapPin,
+  Save,
+  User,
+  Sparkles,
+  FileText,
+} from "lucide-react";
+import { getUserProfile, updateUserProfile } from "../../api";
+import Navbar from "../../pages/Navbar";
+import { BRAND_THEME } from "../../constant/constant";
+
+const emptyForm = {
+  name: "",
+  email: "",
+  bio: "",
+  about: "",
+  location: "",
+  password: "",
+};
+
+const Field = ({ icon, label, children }) => (
+  <label className="block space-y-1.5">
+    <span className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+      {icon}
+      {label}
+    </span>
+    {children}
+  </label>
+);
+
+const inputClass =
+  "h-11 w-full rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 px-4 text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/10";
+
+const textareaClass =
+  "min-h-24 w-full resize-none rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 px-4 py-3 text-xs sm:text-sm font-medium leading-relaxed text-gray-900 dark:text-gray-100 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/10";
 
 export default function UpdateProfile() {
-  const queryClient = new QueryClient();
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [avatarPreview, setAvatarPreview] = useState(
-    user?.profileImage || "/default-avatar.png"
-  );
-  const [avatarFile, setAvatar] = useState(null);
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState(emptyForm);
+  const [profileImage, setProfileImage] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
 
-  const initialData = {
-    name: user?.name || "",
-    email: user?.email || "",
-    bio: user?.bio || "",
-    location: user?.location || "",
-    profileImage: user?.profileImage || null,
-    about: user?.about || "",
-    password: "",
-  }
+  const { data: user, isLoading, isError } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: getUserProfile,
+  });
 
-  const [formData, setFormData] = useState(initialData);
+  useEffect(() => {
+    if (!user) return;
+    setForm({
+      name: user.name || "",
+      email: user.email || "",
+      bio: user.bio || "",
+      about: user.about || "",
+      location: user.location || "",
+      password: "",
+    });
+  }, [user]);
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatarPreview(URL.createObjectURL(file));
-      setAvatar(file);
-    }
-  };
+  const profilePreview = useMemo(() => {
+    if (profileImage) return URL.createObjectURL(profileImage);
+    return user?.profileImage || "";
+  }, [profileImage, user?.profileImage]);
 
-  const handleRemoveAvatar = () => {
-    setAvatarPreview("/default-avatar.png");
-    setAvatar(null);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }))
-  }
+  const coverPreview = useMemo(() => {
+    if (coverImage) return URL.createObjectURL(coverImage);
+    return user?.coverImage || "";
+  }, [coverImage, user?.coverImage]);
 
   const mutation = useMutation({
-    mutationFn: (userData) => updateUserProfile(userData),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries(["userProfile"]);
-      dispatch(setCredentials({ user: data?.user }))
+    mutationFn: (payload) => updateUserProfile(payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       navigate("/profile");
     },
-    onError: (error) => {
-      console.error("Error updating profile:", error);
-    }
-  })
+  });
 
-  const handleUpdateProfile = () => {
-    const data = new FormData();
-    data.append("name", formData.name);
-    data.append("email", formData.email);
-    data.append("bio", formData.bio);
-    data.append("location", formData.location);
-    data.append("about", formData.about);
-    data.append("password", formData.password);
-    if (avatarFile) {
-      data.append("profileImage", avatarFile);
-    }
-    mutation.mutate(data);
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const payload = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value) payload.append(key, value);
+    });
+    if (profileImage) payload.append("profileImage", profileImage);
+    if (coverImage) payload.append("coverImage", coverImage);
+
+    mutation.mutate(payload);
+  };
+
+  const initials = form.name
+    ? form.name
+        .split(" ")
+        .map((part) => part[0]?.toUpperCase())
+        .slice(0, 2)
+        .join("")
+    : "U";
+
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 py-8">
+          <div className="mx-auto max-w-5xl rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
+            <div className="h-48 rounded-3xl animate-shimmer" />
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-20 rounded-2xl animate-shimmer" />
+              ))}
+            </div>
+          </div>
+        </main>
+      </>
+    );
   }
 
-  const handleCancel = () => {
-    navigate("/profile")
+  if (isError) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 py-8">
+          <div className="mx-auto max-w-xl rounded-3xl border border-rose-100 dark:border-rose-900/50 bg-white dark:bg-slate-900 p-8 text-center shadow-xs">
+            <Info className="mx-auto mb-4 h-10 w-10 text-rose-500" />
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Could not load profile</h1>
+            <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Please refresh and try again.</p>
+          </div>
+        </main>
+      </>
+    );
   }
-
-  const inputFields = [
-    { label: "Full Name", name: "name", type: "text", icon: <User className="w-5 h-5 text-indigo-500" />, placeholder: "e.g. John Doe" },
-    { label: "Email Address", name: "email", type: "email", icon: <Mail className="w-5 h-5 text-purple-500" />, placeholder: "e.g. john@example.com" },
-    { label: "Location", name: "location", type: "text", icon: <MapPin className="w-5 h-5 text-pink-500" />, placeholder: "e.g. New York, USA" },
-    { label: "New Password", name: "password", type: "password", icon: <Lock className="w-5 h-5 text-blue-500" />, placeholder: "Leave blank to keep current" },
-  ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <>
       <Navbar />
+      <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 sm:px-6 py-6 transition-colors duration-200">
+        <form onSubmit={handleSubmit} className="mx-auto max-w-5xl space-y-6">
+          
+          {/* Header Action Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xs">
+            <div>
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="mb-2 inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Profile
+              </button>
+              <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Edit Profile</h1>
+              <p className="mt-0.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                Update your public profile information, avatar, cover photo, and location.
+              </p>
+            </div>
 
-      <main className="max-w-5xl mx-auto pt-10 pb-20 px-4">
-        <motion.button
-          whileHover={{ x: -6 }}
-          onClick={handleCancel}
-          className="flex items-center gap-2 text-gray-400 hover:text-indigo-600 mb-8 font-black uppercase tracking-widest text-xs transition-all cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Your Presence
-        </motion.button>
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-6 text-xs font-bold text-white shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </button>
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden border border-white/40 flex flex-col md:flex-row"
-        >
-          {/* Visual Side Banner */}
-          <div className="md:w-2/5 bg-gray-900 p-12 flex flex-col items-center text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[120px] opacity-20 -mr-32 -mt-32" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full blur-[120px] opacity-20 -ml-32 -mb-32" />
+          {/* Main Card with Media & Forms */}
+          <section className="overflow-hidden rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs transition-colors duration-200">
+            {/* Cover Photo Banner Header */}
+            <div className="relative h-48 sm:h-56 overflow-hidden">
+              {coverPreview ? (
+                <img src={coverPreview} alt="Cover preview" className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              
+              <label className="absolute right-4 top-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-black/60 hover:bg-black/80 px-3.5 py-2 text-xs font-bold text-white shadow-md backdrop-blur-md transition-all">
+                <ImagePlus className="h-4 w-4 text-indigo-300" />
+                Change Cover
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => setCoverImage(event.target.files?.[0] || null)}
+                />
+              </label>
+            </div>
 
-            <div className="relative z-10">
-              <h2 className="text-4xl font-black text-white mb-4 tracking-tighter italic">Refine Persona</h2>
-              <p className="text-gray-400 font-extrabold text-[10px] mb-12 uppercase tracking-[0.3em] opacity-80">Identity Configuration</p>
-
-              {/* Advanced Avatar Upload */}
-              <div className="relative group mb-8">
-                <div className="p-1.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full shadow-2xl">
-                  <div className="w-48 h-48 rounded-full overflow-hidden bg-gray-800 relative">
-                    <img
-                      src={avatarPreview}
-                      alt="Avatar"
-                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                    />
-                    <label className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
-                      <Camera className="w-10 h-10 text-white mb-2" />
-                      <span className="text-white text-[10px] font-black uppercase tracking-widest">Upload New</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleAvatarChange}
-                      />
-                    </label>
+            {/* Content Section: Sidebar Profile Card + Main Form */}
+            <div className="p-6 sm:p-8">
+              <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+                
+                {/* Left Profile Preview Sidebar */}
+                <aside className="space-y-4 lg:border-r lg:border-gray-100 lg:dark:border-slate-800 lg:pr-8">
+                  <div className="-mt-16 sm:-mt-20 relative z-10">
+                    <div className="relative h-32 w-32 rounded-full border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
+                      {profilePreview ? (
+                        <img src={profilePreview} alt="Profile preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className={`flex h-full w-full items-center justify-center ${BRAND_THEME.avatarGradient} text-3xl font-black text-white`}>
+                          {initials}
+                        </div>
+                      )}
+                      <label className="absolute bottom-1 right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all active:scale-90">
+                        <Camera className="h-4.5 w-4.5" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => setProfileImage(event.target.files?.[0] || null)}
+                        />
+                      </label>
+                    </div>
                   </div>
-                </div>
 
-                <AnimatePresence>
-                  {avatarFile && (
-                    <motion.button
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0, rotate: 45 }}
-                      onClick={handleRemoveAvatar}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 shadow-xl border-4 border-gray-900 transition z-20 cursor-pointer"
-                    >
-                      <X className="w-5 h-5" />
-                    </motion.button>
+                  <div>
+                    <h2 className="text-lg font-black text-gray-900 dark:text-gray-100 truncate">{form.name || "Your Profile"}</h2>
+                    <p className="text-xs font-semibold text-gray-400 dark:text-gray-400 truncate">{form.email}</p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900/50 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      <Check className="h-3.5 w-3.5" />
+                      Active Profile
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-indigo-50 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/30 p-4">
+                    <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5" /> Profile Tips
+                    </p>
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-gray-600 dark:text-gray-300">
+                      Add a clear profile photo, location, and bio so friends and followers can identify you easily across the platform.
+                    </p>
+                  </div>
+                </aside>
+
+                {/* Right Form Fields */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-base font-black text-gray-900 dark:text-gray-100">Personal Information</h3>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Shown publicly on your profile page and posts.</p>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field icon={<User className="h-4 w-4 text-indigo-500" />} label="Full Name">
+                      <input name="name" value={form.name} onChange={handleChange} className={inputClass} placeholder="Your name" />
+                    </Field>
+
+                    <Field icon={<Mail className="h-4 w-4 text-indigo-500" />} label="Email Address">
+                      <input name="email" value={form.email} onChange={handleChange} className={inputClass} placeholder="you@example.com" />
+                    </Field>
+
+                    <Field icon={<MapPin className="h-4 w-4 text-indigo-500" />} label="Location">
+                      <input name="location" value={form.location} onChange={handleChange} className={inputClass} placeholder="City, Country" />
+                    </Field>
+
+                    <Field icon={<Lock className="h-4 w-4 text-indigo-500" />} label="New Password">
+                      <input
+                        type="password"
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        className={inputClass}
+                        placeholder="Leave blank to keep current"
+                      />
+                    </Field>
+                  </div>
+
+                  <Field icon={<FileText className="h-4 w-4 text-indigo-500" />} label="Short Bio (Headline)">
+                    <textarea
+                      name="bio"
+                      value={form.bio}
+                      onChange={handleChange}
+                      className={textareaClass}
+                      placeholder="A short line about yourself (e.g. Software Engineer & Product Creator)"
+                    />
+                  </Field>
+
+                  <Field icon={<Info className="h-4 w-4 text-indigo-500" />} label="About Me (Detailed)">
+                    <textarea
+                      name="about"
+                      value={form.about}
+                      onChange={handleChange}
+                      className="min-h-28 w-full resize-none rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 px-4 py-3 text-xs sm:text-sm font-medium leading-relaxed text-gray-900 dark:text-gray-100 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/10"
+                      placeholder="Share your interests, work experience, or what you care about..."
+                    />
+                  </Field>
+
+                  {mutation.isError && (
+                    <div className="rounded-xl border border-rose-100 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/50 px-4 py-3 text-xs font-bold text-rose-600 dark:text-rose-400">
+                      Could not save your profile. Please review your details and try again.
+                    </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
-
-              <h3 className="text-2xl font-black text-white mb-1">{formData.name || "User"}</h3>
-              <p className="text-gray-500 font-medium text-sm truncate max-w-[200px]">{formData.email}</p>
             </div>
-          </div>
-
-          {/* Elegant Form Area */}
-          <div className="flex-1 p-8 md:p-16 space-y-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {inputFields.slice(0, 2).map((field) => (
-                <div key={field.name} className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                    {field.icon}
-                    {field.label}
-                  </label>
-                  <input
-                    type={field.type}
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    placeholder={field.placeholder}
-                    className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-gray-900 font-bold placeholder:text-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-200 transition-all"
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                <FileText className="w-5 h-5 text-indigo-500" />
-                Short Bio
-              </label>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                placeholder="Briefly state your vibe..."
-                rows="2"
-                className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-gray-900 font-bold placeholder:text-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-200 transition-all resize-none"
-              ></textarea>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                <Info className="w-5 h-5 text-purple-500" />
-                Deeper Narrative
-              </label>
-              <textarea
-                name="about"
-                value={formData.about}
-                onChange={handleChange}
-                placeholder="Go into detail about your interests..."
-                rows="4"
-                className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-gray-900 font-bold placeholder:text-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-200 transition-all resize-none"
-              ></textarea>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {inputFields.slice(2).map((field) => (
-                <div key={field.name} className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                    {field.icon}
-                    {field.label}
-                  </label>
-                  <input
-                    type={field.type}
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    placeholder={field.placeholder}
-                    className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-6 py-4 text-gray-900 font-bold placeholder:text-gray-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-200 transition-all"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Premium Sticky-ish Footer Actions */}
-            <div className="pt-8 flex flex-col sm:flex-row items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleUpdateProfile}
-                disabled={mutation.isPending}
-                className="w-full sm:flex-1 bg-gray-900 text-white py-5 rounded-2xl font-black text-lg shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] hover:bg-black transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
-              >
-                {mutation.isPending ? (
-                  <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Check className="w-5 h-5" />
-                    Synchronize
-                  </>
-                )}
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(0,0,0,0.05)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleCancel}
-                className="w-full sm:w-auto px-10 py-5 text-gray-400 font-black uppercase tracking-widest text-sm transition-all cursor-pointer"
-              >
-                Discard
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
+          </section>
+        </form>
       </main>
-    </div>
+    </>
   );
 }
-

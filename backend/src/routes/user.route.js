@@ -7,22 +7,24 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
+router.get("/me", authenticateToken, getUserProfile);
 router.get("/profile", authenticateToken, getUserProfile);
-
-router.get("/profile/:userId", authenticateToken, getUserById);
-
 router.put("/profile/update", upload.fields([{ name: 'profileImage' }, { name: 'coverImage' }]), authenticateToken, updateUserProfile);
+router.get("/profile/:userId", authenticateToken, getUserById);
+router.put("/me", upload.fields([{ name: 'profileImage' }, { name: 'coverImage' }]), authenticateToken, updateUserProfile);
 
 router.get("/search", authenticateToken, searchUsersByQuery);
-
-router.post("/follow", authenticateToken, followUser);
-
-router.get("/followers", authenticateToken, getFollowers);
-
-router.get("/following", authenticateToken, getFollowing);
-
 router.get("/feed", authenticateToken, getUserFeed);
 
+router.post("/follow", authenticateToken, followUser);
+router.get("/followers", authenticateToken, getFollowers);
+router.get("/following", authenticateToken, getFollowing);
 router.get("/photos", authenticateToken, getAllPhotosOfUser);
+
+router.get("/:id", authenticateToken, getUserById);
+router.post("/:id/follow", authenticateToken, followUser);
+router.get("/:id/followers", authenticateToken, getFollowers);
+router.get("/:id/following", authenticateToken, getFollowing);
+router.get("/:id/photos", authenticateToken, getAllPhotosOfUser);
 
 export default router;

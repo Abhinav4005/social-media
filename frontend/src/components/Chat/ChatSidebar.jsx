@@ -162,19 +162,16 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
         <div className="flex items-center justify-between mb-4">
           <motion.button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 group cursor-pointer"
             whileHover={{ x: -1 }}
           >
-            <motion.div
-              whileHover={{ rotate: 180 }}
-              transition={{ duration: 0.5 }}
-              className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-black/30"
-              style={{ background: "var(--gradient-vibrant)" }}
-            >
-              <Sparkles className="w-4 h-4 text-white" />
-            </motion.div>
+            <img
+              src="/connecta-logo-icon.png"
+              alt="Connecta Logo"
+              className="h-8 w-8 object-contain drop-shadow-md"
+            />
             <span className="text-[17px] font-black text-white tracking-tight">
-              mysocial.
+              Connecta
             </span>
           </motion.button>
 

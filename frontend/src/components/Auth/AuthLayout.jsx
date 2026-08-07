@@ -38,14 +38,8 @@ export default function AuthLayout({
 
       <main className="relative min-h-[100svh] grid lg:grid-cols-[1.05fr_0.95fr]">
         <section className="hidden lg:flex flex-col justify-between px-12 xl:px-20 py-10">
-          <Link to="/" className="flex items-center gap-3 w-fit">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-vibrant flex items-center justify-center shadow-lg shadow-indigo-100">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-lg font-black tracking-tight">mysocial.</p>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.18em]">Private social network</p>
-            </div>
+          <Link to="/" className="flex items-center gap-3 w-fit transition-transform hover:scale-[1.02]">
+            <img src="/connecta-logo-full.png" alt="Connecta" className="h-16 object-contain" />
           </Link>
 
           <div className="max-w-xl">
@@ -127,10 +121,8 @@ export default function AuthLayout({
             <motion.div variants={authItemVariants} className="mb-8">
               <div className="mb-6 flex items-center justify-between">
                 <Link to="/" className="lg:hidden flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-vibrant flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="font-black tracking-tight">mysocial.</span>
+                  <img src="/connecta-logo-icon.png" alt="Connecta" className="h-9 w-9 object-contain" />
+                  <span className="font-black tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">Connecta</span>
                 </Link>
                 <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-teal-700">
                   <Check className="w-3.5 h-3.5" />

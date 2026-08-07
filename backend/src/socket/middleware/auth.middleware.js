@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 const socketAuthMiddleware = (socket, next) => {
     try{
         const token = socket.handshake?.auth?.token;
-        console.log("token :", token);
 
         if(!token){
             return next(new Error("Authentication error"));

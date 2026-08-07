@@ -6,6 +6,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
-router.post("/upload", upload.single("file"), uploadImage);
+router.post("/", upload.single("file"), uploadImage);
 
 export default router;

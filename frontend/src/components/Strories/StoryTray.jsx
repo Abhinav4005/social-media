@@ -1,64 +1,69 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import StoryCircle from "./StoryCircle";
 import { useSelector } from "react-redux";
 import { Plus } from "lucide-react";
-import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { getStories } from "../../api";
 import CreateStoryModal from "../../Modal/CreateStoryModal";
 
 const StoryTray = () => {
-    const { user } = useSelector((state) => state.auth);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useSelector((state) => state.auth);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const mockStories = [
-        { id: 1, name: "Jessica", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&auto=format&fit=crop" },
-        { id: 2, name: "Alex", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop" },
-        { id: 3, name: "Sarah", image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=300&auto=format&fit=crop" },
-        { id: 4, name: "Mike", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop" },
-        { id: 5, name: "Emma", image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop" },
-        { id: 6, name: "David", image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=300&auto=format&fit=crop" },
-    ];
+  const { data: storiesFeed = [] } = useQuery({
+    queryKey: ["stories"],
+    queryFn: getStories,
+    refetchInterval: 30000, // Poll active stories every 30s
+  });
 
-    return (
-        <div className="mb-5 rounded-3xl border border-gray-100 bg-white p-4 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-            <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                <motion.div
-                    whileHover={{ y: -3 }}
-                    onClick={() => setIsModalOpen(true)}
-                    className="group relative h-36 w-25 flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100"
-                >
-                    <div className="absolute inset-0 bg-gray-900">
-                        {user?.profileImage ? (
-                            <img
-                                src={user.profileImage}
-                                alt="Your profile"
-                                className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-500"
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600" />
-                        )}
-                    </div>
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="app-surface p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-gray-100 dark:border-slate-800 transition-colors duration-200"
+    >
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <motion.button
+          whileHover={{ scale: 1.04, y: -2 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 350, damping: 25 }}
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className="group relative h-44 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-900 text-white shadow-md hover:shadow-xl dark:hover:shadow-indigo-950/40 transition-shadow duration-300 cursor-pointer"
+        >
+          {user?.profileImage ? (
+            <img src={user.profileImage} alt="" className="h-full w-full object-cover opacity-70 transition-transform duration-500 group-hover:scale-110" />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-indigo-600 to-purple-600 transition-transform duration-500 group-hover:scale-105" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <motion.span
+            whileHover={{ scale: 1.15, rotate: 90 }}
+            className="absolute bottom-10 left-1/2 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white dark:border-slate-900 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg transition-transform duration-300"
+          >
+            <Plus className="h-5 w-5 text-white" />
+          </motion.span>
+          <span className="absolute bottom-4 left-2 right-2 text-center text-xs font-bold">Create story</span>
+        </motion.button>
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        {storiesFeed.map((story, index) => (
+          <motion.div
+            key={story.id || index}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + index * 0.1 }}
+          >
+            <StoryCircle story={story} />
+          </motion.div>
+        ))}
+      </div>
 
-                    <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col items-center">
-                        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-lg transition-transform duration-300 group-hover:scale-110">
-                            <Plus className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white">Add story</span>
-                    </div>
-                </motion.div>
-
-                {mockStories.map((story) => (
-                    <StoryCircle key={story.id} story={story} />
-                ))}
-            </div>
-
-            <CreateStoryModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-            />
-        </div>
-    );
+      <CreateStoryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </motion.section>
+  );
 };
 
 export default StoryTray;
+

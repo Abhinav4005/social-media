@@ -1,12 +1,8 @@
-import { useEffect, useState, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { socket } from "../socket";
-import { setOnlineUsers, updateLastSeen } from "./store/slices/presenceSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone, PhoneOff, Video } from "lucide-react";
+import { useSocketPresence } from "./hooks/useSocketPresence";
 
-/* ─── Incoming call banner — shown on ANY page ─────────────── */
+/* ─── Incoming call banner — pure presentational component ─────────────── */
 const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
   <motion.div
     initial={{ opacity: 0, y: -80 }}
@@ -21,7 +17,6 @@ const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
       boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
     }}
   >
-    {/* animated top bar */}
     <motion.div
       animate={{ scaleX: [0, 1] }}
       transition={{ duration: 30, ease: "linear" }}
@@ -29,7 +24,6 @@ const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
     />
 
     <div className="flex items-center gap-3 px-4 py-3.5">
-      {/* avatar */}
       <div className="relative flex-shrink-0">
         <div
           className="w-11 h-11 rounded-full flex items-center justify-center font-black text-white text-sm"
@@ -37,7 +31,6 @@ const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
         >
           {`U${call.from}`.slice(0, 2).toUpperCase()}
         </div>
-        {/* pulse ring */}
         <motion.span
           className="absolute inset-0 rounded-full border-2 border-emerald-400"
           animate={{ scale: [1, 1.5], opacity: [0.6, 0] }}
@@ -48,7 +41,6 @@ const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
         </span>
       </div>
 
-      {/* text */}
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
           Incoming video call
@@ -58,7 +50,6 @@ const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
         </p>
       </div>
 
-      {/* action buttons */}
       <div className="flex gap-2 flex-shrink-0">
         <motion.button
           whileHover={{ scale: 1.1 }}
@@ -88,106 +79,23 @@ const IncomingCallBanner = ({ call, onAnswer, onDecline }) => (
   </motion.div>
 );
 
-/* ═══════════════════════════════════════════════════════════════
-   SocketPresence — always mounted, handles presence + call toasts
-═══════════════════════════════════════════════════════════════ */
+/**
+ * SocketPresence presentational wrapper.
+ * Fulfills SRP by rendering UI and delegating presence/call hooks to useSocketPresence.
+ */
 const SocketPresence = () => {
-  const { user }  = useSelector((state) => state.auth);
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
-
-  const [pendingCall, setPendingCall] = useState(null); // { from, offer }
-  const ringtoneRef = useRef(null);
-
-  /* ── presence ─────────────────────────────────────────────── */
-  useEffect(() => {
-    if (!user?.id) {
-      if (socket.connected) socket.disconnect();
-      return;
-    }
-
-    // Dynamic socket authentication token sync
-    const token = localStorage.getItem("token");
-    if (socket.auth?.token !== token) {
-      socket.auth = { token };
-      socket.disconnect().connect();
-    } else if (socket.disconnected) {
-      socket.connect();
-    }
-
-    const handleConnect     = () => socket.emit("userOnline", user.id);
-    const handleOnlineUsers = (data) => dispatch(setOnlineUsers(data));
-    const handleLastSeen    = (data) => dispatch(updateLastSeen(data));
-
-    socket.on("connect",         handleConnect);
-    socket.on("onlineUsers",     handleOnlineUsers);
-    socket.on("lastSeenUpdate",  handleLastSeen);
-
-    if (socket.connected) handleConnect();
-
-    return () => {
-      socket.off("connect",        handleConnect);
-      socket.off("onlineUsers",    handleOnlineUsers);
-      socket.off("lastSeenUpdate", handleLastSeen);
-      socket.emit("userOffline", user.id);
-    };
-  }, [user?.id, dispatch]);
-
-  /* ── global incoming-call listener ───────────────────────── */
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const handleIncomingCall = ({ from, offer }) => {
-      // If already on the video-call page, let VideoCall.jsx handle it
-      if (window.location.pathname.startsWith("/video-call")) return;
-
-      setPendingCall({ from, offer });
-    };
-
-    // If call ended while banner is up, dismiss it
-    const handleCallEnded = () => setPendingCall(null);
-
-    socket.on("incoming-call", handleIncomingCall);
-    socket.on("call-ended",    handleCallEnded);
-
-    return () => {
-      socket.off("incoming-call", handleIncomingCall);
-      socket.off("call-ended",    handleCallEnded);
-    };
-  }, [user?.id]);
-
-  const handleAnswer = () => {
-    if (!pendingCall) return;
-    // Navigate to video-call page and pass the offer + caller info via state
-    navigate("/video-call/incoming", {
-      state: {
-        incomingCall: pendingCall,
-        targetUserId: pendingCall.from,
-        targetName: `User ${pendingCall.from}`,
-      },
-    });
-    setPendingCall(null);
-  };
-
-  const handleDecline = () => {
-    if (pendingCall) {
-      socket.emit("end-call", { targetUserId: pendingCall.from });
-    }
-    setPendingCall(null);
-  };
+  const { pendingCall, answerCall, declineCall } = useSocketPresence();
 
   return (
-    <>
-      <AnimatePresence>
-        {pendingCall && (
-          <IncomingCallBanner
-            call={pendingCall}
-            onAnswer={handleAnswer}
-            onDecline={handleDecline}
-          />
-        )}
-      </AnimatePresence>
-    </>
+    <AnimatePresence>
+      {pendingCall && (
+        <IncomingCallBanner
+          call={pendingCall}
+          onAnswer={answerCall}
+          onDecline={declineCall}
+        />
+      )}
+    </AnimatePresence>
   );
 };
 

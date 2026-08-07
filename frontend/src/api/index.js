@@ -26,7 +26,6 @@ export const logout = async () => {
         throw new Error("Logout failed");
     }
     localStorage.removeItem('token');
-    console.log("Logout successful");
     return response.data;
 }
 
@@ -62,7 +61,6 @@ export const updateUserProfile = async (userData) => {
     if (response.status !== 200) {
         throw new Error("Failed to update user profile");
     }
-    console.log("User Profile Response:", response.data);
     return response.data;
 }
 
@@ -91,7 +89,6 @@ export const getUserPosts = async () => {
 }
 
 export const createPost = async (postData) => {
-    console.log("Creating Post with Data:", postData);
     const response = await apiClient.post("/post/create", postData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -100,7 +97,6 @@ export const createPost = async (postData) => {
     if (response.status !== 201) {
         throw new Error("Failed to create post");
     }
-    console.log("Create Post Response:", response.data);
     return response.data;
 }
 
@@ -163,7 +159,6 @@ export const getPostById = async (postId) => {
 }
 
 export const likePost = async (postId) => {
-    console.log("Liking Post with ID:", postId);
     const response = await apiClient.post("/post/like", { status: "LIKE" }, {
         params: { postId: postId }
     });
@@ -174,9 +169,9 @@ export const likePost = async (postId) => {
 }
 
 export const commentOnPost = async (postId, commentData) => {
-    console.log("Commenting on Post with ID:", postId, "Comment Data:", commentData);
     const response = await apiClient.post("/post/comment", {
         content: commentData.content,
+        parentId: commentData?.parentId || null,
     }, {
         params: { postId: postId }
     });
@@ -293,7 +288,6 @@ export const getFriendRequests = async () => {
 }
 
 export const respondToFriendRequest = async (requestId, action) => {
-    console.log("Responding to Friend Request ID:", requestId, "with Action:", action);
     const response = await apiClient.post("/friend/respond", {},{
         params: { requestId, action }
     });
@@ -329,3 +323,47 @@ export const savePost = async (postId) => {
 
     return response.data;
 }
+
+export const createStory = async (formData) => {
+    const response = await apiClient.post("/story", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    if (![200, 201].includes(response.status)) {
+        throw new Error("Failed to create story");
+    }
+    return response.data;
+}
+
+export const getStories = async () => {
+    const response = await apiClient.get("/story");
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch stories");
+    }
+    return response.data?.feed || response.data?.data?.feed || [];
+}
+
+export const markStorySeen = async (storyId) => {
+    const response = await apiClient.post(`/story/${storyId}/views`);
+    return response.data;
+}
+
+export const getSavedPosts = async () => {
+    const response = await apiClient.get("/post/saved");
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch saved posts");
+    }
+    return response.data?.posts || response.data?.data?.posts || [];
+}
+
+export const createCheckoutSession = async () => {
+    const response = await apiClient.post("/subscriptions/create-checkout-session");
+    if (response.status !== 200 && response.status !== 201) {
+        throw new Error("Failed to create checkout session");
+    }
+    return response.data;
+}
+
+
+

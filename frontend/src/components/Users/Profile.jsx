@@ -1,734 +1,431 @@
-import Button from "../UI/Button";
-import { useSelector, useDispatch } from "react-redux";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import {
+  Bookmark,
+  CalendarDays,
+  CheckCircle2,
+  Edit3,
+  ExternalLink,
+  Grid2X2,
+  Image as ImageIcon,
+  Info,
+  Link2,
+  MapPin,
+  MessageCircle,
+  Share2,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { useQuery, useMutation, QueryClient } from "@tanstack/react-query";
-import { getUserProfile } from "../../api";
-import FriendsTab from "../Friends/FriendsTab";
-import PostTab from "../Posts/PostTab";
+import { getSavedPosts, getUserFollowers, getUserFollowing, getUserPosts, getUserProfile } from "../../api";
 import Navbar from "../../pages/Navbar";
-import { useNavigate } from "react-router-dom";
-import { clearCredentials, setCredentials } from "../../store/slices/authSlice.js";
-import { Plus, Camera, Edit2, MapPin, Calendar, Link as LinkIcon, Heart, Users, Image as ImageIcon } from "lucide-react";
-import CoverModal from "../../Modal/CoverModal";
-import { updateUserProfile } from "../../api";
-import Photos from "../Photos/Photos";
-import { formatJoinDate } from "../../utils/formatTime.js";
-import { isUserOnline } from "../../utils/messageStatus.js";
+import PostCard from "../Posts/PostCard";
+import { BRAND_THEME } from "../../constant/constant";
 
-export default function Profile({ user }) {
-  const { user: currentUser } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+const formatJoined = (date) => {
+  if (!date) return "Recently";
+  return new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(date));
+};
 
-  if (!user) user = currentUser;
+const formatCount = (num) => {
+  if (!num) return "0";
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  return num.toString();
+};
 
+const ProfileSkeleton = () => (
+  <>
+    <Navbar />
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 py-6">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="h-80 rounded-3xl animate-shimmer" />
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          <div className="space-y-4">
+            <div className="h-48 rounded-3xl animate-shimmer" />
+            <div className="h-40 rounded-3xl animate-shimmer" />
+          </div>
+          <div className="h-96 rounded-3xl animate-shimmer" />
+        </div>
+      </div>
+    </main>
+  </>
+);
+
+const EmptyPanel = ({ icon, title, text }) => (
+  <div className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-xs transition-colors duration-200">
+    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+      {icon}
+    </div>
+    <h3 className="font-black text-base text-gray-900 dark:text-gray-100">{title}</h3>
+    <p className="mx-auto mt-1.5 max-w-sm text-xs font-semibold leading-relaxed text-gray-400 dark:text-gray-400">{text}</p>
+  </div>
+);
+
+export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
-  const [coverData, setCoverData] = useState(null);
-  const [openCoverModal, setOpenCoverModal] = useState(false);
-  const [coverPreview, setCoverPreview] = useState(null);
-  const queryClient = new QueryClient();
 
   const { data: userProfile, isLoading, isError } = useQuery({
-    queryKey: ["userProfile", user?.id],
+    queryKey: ["userProfile"],
     queryFn: getUserProfile,
-    enabled: !!user
   });
 
-  const getInitials = (name = "") =>
-    name
-      .split(" ")
-      .map((n) => n[0]?.toUpperCase())
-      .join("")
-      .slice(0, 2);
+  const { data: posts = [] } = useQuery({
+    queryKey: ["userPosts"],
+    queryFn: getUserPosts,
+  });
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    dispatch(clearCredentials());
-    navigate("/signin");
+  const { data: savedPosts = [] } = useQuery({
+    queryKey: ["savedPosts"],
+    queryFn: getSavedPosts,
+  });
+
+  const { data: followers = [] } = useQuery({
+    queryKey: ["followers"],
+    queryFn: getUserFollowers,
+  });
+
+  const { data: following = [] } = useQuery({
+    queryKey: ["following"],
+    queryFn: getUserFollowing,
+  });
+
+  const initials = useMemo(() => {
+    if (!userProfile?.name) return "U";
+    return userProfile.name
+      .split(" ")
+      .map((part) => part[0]?.toUpperCase())
+      .slice(0, 2)
+      .join("");
+  }, [userProfile?.name]);
+
+  const photoPosts = useMemo(() => posts.filter((post) => post?.image), [posts]);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${userProfile?.name || "Profile"} on Social Hub`,
+        url: window.location.href,
+      });
+      return;
+    }
+    await navigator.clipboard?.writeText(window.location.href);
   };
 
-  const handleViewCover = (coverImage) => {
-    if (!coverImage) return;
-    window.open(coverImage, "_blank");
+  if (isLoading) return <ProfileSkeleton />;
+
+  if (isError || !userProfile) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 py-8 transition-colors duration-200">
+          <div className="mx-auto max-w-6xl">
+            <EmptyPanel
+              icon={<Info className="h-6 w-6" />}
+              title="Profile unavailable"
+              text="We could not load your profile right now. Please refresh and try again."
+            />
+          </div>
+        </main>
+      </>
+    );
   }
 
-  const handleCoverUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverData(file);
-      setCoverPreview(URL.createObjectURL(file));
-    }
-  }
-
-  const handleRemoveCover = () => {
-    setCoverData(null);
-    setCoverPreview(null);
-  }
-
-  const mutation = useMutation({
-    mutationFn: (coverImageData) => updateUserProfile(coverImageData),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries(["userProfile", user?.id]);
-      dispatch(setCredentials(data));
-      navigate("/profile");
-      setCoverData(null);
+  const profileHealthItems = [
+    {
+      icon: <UserRound className="h-4 w-4" />,
+      label: "Identity",
+      status: "Good",
+      statusColor: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900/50",
+      iconColor: "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50",
     },
-    onError: (error) => console.error(error),
-  })
-
-  const handleUpload = () => {
-    const formData = new FormData();
-    if (coverData) {
-      formData.append("coverImage", coverData);
-      mutation.mutate(formData);
-    }
-  }
-
-  const tabs = [
-    { id: "posts", label: "Posts", icon: <ImageIcon className="w-4 h-4" /> },
-    { id: "about", label: "About", icon: <Heart className="w-4 h-4" /> },
-    { id: "friends", label: "Friends", icon: <Users className="w-4 h-4" /> },
-    { id: "photos", label: "Photos", icon: <Camera className="w-4 h-4" /> }
+    {
+      icon: <ImageIcon className="h-4 w-4" />,
+      label: "Media",
+      status: userProfile.profileImage ? "Set" : "Missing",
+      statusColor: userProfile.profileImage ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900/50" : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900/50",
+      iconColor: "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50",
+    },
+    {
+      icon: <MessageCircle className="h-4 w-4" />,
+      label: "Social",
+      status: `${formatCount(followers.length)} followers`,
+      statusColor: "text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700",
+      iconColor: "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <>
       <Navbar />
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-5xl mx-auto pt-8 pb-20 px-4"
-      >
-        {/* Main Profile Card with Glassmorphism */}
-        <div className="bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden border border-white/40">
+      <main className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 sm:px-6 py-6 transition-colors duration-200">
+        <div className="mx-auto max-w-6xl space-y-6">
 
-          {/* Cover Photo Section */}
-          <div className="relative h-72 md:h-96 overflow-hidden group">
-            {userProfile?.coverImage ? (
-              <motion.img
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                src={userProfile.coverImage}
-                alt="Cover"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div
-                className="w-full h-full animate-gradient-x"
-                style={{ background: 'var(--gradient-hero)' }}
-              />
-            )}
-
-            {/* Premium Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-
-            {/* Glass Action Buttons */}
-            <div className="absolute top-6 right-6 flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,1)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleViewCover(userProfile?.coverImage)}
-                className="px-5 py-2.5 bg-white/90 backdrop-blur-md text-gray-900 text-sm font-bold rounded-2xl shadow-xl flex items-center gap-2 transition-all cursor-pointer border border-white/50"
-              >
-                <Camera className="w-4 h-4" />
-                View Cover
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setOpenCoverModal(true)}
-                className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-2xl shadow-xl flex items-center gap-2 transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                {userProfile?.coverImage ? "Change" : "Add Cover"}
-              </motion.button>
+          {/* ── Profile Header Card ── */}
+          <div className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden transition-colors duration-200">
+            {/* Cover Image Banner */}
+            <div className="relative h-56 sm:h-64 overflow-hidden">
+              {userProfile.coverImage ? (
+                <img
+                  src={userProfile.coverImage}
+                  alt="Cover"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
             </div>
 
-            {openCoverModal && (
-              <CoverModal
-                isOpen={openCoverModal}
-                onClose={() => setOpenCoverModal(false)}
-                coverPreview={coverPreview}
-                handleCoverChange={handleCoverUpload}
-                handleRemoveCover={handleRemoveCover}
-                handleUpload={handleUpload}
-                userProfile={userProfile}
-              />
-            )}
-          </div>
-
-          {/* Profile Info Section */}
-          {/* <div className="relative px-6 md:px-12 pb-10">
-
-            <div className="absolute -top-24 left-1/2 md:left-12 transform -translate-x-1/2 md:translate-x-0">
-              <div className="relative group">
-                <div className="p-1.5 bg-white rounded-full shadow-2xl border border-white/80">
-                  {user?.profileImage ? (
-                    <motion.img
-                      whileHover={{ scale: 1.02 }}
-                      src={user?.profileImage}
-                      alt="Profile"
-                      className="w-44 h-44 rounded-full object-cover"
+            {/* Profile Info Section */}
+            <div className="px-6 pb-6 pt-0 sm:px-8">
+              {/* Row 1: Avatar on Left, Action Buttons on Right */}
+              <div className="flex items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-4 relative z-10">
+                {/* Circular Avatar */}
+                <div className="relative h-28 w-28 sm:h-36 sm:w-36 flex-shrink-0 rounded-full border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-800 shadow-xl overflow-hidden">
+                  {userProfile.profileImage ? (
+                    <img
+                      src={userProfile.profileImage}
+                      alt={userProfile.name}
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className="w-44 h-44 rounded-full text-white text-5xl font-black flex items-center justify-center shadow-inner"
-                      style={{ background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-500) 100%)' }}
-                    >
-                      {user?.name ? getInitials(user.name) : "?"}
-                    </motion.div>
+                    <div className={`flex h-full w-full items-center justify-center ${BRAND_THEME.avatarGradient} text-3xl font-black text-white`}>
+                      {initials}
+                    </div>
                   )}
+                  <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500 shadow-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                  </span>
                 </div>
 
-                {isUserOnline(user?.id) && <div className="absolute bottom-1 right-3 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg z-10" />}
-
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute top-1 right-1 p-3 bg-white hover:bg-gray-50 text-indigo-600 rounded-full shadow-xl border border-gray-100 transition-all cursor-pointer opacity-0 group-hover:opacity-100 md:opacity-100 z-10"
-                  onClick={() => navigate("/update-profile")}
-                >
-                  <Edit2 className="w-5 h-5" />
-                </motion.button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2.5 pb-1">
+                  <Link
+                    to="/update-profile"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    Edit Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 font-bold text-xs rounded-xl border border-gray-200 dark:border-slate-700 transition-all cursor-pointer"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="pt-28 md:pt-6 md:pl-56 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-              <div className="text-center md:text-left">
-                <motion.h1
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="font-royal text-5xl md:text-6xl text-gray-900 tracking-tight mb-3 italic"
-                >
-                  {user?.name || "Guest User"}
-                </motion.h1>
+              {/* Row 2: User Name, Bio, Location & Joined details */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-black text-2xl sm:text-3xl text-gray-900 dark:text-gray-100 tracking-tight">
+                    {userProfile.name}
+                  </h1>
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-xs">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                  </span>
+                </div>
 
-                <p className="text-gray-500 text-lg font-medium max-w-xl leading-relaxed mb-6">
-                  {user?.bio || "No bio yet. Add one to tell your story!"}
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
+                  {userProfile.bio || "Building products, sharing ideas, and connecting with people around the world."}
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm font-bold text-gray-400">
-                  <div className="flex items-center gap-2 bg-gray-100/50 px-3 py-1.5 rounded-full">
-                    <MapPin className="w-4 h-4 text-indigo-500" />
-                    <span>{user?.location || "Everywhere"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-100/50 px-3 py-1.5 rounded-full">
-                    <Calendar className="w-4 h-4 text-purple-500" />
-                    <span>{formatJoinDate(user?.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate("/update-profile")}
-                  className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:bg-black transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Edit2 className="w-5 h-5" />
-                  Edit Profile
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(239, 68, 68, 0.1)" }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleLogout}
-                  className="px-10 py-4 bg-white text-red-500 font-black rounded-2xl border-2 border-red-500/20 hover:border-red-500 transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  Logout
-                </motion.button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-              {[
-                { label: 'Posts', value: userProfile?.posts?.length || 0, color: 'indigo', icon: ImageIcon },
-                { label: 'Followers', value: userProfile?.followers?.length || 0, color: 'purple', icon: Users },
-                { label: 'Following', value: userProfile?.following?.length || 0, color: 'blue', icon: Heart }
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  whileHover={{ y: -6, shadow: '0 25px 50px -12px rgba(0,0,0,0.15)' }}
-                  className="bg-white/40 backdrop-blur-md border border-white/60 p-8 rounded-[32px] flex flex-col items-center group cursor-pointer transition-all"
-                >
-                  <div className={`p-4 rounded-2xl bg-${stat.color}-500/10 text-${stat.color}-600 mb-4 group-hover:scale-110 transition-transform`}>
-                    <stat.icon className="w-8 h-8" />
-                  </div>
-                  <span className="text-4xl font-black text-gray-900 mb-1">{stat.value}</span>
-                  <span className="text-sm font-black text-gray-400 uppercase tracking-widest">{stat.label}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>  */}
-          {/* Premium Profile Section */}
-          <div className="relative px-8 md:px-12 pb-12">
-
-            {/* Avatar */}
-            <div className="absolute -top-28 left-1/2 md:left-12 -translate-x-1/2 md:translate-x-0 z-30">
-              <div className="relative">
-
-                <div className="p-[6px] bg-white rounded-full shadow-[0_30px_80px_rgba(15,23,42,.18)]">
-
-                  {user?.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt="profile"
-                      className="w-52 h-52 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="w-52 h-52 rounded-full flex items-center justify-center text-6xl font-bold text-white"
-                      style={{
-                        background:
-                          "linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)",
-                      }}
+                <div className="flex flex-wrap gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400 pt-1">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-indigo-500" />
+                    {userProfile.location || "Location not set"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5 text-indigo-500" />
+                    Joined {formatJoined(userProfile.createdAt)}
+                  </span>
+                  {userProfile.website && (
+                    <a
+                      href={userProfile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
-                      {getInitials(user?.name)}
-                    </div>
+                      <Link2 className="h-3.5 w-3.5" />
+                      Website
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
                   )}
-                </div>
-
-                {isUserOnline(user?.id) && (
-                  <div className="absolute bottom-4 right-4">
-                    <span className="absolute h-8 w-8 rounded-full bg-green-500 animate-ping" />
-                    <span className="relative block h-8 w-8 rounded-full bg-green-500 border-4 border-white" />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="pt-32 md:pt-10 md:pl-64">
-
-              {/* Name */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-
-                <div>
-
-                  <div className="flex items-center gap-3 justify-center md:justify-start">
-
-                    <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900">
-                      {user?.name}
-                    </h1>
-
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
-                      ✓
-                    </div>
-
-                  </div>
-
-                  <p className="text-lg text-slate-500 mt-3 max-w-xl">
-                    {user?.bio ||
-                      "Building products, sharing ideas and connecting with people around the world."}
-                  </p>
-
-                  <div className="flex flex-wrap gap-3 mt-5">
-
-                    <div className="px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 font-medium">
-                      Software Engineer
-                    </div>
-
-                    <div className="px-4 py-2 rounded-full bg-purple-50 text-purple-600 font-medium">
-                      Creator
-                    </div>
-
-                    <div className="px-4 py-2 rounded-full bg-cyan-50 text-cyan-600 font-medium">
-                      Early Member
-                    </div>
-
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-5 mt-6 text-slate-500">
-
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      {user?.location || "India"}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {formatJoinDate(user?.createdAt)}
-                    </div>
-
-                  </div>
-
-                </div>
-
-                {/* CTA Buttons */}
-                <div className="flex flex-wrap gap-4">
-
-                  <button
-                    onClick={() => navigate("/update-profile")}
-                    className="
-            px-8
-            py-4
-            rounded-2xl
-            bg-slate-900
-            text-white
-            font-semibold
-            shadow-[0_20px_40px_rgba(15,23,42,.2)]
-          "
-                  >
-                    Edit Profile
-                  </button>
-
-                  <button
-                    className="
-            px-8
-            py-4
-            rounded-2xl
-            bg-white
-            border
-            border-slate-200
-            font-semibold
-          "
-                  >
-                    Share Profile
-                  </button>
-
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="mt-10 border-t border-slate-200 pt-8">
-
-                <div className="flex flex-wrap gap-12">
-
-                  <div>
-                    <h3 className="text-4xl font-bold text-slate-900">
-                      {userProfile?.posts?.length || 0}
-                    </h3>
-                    <p className="text-slate-500 font-medium">
-                      Posts
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-4xl font-bold text-slate-900">
-                      {userProfile?.followers?.length || 0}
-                    </h3>
-                    <p className="text-slate-500 font-medium">
-                      Followers
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-4xl font-bold text-slate-900">
-                      {userProfile?.following?.length || 0}
-                    </h3>
-                    <p className="text-slate-500 font-medium">
-                      Following
-                    </p>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Achievement Cards */}
-              <div className="grid md:grid-cols-3 gap-5 mt-10">
-
-                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-                  <h4 className="font-bold text-slate-900">
-                    🔥 Top Creator
-                  </h4>
-                  <p className="text-sm text-slate-500 mt-2">
-                    Consistently engaging with the community.
-                  </p>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-                  <h4 className="font-bold text-slate-900">
-                    ⭐ Early Member
-                  </h4>
-                  <p className="text-sm text-slate-500 mt-2">
-                    Joined during the platform's early growth.
-                  </p>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-                  <h4 className="font-bold text-slate-900">
-                    🚀 Community Builder
-                  </h4>
-                  <p className="text-sm text-slate-500 mt-2">
-                    Growing a strong network and audience.
-                  </p>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-
-          {/* Refined Tabs Section */}
-          {/* <div className="mt-4 border-t border-gray-100 bg-gray-50/30 backdrop-blur-sm">
-            <div className="flex max-w-2xl mx-auto px-4">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex flex-col items-center gap-2.5 py-6 px-4 transition-all relative ${activeTab === tab.id ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <div className={`p-2 rounded-xl transition-all ${activeTab === tab.id ? 'bg-primary-600 text-white shadow-lg shadow-primary-200' : 'bg-transparent'}`}>
-                    {tab.icon}
-                  </div>
-                  <span className="text-xs font-bold tracking-wide">{tab.label}</span>
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="tabActiveIndicator"
-                      className="absolute bottom-0 w-12 h-1.5 bg-primary-600 rounded-t-full"
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-8 md:p-12 min-h-[500px] bg-white rounded-t-[40px] shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.05)] border-t border-white">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {activeTab === "posts" && <PostTab posts={userProfile?.posts} isLoading={isLoading} isError={isError} />}
-                  {activeTab === "about" && (
-                    <div className="max-w-3xl mx-auto py-10">
-                      <div className="bg-gray-50 rounded-[32px] p-10 border border-gray-100">
-                        <h3 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
-                          <Heart className="w-6 h-6 text-pink-500" />
-                          About {user?.name?.split(' ')[0]}
-                        </h3>
-                        <p className="text-gray-600 text-xl leading-relaxed italic">
-                          "{user?.about || "This user prefers to keep their life a mystery... for now."}"
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {activeTab === "friends" && (
-                    <FriendsTab
-                      activeTab={activeTab}
-                      followers={userProfile?.followers}
-                      following={userProfile?.following}
-                      isLoading={isLoading}
-                      isError={isError}
-                    />
-                  )}
-                  {activeTab === "photos" && <Photos />}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div> */}
-          <div className="mt-8 px-4 md:px-8">
-
-            {/* Premium Tab Navigation */}
-            <div className="flex justify-center mb-8">
-
-              <div className="inline-flex bg-slate-100/80 backdrop-blur-xl p-2 rounded-3xl border border-slate-200 shadow-lg">
-
-                {tabs.map((tab) => (
+              {/* Navigation Tabs Bar */}
+              <div className="flex items-center gap-2 border-t border-gray-100 dark:border-slate-800 mt-6 pt-3 overflow-x-auto scrollbar-hide">
+                {[
+                  { id: "posts", label: "Posts", count: posts.length, icon: <Grid2X2 className="h-4 w-4" /> },
+                  { id: "photos", label: "Photos", count: photoPosts.length, icon: <ImageIcon className="h-4 w-4" /> },
+                  { id: "bookmarks", label: "Saved Bookmarks", count: savedPosts.length, icon: <Bookmark className="h-4 w-4" /> },
+                ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className="
-            relative
-            px-6
-            py-3
-            rounded-2xl
-            transition-all
-            duration-300
-            font-semibold
-            flex
-            items-center
-            gap-2
-          "
+                    className={`relative flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                      activeTab === tab.id
+                        ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 shadow-xs"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
                   >
-                    {activeTab === tab.id && (
-                      <motion.div
-                        layoutId="activeTab"
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 30,
-                        }}
-                        className="
-                absolute
-                inset-0
-                bg-white
-                rounded-2xl
-                shadow-[0_10px_30px_rgba(15,23,42,.08)]
-              "
-                      />
-                    )}
-
-                    <span
-                      className={`
-              relative z-10 flex items-center gap-2
-              ${activeTab === tab.id
-                          ? "text-slate-900"
-                          : "text-slate-500"
-                        }
-            `}
-                    >
-                      {tab.icon}
-                      {tab.label}
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                      activeTab === tab.id
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400"
+                    }`}>
+                      {tab.count}
                     </span>
                   </button>
                 ))}
-
               </div>
-
             </div>
+          </div>
 
-            {/* Content Card */}
-            <motion.div
-              layout
-              className="
-      bg-white
-      rounded-[32px]
-      border
-      border-slate-200
-      shadow-[0_20px_60px_rgba(15,23,42,.06)]
-      overflow-hidden
-    "
-            >
+          {/* ── Main 2-Column Content Grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
 
-              <div className="p-8 md:p-12 min-h-[600px]">
-
-                <AnimatePresence mode="wait">
-
-                  <motion.div
-                    key={activeTab}
-                    initial={{
-                      opacity: 0,
-                      y: 15,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    exit={{
-                      opacity: 0,
-                      y: -15,
-                    }}
-                    transition={{
-                      duration: 0.25,
-                    }}
-                  >
-
-                    {activeTab === "posts" && (
-                      <PostTab
-                        posts={userProfile?.posts}
-                        isLoading={isLoading}
-                        isError={isError}
-                      />
-                    )}
-
-                    {activeTab === "about" && (
-                      <div className="max-w-4xl mx-auto">
-
-                        <div
-                          className="
-                  bg-gradient-to-br
-                  from-white
-                  to-slate-50
-                  rounded-[32px]
-                  border
-                  border-slate-200
-                  p-10
-                "
-                        >
-
-                          <div className="flex items-center gap-3 mb-8">
-
-                            <div className="p-3 rounded-2xl bg-pink-50">
-                              <Heart className="w-6 h-6 text-pink-500" />
-                            </div>
-
-                            <div>
-                              <h3 className="text-2xl font-bold text-slate-900">
-                                About {user?.name?.split(" ")[0]}
-                              </h3>
-
-                              <p className="text-slate-500">
-                                Personal information & profile details
-                              </p>
-                            </div>
-
-                          </div>
-
-                          <div className="space-y-8">
-
-                            <div>
-                              <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                                Biography
-                              </h4>
-
-                              <p className="text-lg leading-8 text-slate-700">
-                                {user?.about ||
-                                  "No personal information added yet."}
-                              </p>
-                            </div>
-
-                            <div className="grid md:grid-cols-2 gap-6">
-
-                              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                                <p className="text-slate-400 text-sm mb-2">
-                                  Location
-                                </p>
-
-                                <p className="font-semibold text-slate-800">
-                                  {user?.location || "Not specified"}
-                                </p>
-                              </div>
-
-                              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                                <p className="text-slate-400 text-sm mb-2">
-                                  Joined
-                                </p>
-
-                                <p className="font-semibold text-slate-800">
-                                  {formatJoinDate(user?.createdAt)}
-                                </p>
-                              </div>
-
-                            </div>
-
-                          </div>
-
-                        </div>
-
+            {/* ── Left Sidebar Cards ── */}
+            <aside className="space-y-5">
+              
+              {/* Stats Card */}
+              <section className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors duration-200">
+                <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-4">Activity Overview</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Posts", value: posts.length, icon: <Grid2X2 className="h-3.5 w-3.5" /> },
+                    { label: "Followers", value: followers.length, icon: <UsersRound className="h-3.5 w-3.5" /> },
+                    { label: "Following", value: following.length, icon: <TrendingUp className="h-3.5 w-3.5" /> },
+                  ].map(({ label, value, icon }) => (
+                    <div
+                      key={label}
+                      className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-800/40 p-3 text-center transition-all hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:bg-indigo-50/20"
+                    >
+                      <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs">
+                        {icon}
                       </div>
-                    )}
+                      <p className="font-black text-base text-gray-900 dark:text-gray-100">{formatCount(value)}</p>
+                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase mt-0.5">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-                    {activeTab === "friends" && (
-                      <FriendsTab
-                        activeTab={activeTab}
-                        followers={userProfile?.followers}
-                        following={userProfile?.following}
-                        isLoading={isLoading}
-                        isError={isError}
+              {/* About Section */}
+              <section className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors duration-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">About Me</h3>
+                </div>
+                <p className="text-xs font-medium leading-relaxed text-gray-600 dark:text-gray-300">
+                  {userProfile.about || "No detailed bio added yet. Tell your friends and followers what you care about!"}
+                </p>
+              </section>
+
+              {/* Profile Health Widget */}
+              <section className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">Profile Health</h3>
+                  <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-lg">100%</span>
+                </div>
+
+                <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mb-4">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-full w-full rounded-full" />
+                </div>
+
+                <div className="space-y-3">
+                  {profileHealthItems.map((item) => (
+                    <div key={item.label} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 text-xs font-bold text-gray-700 dark:text-gray-300">
+                        <span className={`p-1.5 rounded-lg ${item.iconColor}`}>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${item.statusColor}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </aside>
+
+            {/* ── Right Main Area (Tab Content) ── */}
+            <main className="space-y-4">
+              {activeTab === "posts" && (
+                posts.length > 0 ? (
+                  <div className="space-y-4">
+                    {posts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        {...post}
+                        user={post.user || { id: userProfile.id, name: userProfile.name, profileImage: userProfile.profileImage }}
                       />
-                    )}
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyPanel
+                    icon={<Grid2X2 className="h-6 w-6" />}
+                    title="No posts yet"
+                    text="Share your first post with the community to get started!"
+                  />
+                )
+              )}
 
-                    {activeTab === "photos" && <Photos />}
+              {activeTab === "photos" && (
+                photoPosts.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {photoPosts.map((post) => (
+                      <motion.div
+                        key={post.id}
+                        whileHover={{ scale: 1.02 }}
+                        className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800 shadow-xs bg-slate-900 cursor-pointer"
+                      >
+                        <img src={post.image} alt={post.title || "Photo"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 text-white text-center">
+                          <p className="text-xs font-bold truncate">{post.title || "View Post"}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyPanel
+                    icon={<ImageIcon className="h-6 w-6" />}
+                    title="No photo posts"
+                    text="Photos you attach to your posts will automatically appear here."
+                  />
+                )
+              )}
 
-                  </motion.div>
-
-                </AnimatePresence>
-
-              </div>
-
-            </motion.div>
-
+              {activeTab === "bookmarks" && (
+                savedPosts.length > 0 ? (
+                  <div className="space-y-4">
+                    {savedPosts.map((post) => (
+                      <PostCard key={post.id} {...post} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyPanel
+                    icon={<Bookmark className="h-6 w-6" />}
+                    title="No saved bookmarks"
+                    text="Posts you bookmark will be saved here for quick access."
+                  />
+                )
+              )}
+            </main>
           </div>
         </div>
-      </motion.div>
-    </div>
+      </main>
+    </>
   );
 }

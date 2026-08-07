@@ -14,6 +14,9 @@ A modern, full-stack social media platform built with React, Express, and Postgr
 - 📹 **Video Calls** - WebRTC-powered video calling
 - 👥 **Friends System** - Send/accept friend requests, manage friendships
 - 📖 **Stories** - Share temporary stories that expire after 24 hours
+- 🛡️ **Privacy Controls** - Block/unblock users, toggle private profiles, and manage activity status
+- 💳 **Subscriptions & Payments** - Stripe integration for premium subscriptions & tier access
+- 🤖 **MCP (Model Context Protocol) Support** - Built-in architecture to expose tools, analytics, and moderation to AI agents
 - 🔔 **Notifications** - Real-time notifications for likes, comments, messages
 - 🔍 **Global Search** - Search for users and posts
 - 🎨 **Modern UI** - Beautiful, responsive design with Tailwind CSS
@@ -40,6 +43,8 @@ A modern, full-stack social media platform built with React, Express, and Postgr
 - **Authentication:** JWT + bcryptjs
 - **Real-time:** Socket.io 4.8
 - **File Upload:** Multer + ImageKit
+- **Payments:** Stripe
+- **AI Protocol:** Model Context Protocol (`@modelcontextprotocol/sdk`)
 - **Email:** Nodemailer
 - **Caching:** Redis (Upstash)
 - **Job Queue:** BullMQ + Bull Board
@@ -51,11 +56,12 @@ A modern, full-stack social media platform built with React, Express, and Postgr
 social-hub/
 ├── backend/              # Express.js API server
 │   ├── src/
-│   │   ├── config/      # Database, Redis, ImageKit configs
+│   │   ├── config/      # Database, Redis, ImageKit, Stripe configs
 │   │   ├── controllers/ # Request handlers
 │   │   ├── routes/      # API routes
 │   │   ├── middleware/  # Auth, validation middleware
 │   │   ├── services/    # Business logic
+│   │   ├── repositories/# Data access layer
 │   │   ├── socket/      # Socket.io handlers
 │   │   ├── queues/      # BullMQ job queues
 │   │   ├── workers/     # Background job processors
@@ -87,6 +93,7 @@ social-hub/
 - **PostgreSQL** >= 14.0
 - **Redis** (or Upstash Redis account)
 - **ImageKit** account (for image uploads)
+- **Stripe** account (for payments)
 - **Gmail** account (for email notifications)
 
 ### Installation
@@ -125,6 +132,10 @@ social-hub/
    IMAGEKIT_PRIVATE_KEY=your-private-key
    IMAGEKIT_URL_ENDPOINT=your-endpoint
    
+   # Stripe
+   STRIPE_SECRET_KEY=your-stripe-secret-key
+   STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
+
    NODE_ENV=development
    ```
 
@@ -208,6 +219,9 @@ http://localhost:3000/api/v1
 - **Friends:** `/friend` - Friend requests and management
 - **Notifications:** `/notification` - User notifications
 - **Stories:** `/story` - Story creation and viewing
+- **Privacy:** `/privacy` - Privacy settings, block list, activity visibility
+- **Subscriptions:** `/subscription` - Stripe checkout and subscription management
+- **Images:** `/image` - ImageKit image uploading & processing
 - **Search:** `/global/search` - Global search
 
 See [backend/README.md](./backend/README.md) for detailed API documentation.
