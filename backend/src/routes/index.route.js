@@ -8,17 +8,22 @@ import friendRoutes from "./friend.route.js";
 import globalRoutes from "./global.route.js";
 import imageRoutes from "./image.route.js";
 import storyRoutes from "./story.route.js";
+import subscriptionRoute from "./stripe.route.js";
+import privacyRoutes from "./privacy.route.js";
 
 const router = express.Router();
 
 router.use("/auth", authRoutes);
-router.use("/user", userRoutes);
-router.use("/post", postRoutes);
-router.use("/notification", notificationRoutes);
-router.use("/chat", chatRoutes);
-router.use("/friend", friendRoutes);
+router.use(["/users", "/user"], userRoutes);
+router.use(["/posts", "/post"], postRoutes);
+router.use(["/notifications", "/notification"], notificationRoutes);
+router.use(["/chats", "/chat"], chatRoutes);
+router.use(["/friends", "/friend"], friendRoutes);
 router.use("/global", globalRoutes);
-router.use("/image", imageRoutes);
-router.use("/story", storyRoutes);
+router.use(["/images", "/image"], imageRoutes);
+router.use(["/stories", "/story"], storyRoutes);
+router.use(["/subscriptions", "/subscription"], subscriptionRoute);
+router.use("/privacy", privacyRoutes);
+
 
 export default router;

@@ -15,7 +15,19 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppLoader } from './components/UI/AppLoader.jsx';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2,
+      refetchOnWindowFocus: false,
+      retry: (failureCount, error) => {
+        const status = error?.response?.status;
+        if ([400, 401, 403, 404].includes(status)) return false;
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

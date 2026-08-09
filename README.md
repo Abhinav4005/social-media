@@ -1,83 +1,96 @@
 # Social Hub
 
-A modern, full-stack social media platform built with React, Express, and PostgreSQL. Connect with friends, share posts, chat in real-time, and share stories.
+A modern, full-stack enterprise social media platform built with React, Express, and PostgreSQL. Connect with friends, share posts, chat in real-time, share stories, and conduct video calls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
 ![React](https://img.shields.io/badge/react-18.2.0-blue.svg)
 
-## Features
+## Key Features & Security Architecture
 
-- 🔐 **Authentication** - Secure JWT-based auth with email verification and password reset
-- 📝 **Posts & Comments** - Create, like, and comment on posts with nested replies
-- 💬 **Real-time Chat** - One-on-one and group messaging with Socket.io
-- 📹 **Video Calls** - WebRTC-powered video calling
-- 👥 **Friends System** - Send/accept friend requests, manage friendships
-- 📖 **Stories** - Share temporary stories that expire after 24 hours
-- 🔔 **Notifications** - Real-time notifications for likes, comments, messages
-- 🔍 **Global Search** - Search for users and posts
-- 🎨 **Modern UI** - Beautiful, responsive design with Tailwind CSS
-- 🌙 **Dark Mode** - Toggle between light and dark themes
+- 🔐 **HttpOnly Cookie Authentication** - Secure, XSS-mitigated auth flow using `HttpOnly`, `Secure`, and `SameSite=Strict` cookies (no access tokens in `localStorage`).
+- 🏗️ **Feature-Based Architecture** - Domain-driven frontend structure (`src/features/`) for modular, isolated, and scalable development.
+- 📝 **Posts & Media Feed** - Create, edit, like, bookmark, and comment on posts with image uploads.
+- 💬 **Real-time Chat & WebRTC Calls** - One-on-one and group messaging with Socket.io & peer-to-peer WebRTC video calling.
+- 👥 **Friends System & Profiles** - Send/accept friend requests, explore profiles, and view user photo galleries.
+- 📖 **Temporary Stories** - Share stories that automatically expire after 24 hours (processed via BullMQ background workers).
+- 🛡️ **Privacy & Security** - User blocking, private profiles, rate-limiting, Helmet headers, and input sanitization.
+- 💳 **Subscriptions & Payments** - Stripe integration for checkout sessions and tier access.
+- 🤖 **MCP (Model Context Protocol) Support** - Exposes tools, analytics, and moderation endpoints for AI agent integration.
+- 🔔 **Notifications & Search** - Real-time activity notifications and global search across users & posts.
+- 🎨 **Modern Glassmorphic UI & Dark Mode** - Modern responsive theme built with Tailwind CSS & Framer Motion.
+
+---
 
 ## Tech Stack
 
 ### Frontend
-- **Framework:** React 18.2
-- **Build Tool:** Vite 5.0
+- **Framework:** React 18.2 (Vite 5.0)
+- **Architecture:** Feature-Based / Domain-Driven Architecture
 - **Styling:** Tailwind CSS 4.1
-- **State Management:** Redux Toolkit + Redux Persist
-- **Routing:** React Router DOM 7.8
-- **Data Fetching:** TanStack Query (React Query) 5.85
-- **Real-time:** Socket.io Client 4.8
-- **Video Calls:** Simple Peer (WebRTC)
-- **Animations:** Framer Motion 12.23
-- **Icons:** Lucide React
+- **State Management:** Redux Toolkit + React Query (TanStack Query v5)
+- **Security:** HttpOnly Cookie Auth (`withCredentials: true`), XSS-safe input sanitization
+- **Real-time & Signaling:** Socket.io Client 4.8 + Simple Peer (WebRTC)
+- **Animations & Icons:** Framer Motion 12.23 + Lucide React
 
 ### Backend
-- **Runtime:** Node.js (ES Modules)
-- **Framework:** Express 5.1
+- **Runtime:** Node.js (ES Modules) with Express 5.1
 - **Database:** PostgreSQL with Prisma ORM 7.1
-- **Authentication:** JWT + bcryptjs
-- **Real-time:** Socket.io 4.8
+- **Authentication:** JWT + `cookie-parser` + bcryptjs
+- **Real-time:** Socket.io 4.8 with cookie-handshake authentication
 - **File Upload:** Multer + ImageKit
-- **Email:** Nodemailer
-- **Caching:** Redis (Upstash)
-- **Job Queue:** BullMQ + Bull Board
-- **Rate Limiting:** express-rate-limit
+- **Payments:** Stripe
+- **AI Protocol:** Model Context Protocol (`@modelcontextprotocol/sdk`)
+- **Caching & Job Queue:** Upstash Redis + BullMQ (with Bull Board Admin GUI)
+
+---
 
 ## Project Structure
 
 ```
 social-hub/
-├── backend/              # Express.js API server
+├── backend/              # Express.js API Server
 │   ├── src/
-│   │   ├── config/      # Database, Redis, ImageKit configs
+│   │   ├── config/      # Database, Redis, ImageKit, Stripe configs
 │   │   ├── controllers/ # Request handlers
-│   │   ├── routes/      # API routes
-│   │   ├── middleware/  # Auth, validation middleware
-│   │   ├── services/    # Business logic
-│   │   ├── socket/      # Socket.io handlers
-│   │   ├── queues/      # BullMQ job queues
-│   │   ├── workers/     # Background job processors
-│   │   ├── utils/       # Helper functions
-│   │   ├── lib/         # Third-party integrations
-│   │   └── templates/   # Email templates
+│   │   ├── middleware/  # Cookie auth, rate limits, error handler
+│   │   ├── repositories/# Data access layer
+│   │   ├── routes/      # API v1 routes
+│   │   ├── services/    # Business logic layer
+│   │   ├── socket/      # Socket.io handlers & auth middleware
+│   │   ├── queues/      # BullMQ background job queues
+│   │   └── workers/     # Background processors (story cleanup)
 │   ├── prisma/          # Database schema & migrations
-│   ├── uploads/         # File uploads (gitignored)
 │   └── index.js         # Server entry point
 │
-└── frontend/            # React application
+└── frontend/            # React Application (Vite)
     ├── src/
-    │   ├── components/  # Reusable UI components
-    │   ├── pages/       # Page components
-    │   ├── store/       # Redux store & slices
-    │   ├── routes/      # Route guards
-    │   ├── utils/       # Helper functions
-    │   ├── Modal/       # Modal components
-    │   ├── constant/    # Constants
-    │   └── helper/      # Helper utilities
+    │   ├── features/    # Domain-based feature modules
+    │   │   ├── auth/          # Authentication pages & components
+    │   │   ├── posts/         # Feed, post card, comments, modals
+    │   │   ├── chat/          # Chat sidebar, messaging, video call
+    │   │   ├── profile/       # User profile & cover update
+    │   │   ├── friends/       # Friend requests & lists
+    │   │   ├── stories/       # Story tray & creation modal
+    │   │   ├── settings/      # Account & privacy settings
+    │   │   ├── notifications/ # Notification feed
+    │   │   ├── groups/        # Community groups & modals
+    │   │   ├── search/        # Global search
+    │   │   ├── marketplace/   # Local marketplace
+    │   │   ├── watch/         # Video feed
+    │   │   ├── events/        # Upcoming events
+    │   │   └── saved/         # Bookmarked posts
+    │   ├── api/         # Domain API client modules (auth, posts, chat...)
+    │   ├── components/  # Shared primitive components (UserAvatar, TabBar...)
+    │   ├── constant/    # Centralized constants (API_ENDPOINTS, SOCKET_EVENTS...)
+    │   ├── context/     # Theme & Toast contexts
+    │   ├── hooks/       # Custom hooks (useAuth, useSocketPresence, useWebRTC)
+    │   ├── pages/       # Layout pages (Navbar, Sidebar, Footer, FeedPage)
+    │   └── store/       # Redux store & domain slices
     └── public/          # Static assets
 ```
+
+---
 
 ## Getting Started
 
@@ -86,8 +99,8 @@ social-hub/
 - **Node.js** >= 18.0.0
 - **PostgreSQL** >= 14.0
 - **Redis** (or Upstash Redis account)
-- **ImageKit** account (for image uploads)
-- **Gmail** account (for email notifications)
+- **ImageKit** account (for media storage)
+- **Stripe** account (for payments)
 
 ### Installation
 
@@ -108,6 +121,7 @@ social-hub/
    DATABASE_URL=postgresql://user:password@localhost:5432/socialhub_db
    JWT_SECRET=your_jwt_secret_here
    FRONTEND_URL=http://localhost:5173
+   FRONTEND_BASE_URL=http://localhost:5173
    
    # Email Configuration
    SMTP_HOST=smtp.gmail.com
@@ -125,6 +139,10 @@ social-hub/
    IMAGEKIT_PRIVATE_KEY=your-private-key
    IMAGEKIT_URL_ENDPOINT=your-endpoint
    
+   # Stripe
+   STRIPE_SECRET_KEY=your-stripe-secret-key
+   STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
+
    NODE_ENV=development
    ```
 
@@ -132,11 +150,6 @@ social-hub/
    ```bash
    npx prisma migrate dev
    npx prisma generate
-   ```
-
-   (Optional) Seed the database:
-   ```bash
-   npm run seed
    ```
 
 3. **Set up Frontend**
@@ -148,154 +161,50 @@ social-hub/
    Create `.env` file:
    ```env
    VITE_API_URL=http://localhost:3000/api/v1
+   VITE_SOCKET_URL=http://localhost:3000
    ```
 
 ### Running the Application
 
 **Development Mode:**
 
-1. Start the backend server:
+1. Start backend server:
    ```bash
    cd backend
    npm run dev
    ```
    Server runs on `http://localhost:3000`
 
-2. In a new terminal, start the frontend:
+2. Start frontend dev server:
    ```bash
    cd frontend
    npm run dev
    ```
    App runs on `http://localhost:5173`
 
-3. (Optional) Start background workers:
+3. (Optional) Start background workers & view BullMQ Dashboard:
    ```bash
    cd backend
    npm run worker      # Story processing worker
    npm run cleanup     # Story cleanup worker
    ```
-
-4. (Optional) View queue dashboard:
    Navigate to `http://localhost:3000/admin/queues`
 
-**Production Build:**
+---
 
-```bash
-# Backend
-cd backend
-npm start
+## API Architecture & Centralized Constants
 
-# Frontend
-cd frontend
-npm run build
-npm run preview
-```
+All API interactions are organized using single-source-of-truth constant registries:
 
-## API Documentation
+- **`API_ENDPOINTS`** (`src/constant/apiEndpoints.js`): Maps all HTTP route paths (`/auth/login`, `/post/feed`, `/chat/rooms`, etc.).
+- **`SOCKET_EVENTS`** (`src/constant/socketEvents.js`): Maps all Socket.IO & WebRTC signaling event names.
+- **`QUERY_KEYS`** (`src/constant/queryKeys.js`): Maps React Query server cache keys.
+- **`ROUTES`** (`src/constant/routes.js`): Maps application page routes.
 
-### Base URL
-```
-http://localhost:3000/api/v1
-```
-
-### Main Endpoints
-
-- **Auth:** `/auth` - Login, register, password reset
-- **Users:** `/user` - User profiles, updates
-- **Posts:** `/post` - CRUD operations for posts
-- **Comments:** `/post/:id/comments` - Comment management
-- **Chat:** `/chat` - Messaging and rooms
-- **Friends:** `/friend` - Friend requests and management
-- **Notifications:** `/notification` - User notifications
-- **Stories:** `/story` - Story creation and viewing
-- **Search:** `/global/search` - Global search
-
-See [backend/README.md](./backend/README.md) for detailed API documentation.
-
-## Design System
-
-The application uses a consistent color scheme based on Tailwind CSS custom colors:
-
-- **Primary:** Indigo (`primary-500`, `primary-600`, `primary-700`)
-- **Secondary:** Purple (`secondary-500`, `secondary-600`)
-- **Accent:** Blue (`accent-500`, `accent-600`)
-
-All colors are defined in `frontend/src/styles/theme.css` using CSS custom properties for easy theming.
-
-## Testing
-
-```bash
-# Backend tests (when implemented)
-cd backend
-npm test
-
-# Frontend tests (when implemented)
-cd frontend
-npm test
-```
-
-## Database Management
-
-```bash
-# Open Prisma Studio (Database GUI)
-cd backend
-npx prisma studio
-
-# Create a new migration
-npx prisma migrate dev --name migration_name
-
-# Reset database (WARNING: Deletes all data)
-npx prisma migrate reset
-
-# Generate Prisma Client
-npx prisma generate
-```
-
-## Available Scripts
-
-### Backend
-- `npm run dev` - Start development server with nodemon
-- `npm start` - Start production server
-- `npm run seed` - Seed database with sample data
-- `npm run worker` - Start story processing worker
-- `npm run cleanup` - Start story cleanup worker
-
-### Frontend
-- `npm run dev` - Start Vite dev server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+---
 
 ## License
 
 This project is licensed under the MIT License.
 
-## Author
-
-**Abhinav**
-- GitHub: [@Abhinav4005](https://github.com/Abhinav4005)
-
-## Acknowledgments
-
-- [Prisma](https://www.prisma.io/) for the excellent ORM
-- [Socket.io](https://socket.io/) for real-time capabilities
-- [Tailwind CSS](https://tailwindcss.com/) for the styling framework
-- [ImageKit](https://imagekit.io/) for image management
-
-## Support
-
-If you have any questions or need help, please open an issue on GitHub.
-
----
-
-Made with ❤️ by Abhinav
+Made with ❤️ by [Abhinav](https://github.com/Abhinav4005)

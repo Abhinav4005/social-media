@@ -4,16 +4,15 @@ import { addMemberToRoom, changeGroupName, createRoom, deleteMessage, getMessage
 
 const router = express.Router();
 
-router.post("/create/room", authenticateToken, createRoom);
-
 router.get("/rooms", authenticateToken, getRooms);
 
-router.post("/add/member", authenticateToken, addMemberToRoom);
-
+router.post("/rooms", authenticateToken, createRoom);
+router.post("/create/room", authenticateToken, createRoom);
+router.get("/rooms/:roomId/messages", authenticateToken, getMessages);
 router.get("/room/:roomId/messages", authenticateToken, getMessages);
-
-router.patch("/room/update", authenticateToken, changeGroupName);
-
+router.post("/rooms/:roomId/members", authenticateToken, addMemberToRoom);
+router.put("/rooms/:roomId/name", authenticateToken, changeGroupName);
+router.delete("/messages/:messageId", authenticateToken, deleteMessage);
 router.delete("/message/:messageId/delete", authenticateToken, deleteMessage);
 
 export default router;

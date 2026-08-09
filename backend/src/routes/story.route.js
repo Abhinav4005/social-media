@@ -7,10 +7,8 @@ const router = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post("/create", upload.fields([{ name: "media"}, { name: "media"} ]), authenticateToken, createStory);
-
-router.get("/getUserStory", authenticateToken, getStories);
-
-router.post("/markSeen", authenticateToken, markStorySeen);
+router.post("/", upload.fields([{ name: "media" }]), authenticateToken, createStory);
+router.get("/", authenticateToken, getStories);
+router.post("/:id/views", authenticateToken, markStorySeen);
 
 export default router;

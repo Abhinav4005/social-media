@@ -14,24 +14,21 @@ export const sendEmail = async ({ to, subject, templateName, variables }) => {
       html = html.replace(new RegExp(`{{${key}}}`, "g"), variables[key]);
     }
   
-    const testAccount = await nodemailer.createTestAccount();
-  
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.ethereal.email",
-      port: process.env.SMTP_PORT || 587,
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
       auth: {
-        user: process.env.SMTP_USER || testAccount.user,
-        pass: process.env.SMTP_PASS || testAccount.pass,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
   
     const info = await transporter.sendMail({
-      from: process.env.SMTP_USER || testAccount.user,
+      from: process.env.FROM_EMAIL,
       to,
       subject,
       html,
     });
   
     console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   };  

@@ -18,6 +18,8 @@ enum LikeStatus {
   DISLIKE
 }
 
+
+
 enum NotificationType {
   LIKE
   COMMENT
@@ -73,6 +75,15 @@ enum CallStatus {
   FAILED
 }
 
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  unpaid
+  incomplete
+}
+
 model User {
   id             Int       @id @default(autoincrement())
   name           String
@@ -90,6 +101,7 @@ model User {
   isDeleted      Boolean   @default(false)
 
   emailLastModified    DateTime  @default(now())
+  stripeCustomerId     String?       @unique
 
   posts        Post[]
   comments     Comment[]
@@ -126,6 +138,7 @@ model User {
   storyFeed       StoryFeed[]
   savePost        SavedPost[]
   callParticipant CallParticipant[]
+  subscription    Subscription?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +171,8 @@ model FriendShip {
   updatedAt   DateTime         @updatedAt
 
   @@unique([requesterId, addresseeId])
+  @@index([requesterId, addresseeId, status])
+  @@index([status])
 }
 
 model Follower {
@@ -171,6 +186,8 @@ model Follower {
   createdAt DateTime @default(now())
 
   @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model Post {
@@ -188,6 +205,9 @@ model Post {
   privacy       PostPrivacy?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model Comment {
@@ -206,6 +226,8 @@ model Comment {
   isDeleted     Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
+
+  @@index([postId, createdAt])
 }
 
 model PostLike {
@@ -218,6 +240,7 @@ model PostLike {
   status    LikeStatus @default(DISLIKE)
 
   @@unique([postId, userId])
+  @@index([postId, status])
 }
 
 model CommentLike {
@@ -439,6 +462,9 @@ model Story {
   songType  String?
   isActive  Boolean     @default(true)
   storyFeed StoryFeed[]
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
 }
 
 model StoryView {
@@ -476,6 +502,7 @@ model SavedPost {
   createdAt DateTime @default(now())
 
   @@unique([userId, postId])
+  @@index([userId, createdAt])
 }
 
 model CallSession {
@@ -504,4 +531,15 @@ model CallParticipant {
   isVideoOn     Boolean     @default(true)
 
   @@unique([callSessionId, userId])
+}
+
+model Subscription {
+  id                      Int         @id @default(autoincrement())
+  stripeSubscriptionId    String      @unique
+  status                  SubscriptionStatus
+  currentPeriodEnd        DateTime
+  user                    User        @relation(fields:[userId], references:[id])
+  userId                  Int         @unique
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
 }

@@ -16,6 +16,7 @@
     "axios": "^1.11.0",
     "buffer": "^6.0.3",
     "clsx": "^2.1.1",
+    "dompurify": "^3.4.13",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.539.0",
     "process": "^0.11.10",
@@ -28,7 +29,8 @@
     "simple-peer": "^9.11.1",
     "simple-peer-light": "^9.10.0",
     "socket.io-client": "^4.8.1",
-    "tailwindcss": "^4.1.12"
+    "tailwindcss": "^4.1.12",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",

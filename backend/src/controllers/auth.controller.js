@@ -1,186 +1,102 @@
-import { prisma } from "../lib/prisma.js";
-import bcrypt from "bcryptjs";
-import generateToken from "../utils/generateToken.js";
-import { sendEmail } from "../utils/email.js";
+import { defaultAuthService } from "../services/auth.service.js";
+import { ApiResponse } from "../utils/apiResponse.js";
+import { AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS } from "../middleware/authenticateToken.js";
 
-export const signUp = async (req, res) => {
+export const signUp = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
+        const result = await defaultAuthService.signUp(req.body);
+
+        if (result.token) {
+            res.cookie(AUTH_COOKIE_NAME, result.token, AUTH_COOKIE_OPTIONS);
         }
-        const existingUser = await prisma.user.findUnique({
-            where: {
-                email: email
-            }
-        })
-        if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword
-            }
-        });
-        const { password: _, ...userWithoutPassword } = newUser;
-        const token = generateToken({ id: userWithoutPassword.id });
-        return res.status(201).json({ message: "User created successfully", user: userWithoutPassword, token });
+
+        const { token: _omit, ...safeResult } = result;
+        return ApiResponse.success(res, safeResult, "User created successfully", 201);
     } catch (error) {
+        if (error.status) {
+            return ApiResponse.error(res, error.message, error.status);
+        }
         console.error("Error creating user:", error);
-        return res.status(500).json({ message: "Internal server error", error: error.message });
+        return next(error);
     }
-}
+};
 
-export const signIn = async (req, res) => {
+export const signIn = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email and password are required" });
+        const result = await defaultAuthService.signIn(req.body);
+
+        if (result.token) {
+            res.cookie(AUTH_COOKIE_NAME, result.token, AUTH_COOKIE_OPTIONS);
         }
 
-        const user = await prisma.user.findUnique({
-            where: { email }
-        })
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        const isPasswordSame = await bcrypt.compare(password, user.password);
-
-        if (!isPasswordSame) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-        const { password: _, ...userWithoutPassword } = user;
-        const token = generateToken({ id: userWithoutPassword.id });
-        return res.status(200).json({ message: "Login successful", user: userWithoutPassword, token });
+        const { token: _omit, ...safeResult } = result;
+        return ApiResponse.success(res, safeResult, "Login successful", 200);
     } catch (error) {
-
+        if (error.status) {
+            return ApiResponse.error(res, error.message, error.status);
+        }
         console.error("Error during sign in:", error);
-        return res.status(500).json({ message: "Internal server error", error: error.message });
+        return next(error);
     }
-}
+};
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
     try {
-        const { email } = req.body;
-
-        const user = await prisma.user.findUnique({
-            where: { email: email }
-        });
-
-        if (!user) {
-            return res.status(404).json({ message: "user not found" });
-        }
-
-        const token = generateToken({ id: user?.id, expiresIn: "30m" })
-
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
-
-        const reset = await prisma.passwordReset.create({
-            data: {
-                userId: user?.id,
-                token: token,
-                expiresAt: expiresAt,
-                used: false,
-
-            }
-        });
-
-        await sendEmail({
-            to: email,
-            subject: "Reset Your My-Social Password",
-            templateName: "passwordReset.html",
-            variables: {
-                name: user?.name,
-                resetLink: `${process.env.FRONTEND_URL}?token=${token}`
-            }
-        });
-
-        return res.status(200).json({
-            message: "Password reset link sent successfully",
-            reset: reset
-        })
+        const reset = await defaultAuthService.forgotPassword(req.body);
+        return ApiResponse.success(res, { reset }, "Password reset link sent successfully", 200);
     } catch (error) {
-        console.error("Error in forgot password: ", error)
-        return res.status(500).json({ message: `Error in forgot-password: ${error}` })
+        if (error.status) {
+            return ApiResponse.error(res, error.message, error.status);
+        }
+        console.error("Error in forgot password: ", error);
+        return next(error);
     }
-}
+};
 
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (req, res, next) => {
     try {
-        const { token, newPassword, confirmPassword } = req.body;
-        if (!token || !newPassword || !confirmPassword) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-
-        if(newPassword !== confirmPassword){
-            return res.status(400).json({ message: "Passwords do not match"})
-        }
-
-        const resetRecord = await prisma.passwordReset.findUnique({
-            where: { token: token }
-        })
-
-        if (!resetRecord) {
-            return res.status(404).json({ message: "Token not found" });
-        }
-
-        if(Date.now() > resetRecord.expiresAt){
-            return res.status(400).json({ message: "Token is expired" });
-        }
-
-        if(resetRecord.used){
-            return res.status(400).json({ message: "Token is already used" });
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { id: resetRecord?.userId }
-        });
-
-        if(!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        const hashedPassword = await bcrypt.hash(confirmPassword, 10);
-
-        const updateUser = await prisma.user.update({
-            where: {id: resetRecord?.userId},
-            data:{
-                password: hashedPassword
-            }
-        });
-
-        const updateReset = await prisma.passwordReset.update({
-            where:{ token: token},
-            data:{
-                usedAt: new Date(Date.now()),
-                used: true,
-            }
-        })
-
-        const {password:_, ...userWithoutPassword} = updateUser;
-
-        return res.status(200).json({ 
-            message: "Password reset successfully",
-            user: userWithoutPassword,
-            reset: updateReset
-        })
+        const result = await defaultAuthService.resetPassword(req.body);
+        return ApiResponse.success(res, result, "Password reset successfully", 200);
     } catch (error) {
+        if (error.status) {
+            return ApiResponse.error(res, error.message, error.status);
+        }
         console.error("Error in resetting password: ", error);
-        return res.status(500).json({ message: `Error in resetting password: ${error}`})
+        return next(error);
     }
-}
+};
 
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
     try {
-        // JWT is stateless; logout is handled client-side by removing the token.
-        // This endpoint exists so the frontend has a consistent logout contract.
-        return res.status(200).json({ message: "Logout successful" });
+        res.clearCookie(AUTH_COOKIE_NAME, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
+            path: "/",
+        });
+        return ApiResponse.success(res, null, "Logout successful", 200);
     } catch (error) {
         console.error("Error during logout:", error);
-        return res.status(500).json({ message: "Internal server error", error: error.message });
+        return next(error);
     }
-}
+};
+
+export const refreshToken = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        const result = await defaultAuthService.refreshToken(userId);
+
+        if (result.token) {
+            res.cookie(AUTH_COOKIE_NAME, result.token, AUTH_COOKIE_OPTIONS);
+        }
+
+        const { token: _omit, ...safeResult } = result;
+        return ApiResponse.success(res, safeResult, "Token refreshed successfully", 200);
+    } catch (error) {
+        if (error.status) {
+            return ApiResponse.error(res, error.message, error.status);
+        }
+        console.error("Error refreshing token:", error);
+        return next(error);
+    }
+};

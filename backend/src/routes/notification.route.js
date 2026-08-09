@@ -5,7 +5,6 @@ import { getNotifications, markNotificationAsRead } from "../controllers/notific
 const router = express.Router();
 
 router.get("/", authenticateToken, getNotifications);
-
-router.put("/markAsRead", authenticateToken, markNotificationAsRead);
+router.put("/:id/read", authenticateToken, markNotificationAsRead);
 
 export default router;
