@@ -2,11 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Peer from "simple-peer-light";
 import { socket } from "../socket";
 
-/**
- * Custom Hook: useWebRTC
- * Responsibility: Manages WebRTC Peer connections, socket signaling events, and call state timer.
- * Fulfills Single Responsibility Principle (SRP) & Dependency Inversion Principle (DIP).
- */
 export function useWebRTC({ streamRef, myVideo, targetUserId, preloadedCall }) {
     const userVideo = useRef(null);
     const connectionRef = useRef(null);

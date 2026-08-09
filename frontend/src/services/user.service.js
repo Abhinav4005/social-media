@@ -1,9 +1,5 @@
 import apiClient from "../api/client";
 
-/**
- * Frontend User Service abstraction (DIP & OCP).
- * Encapsulates user profile, friend interactions, and search API calls.
- */
 export const userService = {
     async getUserProfile() {
         const response = await apiClient.get("/users/me");

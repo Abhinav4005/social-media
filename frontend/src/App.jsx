@@ -9,30 +9,30 @@ import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import PageLoader from './components/Common/PageLoader';
 import Footer from './pages/Footer';
+import { ROUTES } from './constant/routes';
 
-// Dynamic React.lazy Code-Splitting for Route Pages
-const Notifications = lazy(() => import('./pages/Notification'));
-const SignUpPage = lazy(() => import('./pages/SignUpPage'));
-const SignInPage = lazy(() => import('./pages/SignInPage'));
+const Notifications = lazy(() => import('./features/notifications').then(m => ({ default: m.NotificationPage })));
+const SignUpPage = lazy(() => import('./features/auth').then(m => ({ default: m.SignUpPage })));
+const SignInPage = lazy(() => import('./features/auth').then(m => ({ default: m.SignInPage })));
+const ForgotPasswordPage = lazy(() => import('./features/auth').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./features/auth').then(m => ({ default: m.ResetPasswordPage })));
 const Home = lazy(() => import('./pages/Home'));
-const Profile = lazy(() => import('./components/Users/Profile'));
-const PostDetail = lazy(() => import('./components/Posts/PostDetail'));
-const Settings = lazy(() => import('./pages/Setting'));
-const UpdateProfile = lazy(() => import('./components/Users/UpdateProfile'));
-const ChatPage = lazy(() => import('./pages/ChatPage'));
-const FriendsDetail = lazy(() => import('./components/Friends/FriendsDetail'));
-const SearchPage = lazy(() => import('./pages/SearchPage'));
-const SearchedUserProfile = lazy(() => import('./components/Users/SearchedUserProfile'));
-const FriendRequests = lazy(() => import('./components/Friends/FriendRequests'));
-const SahreModal = lazy(() => import('./Modal/SahreModal'));
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
-const VideoCall = lazy(() => import('./components/Chat/VideoCall'));
-const GroupsPage = lazy(() => import('./pages/GroupsPage'));
-const WatchPage = lazy(() => import('./pages/WatchPage'));
-const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
-const EventsPage = lazy(() => import('./pages/EventsPage'));
-const SavedPage = lazy(() => import('./pages/SavedPage'));
+const Profile = lazy(() => import('./features/profile').then(m => ({ default: m.Profile })));
+const SearchedUserProfile = lazy(() => import('./features/profile').then(m => ({ default: m.SearchedUserProfile })));
+const UpdateProfile = lazy(() => import('./features/profile').then(m => ({ default: m.UpdateProfile })));
+const PostDetail = lazy(() => import('./features/posts').then(m => ({ default: m.PostDetail })));
+const SahreModal = lazy(() => import('./features/posts').then(m => ({ default: m.SahreModal })));
+const ChatPage = lazy(() => import('./features/chat').then(m => ({ default: m.ChatPage })));
+const VideoCall = lazy(() => import('./features/chat').then(m => ({ default: m.VideoCall })));
+const FriendsDetail = lazy(() => import('./features/friends').then(m => ({ default: m.FriendsDetail })));
+const FriendRequests = lazy(() => import('./features/friends').then(m => ({ default: m.FriendRequests })));
+const Settings = lazy(() => import('./features/settings').then(m => ({ default: m.Setting })));
+const SearchPage = lazy(() => import('./features/search').then(m => ({ default: m.SearchPage })));
+const GroupsPage = lazy(() => import('./features/groups').then(m => ({ default: m.GroupsPage })));
+const WatchPage = lazy(() => import('./features/watch').then(m => ({ default: m.WatchPage })));
+const MarketplacePage = lazy(() => import('./features/marketplace').then(m => ({ default: m.MarketplacePage })));
+const EventsPage = lazy(() => import('./features/events').then(m => ({ default: m.EventsPage })));
+const SavedPage = lazy(() => import('./features/saved').then(m => ({ default: m.SavedPage })));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const FeaturesPage = lazy(() => import('./pages/FeaturesPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
@@ -41,16 +41,15 @@ const HelpCenterPage = lazy(() => import('./pages/HelpCenterPage'));
 const GuidelinesPage = lazy(() => import('./pages/GuidelinesPage'));
 const SafetyCenterPage = lazy(() => import('./pages/SafetyCenterPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
-// Central App Shell Layout managing global components (e.g. Footer) without touching individual pages
 const AppLayout = ({ children }) => {
   const location = useLocation();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
-  // Hide footer on Chat, VideoCall, Auth pages, or logged-in Feed page
-  const isChatOrCall = location.pathname.startsWith('/chat') || location.pathname.startsWith('/video-call');
-  const isMainFeed = location.pathname === '/' && isAuthenticated;
-  const isAuthPage = location.pathname === '/signin' || location.pathname === '/signup';
+  const isChatOrCall = location.pathname.startsWith(ROUTES.CHAT) || location.pathname.startsWith('/video-call');
+  const isMainFeed = location.pathname === ROUTES.HOME && isAuthenticated;
+  const isAuthPage = location.pathname === ROUTES.SIGNIN || location.pathname === ROUTES.SIGNUP;
 
   const shouldHideFooter = isChatOrCall || isMainFeed || isAuthPage;
 
@@ -72,223 +71,267 @@ const App = () => {
             <AppLayout>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-              <Route
-                path="/signin"
-                element={
-                  <PublicRoute>
-                    <SignInPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/signup"
-                element={
-                  <PublicRoute>
-                    <SignUpPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/"
-                element={
-                  <PrivateRoute>
-                    <Home />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PrivateRoute>
-                    <Profile />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/notifications"
-                element={
-                  <PrivateRoute>
-                    <Notifications />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/posts/:postId"
-                element={
-                  <PrivateRoute>
-                    <PostDetail />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <PrivateRoute>
-                    <Settings />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/update-profile"
-                element={
-                  <PrivateRoute>
-                    <UpdateProfile />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <PrivateRoute>
-                    <ChatPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/chat/:roomId"
-                element={
-                  <PrivateRoute>
-                    <ChatPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/friends/:userId"
-                element={
-                  <PrivateRoute>
-                    <FriendsDetail />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/search-page"
-                element={
-                  <PrivateRoute>
-                    <SearchPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/search"
-                element={
-                  <PrivateRoute>
-                    <SearchPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/user/:userId"
-                element={
-                  <PrivateRoute>
-                    <SearchedUserProfile />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/friend-requests"
-                element={
-                  <PrivateRoute>
-                    <FriendRequests />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/groups"
-                element={
-                  <PrivateRoute>
-                    <GroupsPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/watch"
-                element={
-                  <PrivateRoute>
-                    <WatchPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/marketplace"
-                element={
-                  <PrivateRoute>
-                    <MarketplacePage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/events"
-                element={
-                  <PrivateRoute>
-                    <EventsPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/saved"
-                element={
-                  <PrivateRoute>
-                    <SavedPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/share"
-                element={
-                  <PrivateRoute>
-                    <SahreModal />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/forgot-password"
-                element={
-                  <PublicRoute>
-                    <ForgotPasswordPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/reset-password"
-                element={
-                  <PublicRoute>
-                    <ResetPasswordPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/video-call/:roomId"
-                element={
-                  <PrivateRoute>
-                    <VideoCall />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/video-call/incoming"
-                element={
-                  <PrivateRoute>
-                    <VideoCall />
-                  </PrivateRoute>
-                }
-              />
-              {/* Static Informational Routes */}
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/features" element={<FeaturesPage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/help" element={<HelpCenterPage />} />
-              <Route path="/guidelines" element={<GuidelinesPage />} />
-              <Route path="/safety" element={<SafetyCenterPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-            </Routes>
-          </Suspense>
-        </AppLayout>
-      </Router>
-      </ToastProvider>
-    </ThemeProvider>
-  </ErrorBoundary>
+                  <Route
+                    path={ROUTES.SIGNIN}
+                    element={
+                      <PublicRoute>
+                        <SignInPage />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.SIGNUP}
+                    element={
+                      <PublicRoute>
+                        <SignUpPage />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.HOME}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Feed display failed">
+                          <Home />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.PROFILE}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Profile view failed">
+                          <Profile />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.NOTIFICATIONS}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Notifications unavailable">
+                          <Notifications />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/posts/:postId"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Post details failed to load">
+                          <PostDetail />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.SETTINGS}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Settings page error">
+                          <Settings />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.UPDATE_PROFILE}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Profile update error">
+                          <UpdateProfile />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.CHAT}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Chat service unavailable">
+                          <ChatPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/chat/:roomId"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Chat room failed to load">
+                          <ChatPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/friends/:userId"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Friend details error">
+                          <FriendsDetail />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/search-page"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Search page error">
+                          <SearchPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.SEARCH}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Search page error">
+                          <SearchPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/user/:userId"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="User profile error">
+                          <SearchedUserProfile />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.FRIEND_REQUESTS}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Friend requests error">
+                          <FriendRequests />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.GROUPS}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Groups page error">
+                          <GroupsPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.WATCH}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Watch page error">
+                          <WatchPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.MARKETPLACE}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Marketplace page error">
+                          <MarketplacePage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.EVENTS}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Events page error">
+                          <EventsPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.SAVED}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Saved items error">
+                          <SavedPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.SHARE}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Share dialog error">
+                          <SahreModal />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.FORGOT_PASSWORD}
+                    element={
+                      <PublicRoute>
+                        <ForgotPasswordPage />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.RESET_PASSWORD}
+                    element={
+                      <PublicRoute>
+                        <ResetPasswordPage />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path="/video-call/:roomId"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Video call error">
+                          <VideoCall />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/video-call/incoming"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Video call error">
+                          <VideoCall />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+                  <Route path={ROUTES.FEATURES} element={<FeaturesPage />} />
+                  <Route path={ROUTES.PRIVACY} element={<PrivacyPolicyPage />} />
+                  <Route path={ROUTES.TERMS} element={<TermsPage />} />
+                  <Route path={ROUTES.HELP} element={<HelpCenterPage />} />
+                  <Route path={ROUTES.GUIDELINES} element={<GuidelinesPage />} />
+                  <Route path={ROUTES.SAFETY} element={<SafetyCenterPage />} />
+                  <Route path={ROUTES.BLOG} element={<BlogPage />} />
+
+                  {/* Catch-all 404 Route */}
+                  <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
+            </AppLayout>
+          </Router>
+        </ToastProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
-export default App;
+export default App;

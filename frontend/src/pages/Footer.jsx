@@ -66,7 +66,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links Columns */}
           <div>
             <h4 className="text-gray-900 dark:text-gray-100 font-bold mb-6">Company</h4>
             <ul className="space-y-4">
@@ -107,9 +106,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Social Links & Newsletter (Simplified) section could go here */}
-
-        {/* Bottom Bar */}
         <div className="pt-8 mt-8 border-t border-gray-50 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-gray-400 dark:text-gray-400 text-sm">
             © {currentYear} <span className="text-gray-600 dark:text-gray-300 font-semibold">Connecta</span>. Built with ❤️ for everyone.

@@ -1,9 +1,5 @@
 import apiClient from "../api/client";
 
-/**
- * Frontend Post Service abstraction (DIP & OCP).
- * Encapsulates posts, comments, reactions, and feed API calls.
- */
 export const postService = {
     async createPost(formData) {
         const response = await apiClient.post("/posts", formData, {

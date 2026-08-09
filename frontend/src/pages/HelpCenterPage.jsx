@@ -69,7 +69,6 @@ export default function HelpCenterPage() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-6 py-12 md:py-20 space-y-16">
-        {/* ── Hero Search Section ── */}
         <section className="text-center space-y-6 max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -84,7 +83,6 @@ export default function HelpCenterPage() {
             How can we help you today?
           </h1>
 
-          {/* Search Box */}
           <div className="relative max-w-xl mx-auto">
             <div className="flex items-center bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl px-4 py-3.5 shadow-md">
               <Search className="h-5 w-5 text-gray-400 mr-3" />
@@ -99,7 +97,6 @@ export default function HelpCenterPage() {
           </div>
         </section>
 
-        {/* ── Categories Grid ── */}
         <section className="space-y-8">
           <h2 className="text-2xl font-black text-center tracking-tight">Browse Help Topics</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -126,7 +123,6 @@ export default function HelpCenterPage() {
           </div>
         </section>
 
-        {/* ── FAQ Section ── */}
         <section className="space-y-6 max-w-3xl mx-auto">
           <h2 className="text-2xl font-black tracking-tight text-center">Frequently Asked Questions</h2>
           <div className="space-y-4">
@@ -145,7 +141,6 @@ export default function HelpCenterPage() {
           </div>
         </section>
 
-        {/* ── Contact Support CTA ── */}
         <section className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div className="space-y-1">
             <h3 className="text-xl font-bold">Still need help?</h3>

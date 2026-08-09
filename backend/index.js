@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import hpp from 'hpp';
+import cookieParser from 'cookie-parser';
 import path from "path";
 import http from "http";
 import { initSocket } from './src/socket/index.js';
@@ -14,12 +15,13 @@ import { errorHandler } from './src/middleware/error.middleware.js';
 import { responseMiddleware } from './src/middleware/response.middleware.js';
 import globalLimit from './src/middleware/globalLimit.js';
 import adminAuth from './src/middleware/adminAuth.middleware.js';
+import { csrfGuard } from './src/middleware/csrfGuard.js';
+import compression from 'compression';
 
 dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config();
 
-// Process-level unhandled rejection & uncaught exception safety handlers
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[Fatal] Unhandled Rejection at:", promise, "reason:", reason);
 });
@@ -31,14 +33,32 @@ process.on("uncaughtException", (error) => {
 const app = express();
 const server = http.createServer(app);
 
-// Generic API Response Middleware
+app.use(compression());
+
 app.use(responseMiddleware);
 
-// Security HTTP Headers & HPP Protection
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
+  frameguard: { action: "deny" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://ik.imagekit.io"],
+      connectSrc: ["'self'", "ws:", "wss:", "http://localhost:3000", "http://localhost:5173"],
+      frameAncestors: ["'none'"],
+    },
+  },
 }));
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "DENY");
+  next();
+});
 app.use(hpp());
+
+app.use(csrfGuard);
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -57,26 +77,24 @@ app.use(cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-admin-key"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-admin-key", "X-Requested-With", "x-requested-with"],
 }));
 
-// Payload Size Caps
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ limit: "2mb", extended: true }));
+
+app.use(cookieParser());
+
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// Production Health Check Probe for Docker / AWS / Vercel
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString(), env: process.env.NODE_ENV || "development" });
 });
 
-// Protected API v1 Endpoints with Global Rate Limiting
 app.use("/api/v1", globalLimit, indexRoutes);
 
-// Admin Queue Dashboard Protected with Admin Authorization
 app.use("/admin/queues", adminAuth, queueMonitor.getRouter());
 
-// Global Centralized Production Error Handler
 app.use(errorHandler);
 
 initSocket(server);

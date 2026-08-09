@@ -1,9 +1,5 @@
 import apiClient from "../api/client";
 
-/**
- * Frontend Auth Service abstraction (DIP & OCP).
- * Encapsulates all authentication HTTP API calls away from React components.
- */
 export const authService = {
     async signUp(name, email, password) {
         const response = await apiClient.post("/auth/signup", { name, email, password });

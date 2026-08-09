@@ -126,6 +126,19 @@ export class AuthService {
 
         return { user: safeUser, reset: updateReset };
     }
+
+    async refreshToken(userId) {
+        if (!userId) {
+            throw new ApiError(400, "Missing user identification");
+        }
+        const user = await this.authRepository.findUserById(userId);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+        const safeUser = sanitizeUserDTO(user);
+        const token = generateToken({ id: safeUser.id });
+        return { user: safeUser, token };
+    }
 }
 
 export const defaultAuthService = new AuthService();

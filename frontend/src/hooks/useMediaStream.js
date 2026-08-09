@@ -1,10 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-/**
- * Custom Hook: useMediaStream
- * Responsibility: Manages user media device access (camera & mic), tracks, and controls.
- * Fulfills Single Responsibility Principle (SRP) by isolating Media API handling from UI components.
- */
 export function useMediaStream() {
     const myVideo = useRef(null);
     const streamRef = useRef(null);

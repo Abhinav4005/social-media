@@ -1,9 +1,5 @@
 import apiClient from "../api/client";
 
-/**
- * Frontend Privacy & Block Service (DIP & OCP).
- * Encapsulates blocking users, privacy settings, and custom privacy lists API calls.
- */
 export const privacyService = {
     async blockUser(userId) {
         const response = await apiClient.post(`/privacy/block/${userId}`);

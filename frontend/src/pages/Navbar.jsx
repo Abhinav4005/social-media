@@ -8,6 +8,9 @@ import { getFriendRequests, globalSearch } from "../api";
 import useDebounce from "../utils/useDebounce";
 import { BRAND_THEME } from "../constant/constant";
 import { useTheme } from "../context/ThemeContext";
+import UserAvatar from "../components/Common/UserAvatar";
+import { QUERY_KEYS } from "../constant/queryKeys";
+import { ROUTES } from "../constant/routes";
 
 /**
  * Modern Streamlined Navbar presentational component.
@@ -27,13 +30,13 @@ export default function Navbar() {
   const debouncedQuery = useDebounce(searchQuery, 300);
 
   const { data: results, isLoading } = useQuery({
-    queryKey: ["instantSearch", debouncedQuery],
+    queryKey: QUERY_KEYS.globalSearch(debouncedQuery, "all"),
     queryFn: () => globalSearch(debouncedQuery, "all", 5, 1),
     enabled: debouncedQuery.trim().length >= 3,
   });
 
   const { data: friendRequests = [] } = useQuery({
-    queryKey: ["friendRequests"],
+    queryKey: QUERY_KEYS.friendRequests,
     queryFn: getFriendRequests,
     refetchInterval: 15000,
   });
@@ -52,13 +55,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((part) => part[0]?.toUpperCase())
-      .slice(0, 2)
-      .join("") || "U";
-
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -67,7 +63,7 @@ export default function Navbar() {
 
         {/* ── Logo Section ────────────────────────────────────────── */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to={ROUTES.HOME} className="flex items-center gap-2.5 group">
             <div className="relative">
               <img
                 src="/connecta-logo-icon.png"
@@ -76,7 +72,7 @@ export default function Navbar() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-heading text-lg font-black tracking-tight bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent leading-none">
+              <span className="font-heading text-lg font-black tracking-tight bg-gradient-to-r from-secondary-600 via-primary-600 to-primary-500 bg-clip-text text-transparent leading-none">
                 Connecta
               </span>
               <span className="text-[8.5px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mt-0.5">
@@ -91,7 +87,7 @@ export default function Navbar() {
           <div ref={searchRef} className="relative w-full">
             <div className={`flex h-10 w-full items-center gap-2.5 rounded-2xl border px-3.5 transition-all duration-200 ${
               searchFocused
-                ? "border-indigo-400 dark:border-indigo-500 bg-white dark:bg-slate-800 shadow-md shadow-indigo-100/50 dark:shadow-none"
+                ? "border-primary-400 dark:border-primary-500 bg-white dark:bg-slate-800 shadow-md shadow-primary-100/50 dark:shadow-none"
                 : "border-gray-200/80 dark:border-slate-700/70 bg-gray-50/90 dark:bg-slate-800/50 hover:bg-gray-100/70 dark:hover:bg-slate-800"
             }`}>
               <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -129,12 +125,17 @@ export default function Navbar() {
                             key={`user-${result.id}`}
                             type="button"
                             onClick={() => {
-                              navigate(`/users/${result.id}`);
+                              navigate(ROUTES.USER_PROFILE(result.id));
                               setSearchFocused(false);
                             }}
                             className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left hover:bg-gray-50 dark:hover:bg-slate-800/70 transition-colors"
                           >
-                            <img src={result.profileImage || "/default-avatar.png"} alt="" className="h-8 w-8 rounded-full object-cover ring-1 ring-gray-200 dark:ring-slate-700" />
+                            <UserAvatar
+                              name={result.name}
+                              profileImage={result.profileImage}
+                              size="xs"
+                              shape="circle"
+                            />
                             <div className="min-w-0 flex-1">
                               <p className="text-[13px] font-bold text-gray-900 dark:text-gray-100 truncate">{result.name}</p>
                               <p className="truncate text-xs text-gray-400 font-medium">@{result.email?.split("@")[0]}</p>
@@ -146,12 +147,12 @@ export default function Navbar() {
                             key={`post-${result.id}`}
                             type="button"
                             onClick={() => {
-                              navigate(`/posts/${result.id}`);
+                              navigate(ROUTES.POST_DETAIL(result.id));
                               setSearchFocused(false);
                             }}
                             className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left hover:bg-gray-50 dark:hover:bg-slate-800/70 transition-colors"
                           >
-                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex-shrink-0">
                               <Search className="h-3.5 w-3.5" />
                             </span>
                             <p className="truncate text-[13px] font-bold text-gray-900 dark:text-gray-100">{result.title}</p>
@@ -173,81 +174,81 @@ export default function Navbar() {
           
           {/* Home Link */}
           <Link
-            to="/"
+            to={ROUTES.HOME}
             title="Home"
             className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              isActive("/")
-                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold"
+              isActive(ROUTES.HOME)
+                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
                 : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
             <Home className="h-4.5 w-4.5" />
-            {isActive("/") && (
+            {isActive(ROUTES.HOME) && (
               <motion.span
                 layoutId="active-nav-dot"
-                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400"
+                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400"
               />
             )}
           </Link>
 
           {/* Friend Requests Link */}
           <Link
-            to="/friend-requests"
+            to={ROUTES.FRIEND_REQUESTS}
             title="Friend Requests"
             className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              isActive("/friend-requests")
-                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold"
+              isActive(ROUTES.FRIEND_REQUESTS)
+                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
                 : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
             <UsersRound className="h-4.5 w-4.5" />
             {pendingRequestsCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-600 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
                 {pendingRequestsCount}
               </span>
             )}
-            {isActive("/friend-requests") && (
+            {isActive(ROUTES.FRIEND_REQUESTS) && (
               <motion.span
                 layoutId="active-nav-dot"
-                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400"
+                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400"
               />
             )}
           </Link>
 
           {/* Chat Link */}
           <Link
-            to="/chat"
+            to={ROUTES.CHAT}
             title="Messages"
             className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              location.pathname.startsWith("/chat")
-                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold"
+              location.pathname.startsWith(ROUTES.CHAT)
+                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
                 : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
             <MessagesSquare className="h-4.5 w-4.5" />
-            {location.pathname.startsWith("/chat") && (
+            {location.pathname.startsWith(ROUTES.CHAT) && (
               <motion.span
                 layoutId="active-nav-dot"
-                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400"
+                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400"
               />
             )}
           </Link>
 
           {/* Notifications Link */}
           <Link
-            to="/notifications"
+            to={ROUTES.NOTIFICATIONS}
             title="Notifications"
             className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              isActive("/notifications")
-                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold"
+              isActive(ROUTES.NOTIFICATIONS)
+                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
                 : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
             <Bell className="h-4.5 w-4.5" />
-            {isActive("/notifications") && (
+            {isActive(ROUTES.NOTIFICATIONS) && (
               <motion.span
                 layoutId="active-nav-dot"
-                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400"
+                className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400"
               />
             )}
           </Link>
@@ -266,28 +267,24 @@ export default function Navbar() {
             {isDark ? (
               <Sun className="h-4.5 w-4.5 text-amber-400 animate-spin-once" />
             ) : (
-              <Moon className="h-4.5 w-4.5 text-indigo-600" />
+              <Moon className="h-4.5 w-4.5 text-primary-600" />
             )}
           </button>
 
           {/* User Profile Link */}
           <Link
-            to="/profile"
+            to={ROUTES.PROFILE}
             title="My Profile"
             className="relative flex items-center rounded-2xl p-0.5 transition-all duration-200 hover:opacity-90 ml-0.5"
           >
-            {user?.profileImage ? (
-              <img
-                src={user.profileImage}
-                alt={user.name}
-                className="h-9 w-9 rounded-2xl object-cover ring-2 ring-gray-100 dark:ring-slate-700 hover:ring-indigo-300 dark:hover:ring-indigo-500 transition-all duration-200 shadow-xs"
-              />
-            ) : (
-              <span className={`flex h-9 w-9 items-center justify-center rounded-2xl ${BRAND_THEME.avatarGradient} text-[12px] font-bold text-white shadow-xs`}>
-                {initials}
-              </span>
-            )}
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+            <UserAvatar
+              name={user?.name}
+              profileImage={user?.profileImage}
+              size="sm"
+              shape="rounded"
+              showOnline
+              ring="ring-2 ring-gray-100 dark:ring-slate-700 hover:ring-primary-300 dark:hover:ring-primary-500"
+            />
           </Link>
 
         </div>

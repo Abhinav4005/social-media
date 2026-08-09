@@ -3,12 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../socket";
 import { setOnlineUsers, updateLastSeen } from "../store/slices/presenceSlice";
+import { SOCKET_EVENTS } from "../constant/socketEvents";
 
-/**
- * Custom Hook: useSocketPresence
- * Encapsulates socket connection lifecycle, online user tracking, and incoming call signaling.
- * Fulfills Single Responsibility Principle (SRP) & Interface Segregation (ISP).
- */
 export function useSocketPresence() {
     const { user } = useSelector((state) => state.auth || {});
     const dispatch = useDispatch();
@@ -16,40 +12,34 @@ export function useSocketPresence() {
 
     const [pendingCall, setPendingCall] = useState(null);
 
-    /* ── Presence connection ── */
     useEffect(() => {
         if (!user?.id) {
             if (socket.connected) socket.disconnect();
             return;
         }
 
-        const token = localStorage.getItem("token");
-        if (socket.auth?.token !== token) {
-            socket.auth = { token };
-            socket.disconnect().connect();
-        } else if (socket.disconnected) {
+        if (socket.disconnected) {
             socket.connect();
         }
 
-        const handleConnect = () => socket.emit("userOnline", user.id);
+        const handleConnect = () => socket.emit(SOCKET_EVENTS.USER_ONLINE, user.id);
         const handleOnlineUsers = (data) => dispatch(setOnlineUsers(data));
         const handleLastSeen = (data) => dispatch(updateLastSeen(data));
 
         socket.on("connect", handleConnect);
-        socket.on("onlineUsers", handleOnlineUsers);
-        socket.on("lastSeenUpdate", handleLastSeen);
+        socket.on(SOCKET_EVENTS.ONLINE_USERS, handleOnlineUsers);
+        socket.on(SOCKET_EVENTS.LAST_SEEN_UPDATE, handleLastSeen);
 
         if (socket.connected) handleConnect();
 
         return () => {
             socket.off("connect", handleConnect);
-            socket.off("onlineUsers", handleOnlineUsers);
-            socket.off("lastSeenUpdate", handleLastSeen);
-            socket.emit("userOffline", user.id);
+            socket.off(SOCKET_EVENTS.ONLINE_USERS, handleOnlineUsers);
+            socket.off(SOCKET_EVENTS.LAST_SEEN_UPDATE, handleLastSeen);
+            socket.emit(SOCKET_EVENTS.USER_OFFLINE, user.id);
         };
     }, [user?.id, dispatch]);
 
-    /* ── Incoming call listeners ── */
     useEffect(() => {
         if (!user?.id) return;
 
@@ -60,12 +50,12 @@ export function useSocketPresence() {
 
         const handleCallEnded = () => setPendingCall(null);
 
-        socket.on("incoming-call", handleIncomingCall);
-        socket.on("call-ended", handleCallEnded);
+        socket.on(SOCKET_EVENTS.INCOMING_CALL, handleIncomingCall);
+        socket.on(SOCKET_EVENTS.CALL_ENDED, handleCallEnded);
 
         return () => {
-            socket.off("incoming-call", handleIncomingCall);
-            socket.off("call-ended", handleCallEnded);
+            socket.off(SOCKET_EVENTS.INCOMING_CALL, handleIncomingCall);
+            socket.off(SOCKET_EVENTS.CALL_ENDED, handleCallEnded);
         };
     }, [user?.id]);
 
@@ -83,7 +73,7 @@ export function useSocketPresence() {
 
     const declineCall = useCallback(() => {
         if (pendingCall) {
-            socket.emit("end-call", { targetUserId: pendingCall.from });
+            socket.emit(SOCKET_EVENTS.END_CALL, { targetUserId: pendingCall.from });
         }
         setPendingCall(null);
     }, [pendingCall]);

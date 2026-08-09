@@ -1,5 +1,5 @@
 import express from "express";
-import { signUp, signIn, forgotPassword, resetPassword, logout } from "../controllers/auth.controller.js";
+import { signUp, signIn, forgotPassword, resetPassword, logout, refreshToken } from "../controllers/auth.controller.js";
 import loginLimit from "../middleware/loginLimit.js";
 import authLimit from "../middleware/authLimit.js";
 import authenticateToken from "../middleware/authenticateToken.js";
@@ -48,6 +48,7 @@ router.post(
 );
 
 router.post("/logout", authenticateToken, logout);
+router.post("/refresh-token", authenticateToken, refreshToken);
 
 export default router;
 

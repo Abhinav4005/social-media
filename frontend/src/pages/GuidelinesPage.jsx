@@ -37,7 +37,6 @@ export default function GuidelinesPage() {
       <Navbar />
 
       <main className="max-w-4xl mx-auto px-6 py-12 md:py-20 space-y-12">
-        {/* ── Header ── */}
         <section className="text-center space-y-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -57,7 +56,6 @@ export default function GuidelinesPage() {
           </p>
         </section>
 
-        {/* ── Guidelines Cards ── */}
         <div className="space-y-6">
           {rules.map((rule, i) => (
             <motion.div
@@ -80,7 +78,6 @@ export default function GuidelinesPage() {
           ))}
         </div>
 
-        {/* ── Reporting Banner ── */}
         <section className="p-8 rounded-3xl bg-indigo-50/60 dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 space-y-3">
           <h3 className="font-bold text-base text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />

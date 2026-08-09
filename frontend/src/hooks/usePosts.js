@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { postService } from "../services/post.service";
 
-/**
- * Custom Hook: usePosts
- * Encapsulates feed fetching, pagination, post creation, comments, and reactions.
- * Fulfills SRP & ISP.
- */
 export function usePosts(initialPage = 1, limit = 10) {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(false);

@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Camera, Loader2, Smile, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import FeedLayout from "../components/FeedLayout";
-import PostCard from "../components/Posts/PostCard";
+import { PostCard, CreatePostModal } from "../features/posts";
 import Sidebar from "./Sidebar";
-import Notifications from "./Notification";
-import StoryTray from "../components/Strories/StoryTray";
-import CreatePostModal from "../Modal/CreatePostModal";
-import { getPostFeed } from "../api";
+import { NotificationList } from "../features/notifications";
+import { StoryTray } from "../features/stories";
+import { getNotifications, getPostFeed } from "../api";
+import { QUERY_KEYS } from "../constant/queryKeys";
 
 const PostShimmer = () => (
   <motion.div
@@ -70,7 +70,6 @@ const EmptyState = ({ onOpenModal }) => {
   );
 };
 
-
 const ErrorState = ({ refetch }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -106,9 +105,15 @@ export default function FeedPage() {
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ["feedPosts"],
+    queryKey: QUERY_KEYS.feed,
     queryFn: ({ pageParam = 1 }) => getPostFeed(pageParam),
     getNextPageParam: (lastPage) => (lastPage?.hasMore ? lastPage?.page + 1 : undefined),
+  });
+
+  const { data: notifications, isLoading: notifLoading, isError: notifError } = useQuery({
+    queryKey: QUERY_KEYS.notifications,
+    queryFn: getNotifications,
+    refetchInterval: 10000,
   });
 
   const handleScroll = useCallback(() => {
@@ -173,9 +178,7 @@ export default function FeedPage() {
                 ))}
               </div>
             </section>
-
             <StoryTray />
-
             <section className="space-y-4">
               {isLoading ? (
                 <>
@@ -212,9 +215,8 @@ export default function FeedPage() {
             </section>
           </div>
         }
-        right={<Notifications />}
+        right={<NotificationList notifications={notifications} isLoading={notifLoading} isError={notifError} />}
       />
-
       <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );

@@ -20,7 +20,11 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 2,
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: (failureCount, error) => {
+        const status = error?.response?.status;
+        if ([400, 401, 403, 404].includes(status)) return false;
+        return failureCount < 2;
+      },
     },
   },
 });

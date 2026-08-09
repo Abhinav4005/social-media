@@ -3,14 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../services/auth.service";
 import { setCredentials, logout as logoutAction } from "../store/slices/authSlice";
 
-/**
- * Custom Hook: useAuth
- * Encapsulates authentication state, login, signup, and token lifecycle management.
- * Fulfills Single Responsibility Principle (SRP) & Interface Segregation (ISP).
- */
 export function useAuth() {
     const dispatch = useDispatch();
-    const { user, token } = useSelector((state) => state.auth || {});
+    const { user } = useSelector((state) => state.auth || {});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -19,9 +14,8 @@ export function useAuth() {
         setError(null);
         try {
             const data = await authService.signIn(email, password);
-            if (data.token && data.user) {
-                localStorage.setItem("token", data.token);
-                dispatch(setCredentials({ user: data.user, token: data.token }));
+            if (data.user) {
+                dispatch(setCredentials({ user: data.user }));
             }
             setLoading(false);
             return data;
@@ -38,9 +32,8 @@ export function useAuth() {
         setError(null);
         try {
             const data = await authService.signUp(name, email, password);
-            if (data.token && data.user) {
-                localStorage.setItem("token", data.token);
-                dispatch(setCredentials({ user: data.user, token: data.token }));
+            if (data.user) {
+                dispatch(setCredentials({ user: data.user }));
             }
             setLoading(false);
             return data;
@@ -58,15 +51,13 @@ export function useAuth() {
         } catch (e) {
             console.error("Logout API error", e);
         } finally {
-            localStorage.removeItem("token");
             dispatch(logoutAction());
         }
     }, [dispatch]);
 
     return {
         user,
-        token,
-        isAuthenticated: !!token,
+        isAuthenticated: !!user,
         loading,
         error,
         signIn,

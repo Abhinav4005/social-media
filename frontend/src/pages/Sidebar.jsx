@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ChevronDown } from "lucide-react";
 import { BRAND_THEME, mainItems, shortcutItems } from "../constant/constant";
+import UserAvatar from "../components/Common/UserAvatar";
+import { ROUTES } from "../constant/routes";
 
 function NavItem({ item, active }) {
   return (
@@ -10,14 +12,14 @@ function NavItem({ item, active }) {
         to={item.path}
         className={`relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-bold transition-all duration-150 ${
           active
-            ? "border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300 shadow-xs shadow-indigo-50/50 dark:shadow-none"
-            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-slate-800/80 hover:text-indigo-650 dark:hover:text-indigo-400"
+            ? "border border-primary-100 dark:border-primary-900/50 bg-primary-50/70 dark:bg-primary-950/40 text-primary-650 dark:text-primary-300 shadow-xs shadow-primary-50/50 dark:shadow-none"
+            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50/80 dark:hover:bg-slate-800/80 hover:text-primary-650 dark:hover:text-primary-400"
         }`}
       >
         <span
           className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-150 ${
             active
-              ? "bg-white dark:bg-slate-800 border-indigo-100 dark:border-indigo-900/50 text-indigo-650 dark:text-indigo-300 shadow-xs"
+              ? "bg-white dark:bg-slate-800 border-primary-100 dark:border-primary-900/50 text-primary-650 dark:text-primary-300 shadow-xs"
               : "bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-800 text-gray-400 dark:text-gray-400 group-hover:bg-white dark:group-hover:bg-slate-800"
           }`}
         >
@@ -33,13 +35,6 @@ function NavItem({ item, active }) {
 export default function Sidebar() {
   const { pathname } = useLocation();
   const { user } = useSelector((state) => state.auth);
-
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((part) => part[0]?.toUpperCase())
-      .slice(0, 2)
-      .join("") || "U";
 
   return (
     <aside
@@ -63,8 +58,10 @@ export default function Sidebar() {
       "
     >
       {/* Dynamic User Profile Card */}
-      <div
+      <Link
+        to={ROUTES.PROFILE}
         className="
+          flex
           mb-5
           rounded-2xl
           border
@@ -83,21 +80,17 @@ export default function Sidebar() {
         "
       >
         <div className="flex items-center gap-3">
-          {user?.profileImage ? (
-            <img
-              src={user.profileImage}
-              alt={user.name}
-              className="h-10 w-10 rounded-xl object-cover ring-1.5 ring-white dark:ring-slate-800 shadow-xs"
-            />
-          ) : (
-            <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${BRAND_THEME.avatarGradient} text-xs font-bold text-white shadow-xs`}>
-              {initials}
-            </span>
-          )}
+          <UserAvatar
+            name={user?.name}
+            profileImage={user?.profileImage}
+            size="sm"
+            shape="rounded"
+            ring="ring-1.5 ring-white dark:ring-slate-800 shadow-xs"
+          />
 
           <div className="min-w-0">
             <h3 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 truncate">
-              {user?.name || "Abhinav Kumar"}
+              {user?.name || "User"}
             </h3>
 
             <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-400 truncate">
@@ -105,7 +98,7 @@ export default function Sidebar() {
             </p>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Main Navigation */}
       <nav className="space-y-1">

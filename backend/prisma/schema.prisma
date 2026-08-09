@@ -462,6 +462,9 @@ model Story {
   songType  String?
   isActive  Boolean     @default(true)
   storyFeed StoryFeed[]
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
 }
 
 model StoryView {
@@ -499,6 +502,7 @@ model SavedPost {
   createdAt DateTime @default(now())
 
   @@unique([userId, postId])
+  @@index([userId, createdAt])
 }
 
 model CallSession {

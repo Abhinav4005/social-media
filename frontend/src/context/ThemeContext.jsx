@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { STORAGE_KEYS } from '../constant/storageKeys';
 
 const ThemeContext = createContext();
 
-const THEME_STORAGE_KEY = 'social_hub_theme';
+const THEME_STORAGE_KEY = STORAGE_KEYS.THEME;
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setThemeState] = useState(() => {

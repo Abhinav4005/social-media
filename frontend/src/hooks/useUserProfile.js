@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { userService } from "../services/user.service";
 
-/**
- * Custom Hook: useUserProfile
- * Encapsulates profile loading, profile editing state, and file uploads.
- * Fulfills SRP & ISP by isolating user management logic away from UI layout files.
- */
 export function useUserProfile() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(false);

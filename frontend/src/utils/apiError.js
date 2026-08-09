@@ -1,7 +1,3 @@
-/**
- * Frontend Custom ApiError Class extending Error.
- * Preserves HTTP status codes, server response envelopes, and error messages.
- */
 export class ApiError extends Error {
     constructor(statusCode, message = "An error occurred", errors = []) {
         super(message);

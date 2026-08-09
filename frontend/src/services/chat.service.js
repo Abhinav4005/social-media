@@ -1,9 +1,5 @@
 import apiClient from "../api/client";
 
-/**
- * Frontend Chat Service abstraction (DIP & OCP).
- * Encapsulates rooms and chat message API calls.
- */
 export const chatService = {
     async createRoom(type, name, memberIds) {
         const response = await apiClient.post("/chats/rooms", { type, name, memberIds });
