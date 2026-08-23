@@ -23,4 +23,7 @@ export const QUERY_KEYS = {
   upcomingEvents: ["upcomingEvents"],
   myEvents: ["myEvents"],
   event: (id) => ["event", id],
+  marketplaceListings: (category, search) => ["marketplaceListings", category, search],
+  myMarketplaceListings: ["myMarketplaceListings"],
+  marketplaceListing: (id) => ["marketplaceListing", id],
 };

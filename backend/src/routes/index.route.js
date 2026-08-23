@@ -12,6 +12,7 @@ import subscriptionRoute from "./stripe.route.js";
 import privacyRoutes from "./privacy.route.js";
 import groupRoutes from "./group.route.js";
 import eventRoutes from "./event.route.js";
+import marketplaceRoutes from "./marketplace.route.js";
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ router.use(["/subscriptions", "/subscription"], subscriptionRoute);
 router.use("/privacy", privacyRoutes);
 router.use(["/groups", "/group"], groupRoutes);
 router.use(["/events", "/event"], eventRoutes);
+router.use(["/marketplace", "/marketplaces"], marketplaceRoutes);
 
 
 export default router;

@@ -95,6 +95,16 @@ enum EventRsvpStatus {
   NOT_GOING
 }
 
+enum MarketplaceCategory {
+  ELECTRONICS
+  FURNITURE
+  VEHICLES
+  FASHION
+  SPORTS
+  BOOKS
+  OTHER
+}
+
 model User {
   id             Int       @id @default(autoincrement())
   name           String
@@ -153,6 +163,7 @@ model User {
   groupMemberships GroupMember[]
   eventAttendees    EventAttendee[]
   createdEvents     Event[]
+  marketplaceListings MarketplaceListing[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -632,4 +643,23 @@ model EventAttendee {
   @@unique([eventId, userId])
   @@index([eventId])
   @@index([userId])
+}
+
+model MarketplaceListing {
+  id          Int                 @id @default(autoincrement())
+  title       String
+  description String?
+  price       Float
+  category    MarketplaceCategory @default(OTHER)
+  location    String?
+  images      String[]
+  seller      User                @relation(fields: [sellerId], references: [id])
+  sellerId    Int
+  isSold      Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([category])
+  @@index([sellerId])
+  @@index([createdAt])
 }
