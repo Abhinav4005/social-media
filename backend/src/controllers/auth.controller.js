@@ -66,6 +66,20 @@ export const resetPassword = async (req, res, next) => {
     }
 };
 
+export const changePassword = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        const result = await defaultAuthService.changePassword(userId, req.body);
+        return ApiResponse.success(res, result, "Password changed successfully", 200);
+    } catch (error) {
+        if (error.status) {
+            return ApiResponse.error(res, error.message, error.status);
+        }
+        console.error("Error changing password:", error);
+        return next(error);
+    }
+};
+
 export const logout = async (req, res, next) => {
     try {
         res.clearCookie(AUTH_COOKIE_NAME, {

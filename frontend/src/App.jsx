@@ -29,6 +29,7 @@ const FriendRequests = lazy(() => import('./features/friends').then(m => ({ defa
 const Settings = lazy(() => import('./features/settings').then(m => ({ default: m.Setting })));
 const SearchPage = lazy(() => import('./features/search').then(m => ({ default: m.SearchPage })));
 const GroupsPage = lazy(() => import('./features/groups').then(m => ({ default: m.GroupsPage })));
+const GroupDetailPage = lazy(() => import('./features/groups').then(m => ({ default: m.GroupDetailPage })));
 const WatchPage = lazy(() => import('./features/watch').then(m => ({ default: m.WatchPage })));
 const MarketplacePage = lazy(() => import('./features/marketplace').then(m => ({ default: m.MarketplacePage })));
 const EventsPage = lazy(() => import('./features/events').then(m => ({ default: m.EventsPage })));
@@ -223,6 +224,16 @@ const App = () => {
                       <PrivateRoute>
                         <ErrorBoundary compact title="Groups page error">
                           <GroupsPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/groups/:id"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Group detail page error">
+                          <GroupDetailPage />
                         </ErrorBoundary>
                       </PrivateRoute>
                     }
