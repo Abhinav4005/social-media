@@ -37,6 +37,7 @@ import {
 } from "../../../api";
 import { useToast } from "../../../context/ToastContext";
 import GroupModal from "../modals/GroupModal";
+import { PostCard } from "../../posts";
 
 export default function GroupDetailPage() {
     const { id } = useParams();
@@ -275,8 +276,8 @@ export default function GroupDetailPage() {
                                             onClick={() => (isMember ? leaveMutation.mutate() : joinMutation.mutate())}
                                             disabled={joinMutation.isPending || leaveMutation.isPending}
                                             className={`flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 ${isMember
-                                                    ? "bg-white/20 hover:bg-red-500/80 backdrop-blur-md text-white"
-                                                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                ? "bg-white/20 hover:bg-red-500/80 backdrop-blur-md text-white"
+                                                : "bg-indigo-600 hover:bg-indigo-700 text-white"
                                                 }`}
                                         >
                                             {joinMutation.isPending || leaveMutation.isPending ? (
@@ -316,8 +317,8 @@ export default function GroupDetailPage() {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`py-3.5 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeTab === tab.id
-                                                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                                                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                            ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                                            : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                                             }`}
                                     >
                                         {tab.label}
@@ -384,54 +385,7 @@ export default function GroupDetailPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         {posts.map((post) => (
-                                            <motion.div
-                                                key={post.id}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-xs space-y-3"
-                                            >
-                                                {/* Author Header */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                                                            {post.user?.profileImage ? (
-                                                                <img src={post.user.profileImage} alt={post.user.name} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                post.user?.name?.[0] || "U"
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100">{post.user?.name || "Group Member"}</h4>
-                                                            <p className="text-[10px] text-gray-400">{new Date(post.createdAt).toLocaleDateString()}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Title & Body */}
-                                                <div>
-                                                    <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">{post.title}</h3>
-                                                    <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">{post.description}</p>
-                                                </div>
-
-                                                {/* Post Media */}
-                                                {post.image && (
-                                                    <div className="rounded-2xl overflow-hidden max-h-80 bg-gray-100 dark:bg-slate-800">
-                                                        <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-                                                    </div>
-                                                )}
-
-                                                {/* Post Footer */}
-                                                <div className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-slate-800 text-xs font-semibold text-gray-500">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <ThumbsUp className="w-4 h-4 text-indigo-500" />
-                                                        {post.post_likes?.length || 0} Likes
-                                                    </span>
-                                                    <span className="flex items-center gap-1.5">
-                                                        <MessageSquare className="w-4 h-4 text-purple-500" />
-                                                        {post.comments?.length || 0} Comments
-                                                    </span>
-                                                </div>
-                                            </motion.div>
+                                            <PostCard key={post.id} {...post} />
                                         ))}
                                     </div>
                                 )}
