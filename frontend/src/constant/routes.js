@@ -17,6 +17,7 @@ export const ROUTES = {
   WATCH: '/watch',
   MARKETPLACE: '/marketplace',
   EVENTS: '/events',
+  EVENT_DETAIL: (eventId) => `/events/${eventId}`,
   SAVED: '/saved',
   SHARE: '/share',
   FORGOT_PASSWORD: '/forgot-password',
