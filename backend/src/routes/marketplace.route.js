@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticateToken } from "../middleware/authenticateToken.js";
+import authenticateToken from "../middleware/authenticateToken.js";
 import {
     createListing,
     getListings,
