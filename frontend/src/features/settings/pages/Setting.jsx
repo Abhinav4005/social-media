@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../../hooks/useAuth";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import PrivacySettingsModal from "../components/PrivacySettingsModal";
-import { createCheckoutSession } from "../../../api";
+import { createCheckoutSession, changePassword } from "../../../api";
 import { useToast } from "../../../context/ToastContext";
 import { useTheme } from "../../../context/ThemeContext";
 import SectionCard from "../../../components/Common/SectionCard";
@@ -127,6 +127,42 @@ export default function Settings() {
     const { logout } = useAuth();
     const { profile, saving, error, updateProfile } = useUserProfile();
     const [formData, setFormData] = useState({ name: "", email: "", bio: "" });
+    const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    const [changingPassword, setChangingPassword] = useState(false);
+
+    const handlePasswordChange = (e) => {
+        const { name, value } = e.target;
+        setPasswordData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        const { currentPassword, newPassword, confirmPassword } = passwordData;
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showError("All password fields are required");
+            return;
+        }
+        if (newPassword.length < 6) {
+            showError("New password must be at least 6 characters");
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showError("Passwords do not match");
+            return;
+        }
+
+        setChangingPassword(true);
+        try {
+            await changePassword(currentPassword, newPassword, confirmPassword);
+            showSuccess("Password changed successfully");
+            setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        } catch (err) {
+            showError(err?.response?.data?.message || err.message || "Failed to change password");
+        } finally {
+            setChangingPassword(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -377,23 +413,29 @@ export default function Settings() {
                                     icon={Lock}
                                     iconColor="from-rose-500 to-red-600"
                                 >
-                                    <div className="space-y-5">
+                                    <form onSubmit={handleChangePassword} className="space-y-5">
                                         <Field label="Current Password" type="password" name="currentPassword"
-                                            value="" onChange={() => {}} placeholder="Enter current password" />
+                                            value={passwordData.currentPassword} onChange={handlePasswordChange} placeholder="Enter current password" />
                                         <Field label="New Password" type="password" name="newPassword"
-                                            value="" onChange={() => {}} placeholder="Enter new password" />
+                                            value={passwordData.newPassword} onChange={handlePasswordChange} placeholder="Enter new password" />
                                         <Field label="Confirm New Password" type="password" name="confirmPassword"
-                                            value="" onChange={() => {}} placeholder="Confirm new password" />
+                                            value={passwordData.confirmPassword} onChange={handlePasswordChange} placeholder="Confirm new password" />
 
                                         <div className="flex justify-end pt-1">
                                             <motion.button
-                                                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                                                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white font-semibold text-sm shadow-lg shadow-rose-300/40 dark:shadow-rose-900/30 cursor-pointer transition-all"
+                                                type="submit"
+                                                disabled={changingPassword}
+                                                whileHover={!changingPassword ? { scale: 1.02 } : {}} whileTap={!changingPassword ? { scale: 0.97 } : {}}
+                                                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white font-semibold text-sm shadow-lg shadow-rose-300/40 dark:shadow-rose-900/30 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                <Lock className="w-4 h-4" /> Update Password
+                                                {changingPassword ? (
+                                                    <><LoadingSpinner size="xs" /> Updating…</>
+                                                ) : (
+                                                    <><Lock className="w-4 h-4" /> Update Password</>
+                                                )}
                                             </motion.button>
                                         </div>
-                                    </div>
+                                    </form>
                                 </SectionCard>
                             )}
 

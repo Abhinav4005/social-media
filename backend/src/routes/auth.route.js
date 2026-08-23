@@ -1,5 +1,5 @@
 import express from "express";
-import { signUp, signIn, forgotPassword, resetPassword, logout, refreshToken } from "../controllers/auth.controller.js";
+import { signUp, signIn, forgotPassword, resetPassword, changePassword, logout, refreshToken } from "../controllers/auth.controller.js";
 import loginLimit from "../middleware/loginLimit.js";
 import authLimit from "../middleware/authLimit.js";
 import authenticateToken from "../middleware/authenticateToken.js";
@@ -45,6 +45,17 @@ router.post(
         newPassword: { required: true, minLength: 6 }
     }),
     resetPassword
+);
+
+router.post(
+    "/change-password",
+    authenticateToken,
+    validatePayload({
+        currentPassword: { required: true },
+        newPassword: { required: true, minLength: 6 },
+        confirmPassword: { required: true, minLength: 6 }
+    }),
+    changePassword
 );
 
 router.post("/logout", authenticateToken, logout);

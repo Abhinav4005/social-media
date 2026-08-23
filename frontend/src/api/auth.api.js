@@ -49,3 +49,15 @@ export const refreshToken = async () => {
     const response = await apiClient.post(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {});
     return response.data;
 };
+
+export const changePassword = async (currentPassword, newPassword, confirmPassword) => {
+    const response = await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+        currentPassword,
+        newPassword,
+        confirmPassword
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to change password");
+    }
+    return response.data;
+};

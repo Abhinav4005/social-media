@@ -13,6 +13,7 @@ export const ROUTES = {
   USER_PROFILE: (userId) => `/user/${userId}`,
   FRIEND_REQUESTS: '/friend-requests',
   GROUPS: '/groups',
+  GROUP_DETAIL: (groupId) => `/groups/${groupId}`,
   WATCH: '/watch',
   MARKETPLACE: '/marketplace',
   EVENTS: '/events',

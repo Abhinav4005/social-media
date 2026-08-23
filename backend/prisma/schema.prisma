@@ -84,6 +84,17 @@ enum SubscriptionStatus {
   incomplete
 }
 
+enum GroupVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum EventRsvpStatus {
+  INTERESTED
+  GOING
+  NOT_GOING
+}
+
 model User {
   id             Int       @id @default(autoincrement())
   name           String
@@ -139,6 +150,9 @@ model User {
   savePost        SavedPost[]
   callParticipant CallParticipant[]
   subscription    Subscription?
+  groupMemberships GroupMember[]
+  eventAttendees    EventAttendee[]
+  createdEvents     Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -203,6 +217,7 @@ model Post {
   notifications Notification[]
   savedPost     SavedPost[]
   privacy       PostPrivacy?
+  groupPosts    GroupPost[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -542,4 +557,79 @@ model Subscription {
   userId                  Int         @unique
   createdAt               DateTime    @default(now())
   updatedAt               DateTime    @updatedAt
+}
+
+model Group {
+  id             Int             @id @default(autoincrement())
+  name           String
+  description    String?
+  coverImage     String?
+  coverImageId   String?
+  visibility     GroupVisibility @default(PUBLIC)
+  members        GroupMember[]
+  posts          GroupPost[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([visibility])
+  @@index([createdAt])
+}
+
+model GroupMember {
+  id       Int        @id @default(autoincrement())
+  group    Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId  Int
+  user     User       @relation(fields: [userId], references: [id])
+  userId   Int
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@index([groupId])
+}
+
+model GroupPost {
+  id        Int      @id @default(autoincrement())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, postId])
+  @@index([groupId, createdAt])
+}
+
+model Event {
+  id           Int             @id @default(autoincrement())
+  title        String
+  description  String?
+  location     String?
+  startDate    DateTime
+  endDate      DateTime?
+  coverImage   String?
+  coverImageId String?
+  creator      User            @relation(fields: [creatorId], references: [id])
+  creatorId    Int
+  attendees    EventAttendee[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([startDate])
+  @@index([creatorId])
+}
+
+model EventAttendee {
+  id        Int             @id @default(autoincrement())
+  event     Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   Int
+  user      User            @relation(fields: [userId], references: [id])
+  userId    Int
+  status    EventRsvpStatus @default(INTERESTED)
+  createdAt DateTime        @default(now())
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
 }

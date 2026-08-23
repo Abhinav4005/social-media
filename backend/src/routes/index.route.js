@@ -10,6 +10,8 @@ import imageRoutes from "./image.route.js";
 import storyRoutes from "./story.route.js";
 import subscriptionRoute from "./stripe.route.js";
 import privacyRoutes from "./privacy.route.js";
+import groupRoutes from "./group.route.js";
+import eventRoutes from "./event.route.js";
 
 const router = express.Router();
 
@@ -24,6 +26,8 @@ router.use(["/images", "/image"], imageRoutes);
 router.use(["/stories", "/story"], storyRoutes);
 router.use(["/subscriptions", "/subscription"], subscriptionRoute);
 router.use("/privacy", privacyRoutes);
+router.use(["/groups", "/group"], groupRoutes);
+router.use(["/events", "/event"], eventRoutes);
 
 
 export default router;

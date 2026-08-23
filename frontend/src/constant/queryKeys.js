@@ -17,4 +17,10 @@ export const QUERY_KEYS = {
   followers: ["followers"],
   following: ["following"],
   messages: (roomId) => ["messages", roomId],
+  myGroups: ["myGroups"],
+  discoverGroups: ["discoverGroups"],
+  group: (id) => ["group", id],
+  upcomingEvents: ["upcomingEvents"],
+  myEvents: ["myEvents"],
+  event: (id) => ["event", id],
 };

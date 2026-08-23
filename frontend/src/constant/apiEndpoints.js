@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: "/auth/forgot-password",
     RESET_PASSWORD: "/auth/reset-password",
     REFRESH_TOKEN: "/auth/refresh-token",
+    CHANGE_PASSWORD: "/auth/change-password",
   },
   USER: {
     PROFILE: "/user/profile",
@@ -53,5 +54,28 @@ export const API_ENDPOINTS = {
   },
   SUBSCRIPTIONS: {
     CHECKOUT: "/subscriptions/create-checkout-session",
+  },
+  GROUPS: {
+    CREATE: "/group/create",
+    MY_GROUPS: "/group/my-groups",
+    DISCOVER: "/group/discover",
+    BY_ID: (id) => `/group/${id}`,
+    JOIN: (id) => `/group/${id}/join`,
+    LEAVE: (id) => `/group/${id}/leave`,
+    UPDATE: (id) => `/group/${id}`,
+    DELETE: (id) => `/group/${id}`,
+    POSTS: (id) => `/group/${id}/posts`,
+    MEMBERS: (id) => `/group/${id}/members`,
+    REMOVE_MEMBER: (groupId, userId) => `/group/${groupId}/members/${userId}`,
+    UPDATE_MEMBER_ROLE: (groupId, userId) => `/group/${groupId}/members/${userId}/role`,
+  },
+  EVENTS: {
+    CREATE: "/event/create",
+    UPCOMING: "/event/upcoming",
+    MY_EVENTS: "/event/my-events",
+    BY_ID: (id) => `/event/${id}`,
+    RSVP: (id) => `/event/${id}/rsvp`,
+    UPDATE: (id) => `/event/${id}`,
+    DELETE: (id) => `/event/${id}`,
   },
 };

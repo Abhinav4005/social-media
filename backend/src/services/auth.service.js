@@ -127,6 +127,38 @@ export class AuthService {
         return { user: safeUser, reset: updateReset };
     }
 
+    async changePassword(userId, { currentPassword, newPassword, confirmPassword }) {
+        if (!currentPassword || !newPassword) {
+            throw new ApiError(400, "Current password and new password are required");
+        }
+
+        const cleanNewPassword = SecurityValidator.validatePassword(newPassword);
+
+        if (cleanNewPassword !== confirmPassword) {
+            throw new ApiError(400, "Passwords do not match");
+        }
+
+        const user = await this.authRepository.findUserById(userId);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isCurrentValid) {
+            throw new ApiError(401, "Current password is incorrect");
+        }
+
+        const isSamePassword = await bcrypt.compare(cleanNewPassword, user.password);
+        if (isSamePassword) {
+            throw new ApiError(400, "New password must be different from current password");
+        }
+
+        const hashedPassword = await bcrypt.hash(cleanNewPassword, 10);
+        await this.authRepository.updateUserPassword(userId, hashedPassword);
+
+        return { message: "Password changed successfully" };
+    }
+
     async refreshToken(userId) {
         if (!userId) {
             throw new ApiError(400, "Missing user identification");

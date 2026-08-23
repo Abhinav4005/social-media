@@ -7,3 +7,5 @@ export * from "./stories.api";
 export * from "./notifications.api";
 export * from "./search.api";
 export * from "./subscriptions.api";
+export * from "./groups.api";
+export * from "./events.api";
