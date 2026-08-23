@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Users, FileText, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, FileText, Sparkles, UserCheck, CalendarDays } from "lucide-react";
 import Navbar from "../../../pages/Navbar";
 import { useQuery } from "@tanstack/react-query";
 import { globalSearch } from "../../../api";
@@ -21,14 +21,14 @@ export default function SearchPage() {
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(query, 500);
-  const [results, setResults] = useState({ users: [], posts: [] });
+  const [results, setResults] = useState({ users: [], posts: [], groups: [], events: [] });
 
   useEffect(() => {
     const q = searchParams.get("q") || "";
     setQuery(q);
   }, [searchParams]);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.globalSearch(debouncedQuery, tab),
     queryFn: () => globalSearch(debouncedQuery, tab, 20, 1),
     enabled: debouncedQuery.trim().length >= 3,
@@ -50,19 +50,23 @@ export default function SearchPage() {
           likes: post?._count?.post_likes || 0,
           comments: post?._count?.comments || 0,
           user: post?.user
-        })) || []
+        })) || [],
+        groups: data?.groups || [],
+        events: data?.events || [],
       });
     } else {
-      setResults({ users: [], posts: [] });
+      setResults({ users: [], posts: [], groups: [], events: [] });
     }
   }, [data]);
 
   const showResults = query.trim().length >= 3;
 
   const TABS = [
-    { id: "all",   label: "All Results", icon: <Sparkles className="w-4 h-4" /> },
-    { id: "users", label: "People",      icon: <Users className="w-4 h-4" /> },
-    { id: "posts", label: "Posts",       icon: <FileText className="w-4 h-4" /> },
+    { id: "all", label: "All", icon: <Sparkles className="w-4 h-4" /> },
+    { id: "users", label: "People", icon: <Users className="w-4 h-4" /> },
+    { id: "posts", label: "Posts", icon: <FileText className="w-4 h-4" /> },
+    { id: "groups", label: "Groups", icon: <UserCheck className="w-4 h-4" /> },
+    { id: "events", label: "Events", icon: <CalendarDays className="w-4 h-4" /> },
   ];
 
   return (
@@ -80,11 +84,11 @@ export default function SearchPage() {
         </motion.button>
 
         <div className="mb-10 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent inline-block">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent inline-block">
             Global Search
           </h1>
           <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-            Find people, posts, and topics from across the community in one place.
+            Find people, posts, groups, and events from across the community in one place.
           </p>
         </div>
 
@@ -92,7 +96,7 @@ export default function SearchPage() {
           <SearchInput
             value={query}
             onChange={setQuery}
-            placeholder="Who or what are you looking for?"
+            placeholder="Search people, posts, groups, events..."
             size="md"
             className="rounded-3xl px-6 py-5 shadow-xl border-2 bg-white dark:bg-slate-900 text-lg"
           />
@@ -102,14 +106,14 @@ export default function SearchPage() {
           <EmptyState
             icon={Sparkles}
             title="Search the Hub"
-            description="Enter at least 3 characters to find people, posts, and topics from across the community."
+            description="Enter at least 3 characters to find people, posts, groups, and events across the community."
             iconBg="bg-gray-50"
             iconColor="text-gray-300"
             className="rounded-[3rem] shadow-sm border border-gray-100 bg-white dark:bg-slate-900"
           />
         ) : (
           <div className="space-y-10">
-            <div className="flex justify-center">
+            <div className="flex justify-center overflow-x-auto pb-2">
               <TabBar tabs={TABS} activeTab={tab} onChange={setTab} variant="card" />
             </div>
 
@@ -165,7 +169,7 @@ export default function SearchPage() {
                                   <p className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</p>
                                 </div>
                               </div>
-                              <button className="px-4 py-2 text-xs font-bold bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-200 dark:shadow-none cursor-pointer">
+                              <button className="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition cursor-pointer">
                                 View
                               </button>
                             </motion.div>
@@ -175,6 +179,93 @@ export default function SearchPage() {
                     </div>
                   )}
 
+                  {/* GROUPS */}
+                  {(tab === "groups" || tab === "all") && (
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-2">Groups</h3>
+                      {results.groups.length === 0 && !isLoading ? (
+                        <EmptyState
+                          icon={UserCheck}
+                          title={`No groups found matching "${query}"`}
+                          noBorder
+                          iconBg="bg-gray-100 dark:bg-slate-800"
+                          iconColor="text-gray-300 dark:text-gray-600"
+                          className="rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                        />
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {results.groups.map((group) => (
+                            <motion.div
+                              key={group.id}
+                              whileHover={{ y: -4 }}
+                              className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 shadow-xs border border-gray-100 dark:border-slate-800 rounded-3xl cursor-pointer transition-all"
+                              onClick={() => navigate(`/groups/${group.id}`)}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold overflow-hidden">
+                                  {group.coverImage ? (
+                                    <img src={group.coverImage} alt={group.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    group.name[0]?.toUpperCase()
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
+                                  <p className="text-xs text-gray-400">{group._count?.members || 0} members</p>
+                                </div>
+                              </div>
+                              <button className="px-4 py-2 text-xs font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded-xl hover:bg-indigo-600 hover:text-white transition cursor-pointer">
+                                Visit
+                              </button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* EVENTS */}
+                  {(tab === "events" || tab === "all") && (
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-2">Events</h3>
+                      {results.events.length === 0 && !isLoading ? (
+                        <EmptyState
+                          icon={CalendarDays}
+                          title={`No events found matching "${query}"`}
+                          noBorder
+                          iconBg="bg-gray-100 dark:bg-slate-800"
+                          iconColor="text-gray-300 dark:text-gray-600"
+                          className="rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                        />
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {results.events.map((event) => (
+                            <motion.div
+                              key={event.id}
+                              whileHover={{ y: -4 }}
+                              className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 shadow-xs border border-gray-100 dark:border-slate-800 rounded-3xl cursor-pointer transition-all"
+                              onClick={() => navigate(`/events/${event.id}`)}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex flex-col items-center justify-center font-bold text-indigo-600 dark:text-indigo-400">
+                                  <CalendarDays className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-gray-900 dark:text-gray-100">{event.title}</p>
+                                  <p className="text-xs text-gray-400">{event.location || "Online"}</p>
+                                </div>
+                              </div>
+                              <button className="px-4 py-2 text-xs font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded-xl hover:bg-indigo-600 hover:text-white transition cursor-pointer">
+                                View Event
+                              </button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* POSTS */}
                   {(tab === "posts" || tab === "all") && (
                     <div className="space-y-4">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-2">Posts</h3>
@@ -217,7 +308,7 @@ export default function SearchPage() {
                                 <span className="flex items-center gap-1.5 text-red-500">
                                   ❤️ {post.likes}
                                 </span>
-                                <span className="flex items-center gap-1.5 text-primary-600">
+                                <span className="flex items-center gap-1.5 text-indigo-600">
                                   💬 {post.comments}
                                 </span>
                               </div>

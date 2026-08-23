@@ -33,6 +33,7 @@ const GroupDetailPage = lazy(() => import('./features/groups').then(m => ({ defa
 const WatchPage = lazy(() => import('./features/watch').then(m => ({ default: m.WatchPage })));
 const MarketplacePage = lazy(() => import('./features/marketplace').then(m => ({ default: m.MarketplacePage })));
 const EventsPage = lazy(() => import('./features/events').then(m => ({ default: m.EventsPage })));
+const EventDetailPage = lazy(() => import('./features/events').then(m => ({ default: m.EventDetailPage })));
 const SavedPage = lazy(() => import('./features/saved').then(m => ({ default: m.SavedPage })));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const FeaturesPage = lazy(() => import('./pages/FeaturesPage'));
@@ -264,6 +265,16 @@ const App = () => {
                       <PrivateRoute>
                         <ErrorBoundary compact title="Events page error">
                           <EventsPage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/events/:id"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Event detail page error">
+                          <EventDetailPage />
                         </ErrorBoundary>
                       </PrivateRoute>
                     }

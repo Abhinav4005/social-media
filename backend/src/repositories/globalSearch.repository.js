@@ -5,12 +5,12 @@ import { prisma } from "../lib/prisma.js";
  * Fulfills SRP by decoupling database querying from caching and HTTP logic.
  */
 export class GlobalSearchRepository {
-    constructor(db = prisma) {
-        this.db = db;
-    }
+  constructor(db = prisma) {
+    this.db = db;
+  }
 
-    async searchUsers(search, userId, limit, offset) {
-        return await this.db.$queryRaw`
+  async searchUsers(search, userId, limit, offset) {
+    return await this.db.$queryRaw`
             SELECT id, name, email, about, bio, location, "profileImage"
             FROM "User"
             WHERE id != ${userId} AND (
@@ -24,10 +24,10 @@ export class GlobalSearchRepository {
             LIMIT ${parseInt(limit, 10)}
             OFFSET ${parseInt(offset, 10)}
         `;
-    }
+  }
 
-    async searchPosts(search, limit, offset) {
-        return await this.db.$queryRaw`
+  async searchPosts(search, limit, offset) {
+    return await this.db.$queryRaw`
             SELECT "Post".*,
               json_build_object(
                 'id', "User".id,
@@ -61,7 +61,44 @@ export class GlobalSearchRepository {
             LIMIT ${parseInt(limit, 10)} 
             OFFSET ${parseInt(offset, 10)};
         `;
-    }
+  }
+
+  async searchGroups(search, limit, offset) {
+    return await this.db.group.findMany({
+      where: {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
+        ]
+      },
+      include: {
+        _count: {
+          select: { members: true, posts: true }
+        }
+      },
+      take: parseInt(limit, 10),
+      skip: parseInt(offset, 10)
+    });
+  }
+
+  async searchEvents(search, limit, offset) {
+    return await this.db.event.findMany({
+      where: {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { location: { contains: search, mode: 'insensitive' } }
+        ]
+      },
+      include: {
+        _count: {
+          select: { attendees: true }
+        }
+      },
+      take: parseInt(limit, 10),
+      skip: parseInt(offset, 10)
+    });
+  }
 }
 
 export const defaultGlobalSearchRepository = new GlobalSearchRepository();

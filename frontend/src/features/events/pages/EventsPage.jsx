@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CalendarDays, MapPin, Plus, Loader2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../../pages/Navbar";
 import Sidebar from "../../../pages/Sidebar";
 import FeedLayout from "../../../components/FeedLayout";
@@ -9,6 +10,7 @@ import EmptyState from "../../../components/Common/EmptyState";
 import { getUpcomingEvents, getMyEvents, rsvpEvent } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import { useToast } from "../../../context/ToastContext";
+import CreateEventModal from "../modals/CreateEventModal";
 
 const EventShimmer = () => (
   <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 animate-pulse">
@@ -37,7 +39,9 @@ function formatEventDate(dateStr) {
 
 export default function EventsPage() {
   const [tab, setTab] = useState("upcoming");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
   const { data: upcomingEvents = [], isLoading: loadingUpcoming } = useQuery({
@@ -82,7 +86,10 @@ export default function EventsPage() {
                 <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Events</h1>
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-400">Discover upcoming events and meetups near you</p>
               </div>
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer">
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+              >
                 <Plus className="w-4 h-4" />
                 Create event
               </button>
@@ -136,7 +143,8 @@ export default function EventsPage() {
                       key={event.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xs hover:shadow-md transition-all"
+                      onClick={() => navigate(`/events/${event.id}`)}
+                      className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xs hover:shadow-md transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-16 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl flex flex-col items-center justify-center flex-shrink-0">
@@ -159,7 +167,10 @@ export default function EventsPage() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => rsvpMutation.mutate({ eventId: event.id, status: rsvpStatus === "INTERESTED" ? "NOT_GOING" : "INTERESTED" })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            rsvpMutation.mutate({ eventId: event.id, status: rsvpStatus === "INTERESTED" ? "NOT_GOING" : "INTERESTED" });
+                          }}
                           disabled={isBusy}
                           className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 ${rsvpStatus === "INTERESTED"
                             ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50"
@@ -169,7 +180,10 @@ export default function EventsPage() {
                           {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : rsvpStatus === "INTERESTED" ? "Interested ✓" : "Interested"}
                         </button>
                         <button
-                          onClick={() => rsvpMutation.mutate({ eventId: event.id, status: rsvpStatus === "GOING" ? "NOT_GOING" : "GOING" })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            rsvpMutation.mutate({ eventId: event.id, status: rsvpStatus === "GOING" ? "NOT_GOING" : "GOING" });
+                          }}
                           disabled={isBusy}
                           className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 ${rsvpStatus === "GOING"
                             ? "bg-indigo-600 text-white shadow-sm"
@@ -186,6 +200,11 @@ export default function EventsPage() {
             )}
           </div>
         }
+      />
+
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </>
   );

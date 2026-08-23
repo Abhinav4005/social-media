@@ -1,4 +1,4 @@
-import { globalPostSearch, globalUserSearch } from "../services/globalSearch.service.js";
+import { globalPostSearch, globalUserSearch, globalGroupSearch, globalEventSearch } from "../services/globalSearch.service.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
 export const globalSearch = async (req, res, next) => {
@@ -17,15 +17,19 @@ export const globalSearch = async (req, res, next) => {
     }
 
     try {
-        const [users, posts] = await Promise.all([
+        const [users, posts, groups, events] = await Promise.all([
             globalUserSearch(searchTrim, type, limitValue, offset, userId),
-            globalPostSearch(searchTrim, type, limitValue, offset)
+            globalPostSearch(searchTrim, type, limitValue, offset),
+            globalGroupSearch(searchTrim, type, limitValue, offset),
+            globalEventSearch(searchTrim, type, limitValue, offset)
         ]);
 
         return ApiResponse.success(res, {
             users,
             posts,
-            totalResults: (users?.length || 0) + (posts?.length || 0)
+            groups,
+            events,
+            totalResults: (users?.length || 0) + (posts?.length || 0) + (groups?.length || 0) + (events?.length || 0)
         }, "Search results fetched successfully", 200);
     } catch (error) {
         console.error("Error performing global search:", error);
