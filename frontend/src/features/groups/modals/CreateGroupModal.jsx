@@ -1,10 +1,12 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Users, Search, Check, UserPlus, Hash } from "lucide-react";
+import { X, Users, Search, Check, UserPlus, Hash, Sparkles, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createOrGetRoom } from "../../../api";
+import { createOrGetRoom, generateAIGroup } from "../../../api";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../../context/ToastContext";
+import AIUpgradeModal from "../../../components/Common/AIUpgradeModal";
 
 const GRADIENTS = [
     ["#6366f1", "#8b5cf6"],
@@ -41,12 +43,37 @@ const CreateGroupModal = ({ isOpen, onClose, chatList }) => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { user } = useSelector((state) => state.auth);
+    const { showSuccess, showError } = useToast();
     const [search, setSearch] = useState("");
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [groupName, setGroupName] = useState("");
     const [nameFocused, setNameFocused] = useState(false);
     const [searchFocused, setSearchFocused] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeMessage, setUpgradeMessage] = useState("");
     const searchRef = useRef(null);
+
+    const handleAIGroupGenerate = async () => {
+        setIsGeneratingAI(true);
+        try {
+            const res = await generateAIGroup({ name: groupName || "Tech Innovators", category: "General Community" });
+            if (res?.description) {
+                setGroupName((prev) => prev || "Tech Innovators Community");
+                showSuccess("AI setup group ideas! ✨");
+            }
+        } catch (err) {
+            const msg = err?.response?.data?.message || err.message;
+            if (err?.response?.status === 403 || err?.response?.data?.upgradeRequired) {
+                setUpgradeMessage(msg);
+                setShowUpgradeModal(true);
+            } else {
+                showError(msg || "Failed to generate group content");
+            }
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
 
     const filterChat = chatList.filter((chat) =>
         chat.name.toLowerCase().includes(search.toLowerCase())
@@ -366,6 +393,12 @@ const CreateGroupModal = ({ isOpen, onClose, chatList }) => {
                         </div>
                     </div>
                 </motion.div>
+
+                <AIUpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    message={upgradeMessage}
+                />
             </motion.div>
         </AnimatePresence>
     );

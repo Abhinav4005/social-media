@@ -118,6 +118,45 @@ class AIService {
 
         return AI_FALLBACKS.SMART_REPLY();
     }
+
+    async generateBio({ role, interests }) {
+        const prompt = AI_PROMPTS.BIO_GENERATOR(role, interests);
+        const raw = await this.callGemini(prompt);
+        if (raw) {
+            try {
+                const cleaned = raw.replace(/```json|```/g, "").trim();
+                const parsed = JSON.parse(cleaned);
+                if (parsed.bios) return parsed;
+            } catch (e) { }
+        }
+        return AI_FALLBACKS.BIO_GENERATOR(role, interests);
+    }
+
+    async generateEvent({ title, category }) {
+        const prompt = AI_PROMPTS.EVENT_GENERATOR(title, category);
+        const raw = await this.callGemini(prompt);
+        if (raw) {
+            try {
+                const cleaned = raw.replace(/```json|```/g, "").trim();
+                const parsed = JSON.parse(cleaned);
+                if (parsed.description) return parsed;
+            } catch (e) { }
+        }
+        return AI_FALLBACKS.EVENT_GENERATOR(title, category);
+    }
+
+    async generateGroup({ name, category }) {
+        const prompt = AI_PROMPTS.GROUP_GENERATOR(name, category);
+        const raw = await this.callGemini(prompt);
+        if (raw) {
+            try {
+                const cleaned = raw.replace(/```json|```/g, "").trim();
+                const parsed = JSON.parse(cleaned);
+                if (parsed.description) return parsed;
+            } catch (e) { }
+        }
+        return AI_FALLBACKS.GROUP_GENERATOR(name, category);
+    }
 }
 
 export const defaultAIService = new AIService();

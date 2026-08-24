@@ -1,6 +1,15 @@
 import { Router } from "express";
 import authenticateToken from "../middleware/authenticateToken.js";
-import { generatePostAI, generateListingAI, chatWithAIController, summarizePostAI, generateSmartReplyAI } from "../controllers/ai.controller.js";
+import {
+    generatePostAI,
+    generateListingAI,
+    chatWithAIController,
+    summarizePostAI,
+    generateSmartReplyAI,
+    generateBioAI,
+    generateEventAI,
+    generateGroupAI,
+} from "../controllers/ai.controller.js";
 
 const router = Router();
 
@@ -11,5 +20,8 @@ router.post("/generate-listing", generateListingAI);
 router.post("/chat", chatWithAIController);
 router.post("/summarize", summarizePostAI);
 router.post("/smart-reply", generateSmartReplyAI);
+router.post("/generate-bio", generateBioAI);
+router.post("/generate-event", generateEventAI);
+router.post("/generate-group", generateGroupAI);
 
 export default router;

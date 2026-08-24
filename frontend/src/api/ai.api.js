@@ -25,3 +25,18 @@ export const generateAISmartReply = async ({ context = "", tone = "supportive" }
     const res = await apiClient.post("/ai/smart-reply", { context, tone });
     return res.data?.data || res.data;
 };
+
+export const generateAIBio = async ({ role, interests }) => {
+    const res = await apiClient.post("/ai/generate-bio", { role, interests });
+    return res.data?.data || res.data;
+};
+
+export const generateAIEvent = async ({ title, category }) => {
+    const res = await apiClient.post("/ai/generate-event", { title, category });
+    return res.data?.data || res.data;
+};
+
+export const generateAIGroup = async ({ name, category }) => {
+    const res = await apiClient.post("/ai/generate-group", { name, category });
+    return res.data?.data || res.data;
+};

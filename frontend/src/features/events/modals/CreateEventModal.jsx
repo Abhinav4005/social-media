@@ -1,16 +1,21 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CalendarDays, MapPin, Image as ImageIcon, Loader2 } from "lucide-react";
+import { X, CalendarDays, MapPin, Image as ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createEvent } from "../../../api";
+import { createEvent, generateAIEvent } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import { useToast } from "../../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
+import AIUpgradeModal from "../../../components/Common/AIUpgradeModal";
 
 export default function CreateEventModal({ isOpen, onClose }) {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
     const navigate = useNavigate();
+
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeMessage, setUpgradeMessage] = useState("");
 
     const [formData, setFormData] = useState({
         title: "",
@@ -20,6 +25,34 @@ export default function CreateEventModal({ isOpen, onClose }) {
         endDate: "",
         coverImage: "",
     });
+
+    const handleAIGenerate = async () => {
+        if (!formData.title.trim()) {
+            showError("Please enter an event title first for AI to generate description!");
+            return;
+        }
+        setIsGeneratingAI(true);
+        try {
+            const res = await generateAIEvent({ title: formData.title, category: "Community" });
+            if (res?.description) {
+                setFormData((prev) => ({
+                    ...prev,
+                    description: `${res.description}\n\n📅 Agenda:\n${(res.agenda || []).join("\n")}`,
+                }));
+                showSuccess("AI generated event details! ✨");
+            }
+        } catch (err) {
+            const msg = err?.response?.data?.message || err.message;
+            if (err?.response?.status === 403 || err?.response?.data?.upgradeRequired) {
+                setUpgradeMessage(msg);
+                setShowUpgradeModal(true);
+            } else {
+                showError(msg || "Failed to generate event description");
+            }
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
 
     const createMutation = useMutation({
         mutationFn: (data) => createEvent(data),
@@ -109,12 +142,27 @@ export default function CreateEventModal({ isOpen, onClose }) {
 
                         {/* Description */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
-                                Description
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                    Description
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleAIGenerate}
+                                    disabled={isGeneratingAI}
+                                    className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:to-pink-500/20 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition cursor-pointer disabled:opacity-50"
+                                >
+                                    {isGeneratingAI ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                    )}
+                                    <span>AI Auto-Write</span>
+                                </button>
+                            </div>
                             <textarea
-                                rows={3}
-                                placeholder="Tell people what your event is about..."
+                                rows={4}
+                                placeholder="Tell people what your event is about or click AI Auto-Write..."
                                 value={formData.description}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm font-medium text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-all resize-none"
@@ -204,6 +252,12 @@ export default function CreateEventModal({ isOpen, onClose }) {
                     </form>
                 </motion.div>
             </div>
+
+            <AIUpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                message={upgradeMessage}
+            />
         </AnimatePresence>
     );
 }

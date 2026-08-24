@@ -90,3 +90,48 @@ export const generateSmartReplyAI = async (req, res, next) => {
         return next(error);
     }
 };
+
+export const generateBioAI = async (req, res, next) => {
+    try {
+        const quota = checkQuota(req);
+        const { role, interests } = req.body;
+        const result = await defaultAIService.generateBio({ role, interests });
+        return ApiResponse.success(res, { ...result, quota }, "Bio generated successfully");
+    } catch (error) {
+        if (error.upgradeRequired) {
+            return ApiResponse.error(res, error.message, 403, { upgradeRequired: true });
+        }
+        console.error("Error generating bio:", error);
+        return next(error);
+    }
+};
+
+export const generateEventAI = async (req, res, next) => {
+    try {
+        const quota = checkQuota(req);
+        const { title, category } = req.body;
+        const result = await defaultAIService.generateEvent({ title, category });
+        return ApiResponse.success(res, { ...result, quota }, "Event generated successfully");
+    } catch (error) {
+        if (error.upgradeRequired) {
+            return ApiResponse.error(res, error.message, 403, { upgradeRequired: true });
+        }
+        console.error("Error generating event:", error);
+        return next(error);
+    }
+};
+
+export const generateGroupAI = async (req, res, next) => {
+    try {
+        const quota = checkQuota(req);
+        const { name, category } = req.body;
+        const result = await defaultAIService.generateGroup({ name, category });
+        return ApiResponse.success(res, { ...result, quota }, "Group content generated successfully");
+    } catch (error) {
+        if (error.upgradeRequired) {
+            return ApiResponse.error(res, error.message, 403, { upgradeRequired: true });
+        }
+        console.error("Error generating group content:", error);
+        return next(error);
+    }
+};
