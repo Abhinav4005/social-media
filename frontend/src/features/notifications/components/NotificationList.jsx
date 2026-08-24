@@ -2,8 +2,11 @@ import { Bell, Heart, MessageCircle, UserPlus, Inbox, Check, MoreHorizontal } fr
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Navbar from "../../../pages/Navbar";
 import { formatLastSeen } from "../../../utils/formatTime";
+import { markAllNotificationsAsRead } from "../../../api";
+import { QUERY_KEYS } from "../../../constant/queryKeys";
 
 const TYPE_CONFIG = {
   LIKE: {
@@ -153,8 +156,16 @@ function NotificationItem({ notification, isPage }) {
 
 export default function NotificationList({ notifications, isLoading, isError }) {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const isPage = location.pathname === "/notifications";
   const [activeFilter, setActiveFilter] = useState("All");
+
+  const markAllMutation = useMutation({
+    mutationFn: markAllNotificationsAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications });
+    },
+  });
 
   const filtered =
     activeFilter === "All"
@@ -211,6 +222,21 @@ export default function NotificationList({ notifications, isLoading, isError }) 
     );
   }
 
+  const [isCooldown, setIsCooldown] = useState(false);
+  const unreadCount = notifications?.filter((n) => !n.read && !n.isRead)?.length || 0;
+
+  const handleMarkAllRead = () => {
+    if (unreadCount === 0 || markAllMutation.isPending || isCooldown) return;
+    setIsCooldown(true);
+    markAllMutation.mutate(undefined, {
+      onSettled: () => {
+        setTimeout(() => setIsCooldown(false), 2000);
+      },
+    });
+  };
+
+  const isButtonDisabled = unreadCount === 0 || markAllMutation.isPending || isCooldown;
+
   return (
     <>
       <Navbar />
@@ -241,19 +267,24 @@ export default function NotificationList({ notifications, isLoading, isError }) 
                       exit={{ opacity: 0, y: 4 }}
                       className="text-[12px] font-medium text-gray-400 dark:text-gray-500 mt-0.5"
                     >
-                      {isLoading ? "Loading…" : `${notifications?.length ?? 0} total · ${notifications?.filter(n => !n.isRead)?.length ?? 0} unread`}
+                      {isLoading ? "Loading…" : `${notifications?.length ?? 0} total · ${unreadCount} unread`}
                     </motion.p>
                   </AnimatePresence>
                 </div>
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 text-xs font-semibold transition-colors cursor-pointer"
+                whileHover={!isButtonDisabled ? { scale: 1.04 } : {}}
+                whileTap={!isButtonDisabled ? { scale: 0.96 } : {}}
+                onClick={handleMarkAllRead}
+                disabled={isButtonDisabled}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${isButtonDisabled
+                    ? "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60"
+                    : "bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 cursor-pointer"
+                  }`}
               >
                 <Check className="w-3.5 h-3.5" />
-                Mark all read
+                {markAllMutation.isPending ? "Marking..." : isCooldown ? "Updated" : "Mark all read"}
               </motion.button>
             </div>
 
@@ -263,11 +294,10 @@ export default function NotificationList({ notifications, isLoading, isError }) 
                   key={f}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveFilter(f)}
-                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
-                    activeFilter === f
-                      ? "text-primary-700 dark:text-primary-300"
-                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800"
-                  }`}
+                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${activeFilter === f
+                    ? "text-primary-700 dark:text-primary-300"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
                 >
                   {activeFilter === f && (
                     <motion.span

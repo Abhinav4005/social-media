@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { X, Tag, DollarSign, MapPin, Image, Loader2, FileText } from "lucide-react";
+import { X, Tag, DollarSign, MapPin, Image, Loader2, FileText, Sparkles, Wand2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createMarketplaceListing } from "../../../api";
+import { createMarketplaceListing, generateAIListing } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import { useToast } from "../../../context/ToastContext";
 
@@ -23,9 +23,29 @@ export default function CreateListingModal({ isOpen, onClose }) {
     const [location, setLocation] = useState("");
     const [description, setDescription] = useState("");
     const [imageUrl, setImageUrl] = useState("");
+    const [isAIGenerating, setIsAIGenerating] = useState(false);
 
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
+
+    const handleAIGenerate = async () => {
+        if (!title.trim()) {
+            return showError("Please enter an item title first to generate AI description");
+        }
+        try {
+            setIsAIGenerating(true);
+            const res = await generateAIListing({ item: title.trim(), category });
+            if (res) {
+                if (res.title && !title) setTitle(res.title);
+                if (res.description) setDescription(res.description);
+                showSuccess("AI product description generated!");
+            }
+        } catch (err) {
+            showError("Failed to generate AI listing content");
+        } finally {
+            setIsAIGenerating(false);
+        }
+    };
 
     const createMutation = useMutation({
         mutationFn: createMarketplaceListing,
@@ -170,7 +190,27 @@ export default function CreateListingModal({ isOpen, onClose }) {
 
                         {/* Description */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Description</label>
+                                <button
+                                    type="button"
+                                    onClick={handleAIGenerate}
+                                    disabled={isAIGenerating}
+                                    className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer disabled:opacity-50"
+                                >
+                                    {isAIGenerating ? (
+                                        <>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            <span>Writing with AI...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Wand2 className="w-3 h-3 text-purple-500" />
+                                            <span>✨ Generate with AI</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                             <textarea
                                 rows={3}
                                 placeholder="Describe the condition, features, or reasons for selling..."

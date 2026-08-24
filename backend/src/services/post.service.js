@@ -203,6 +203,11 @@ export class PostService {
         const posts = await this.postRepository.getSavedPosts(cleanUserId);
         return (posts || []).map(sanitizePostDTO);
     }
+
+    async getWatchFeed(category = "all") {
+        const posts = await this.postRepository.getWatchFeed(category);
+        return (posts || []).map(sanitizePostDTO);
+    }
 }
 
 export const defaultPostService = new PostService();

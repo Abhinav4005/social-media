@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-const StoryCircle = ({ story }) => {
+const StoryCircle = ({ story, onClick }) => {
   if (!story) return null;
 
   const storyItem = story.story || story;
@@ -15,6 +15,7 @@ const StoryCircle = ({ story }) => {
       whileTap={{ scale: 0.96 }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
       type="button"
+      onClick={onClick}
       className="group relative h-44 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-900 text-left text-white shadow-md hover:shadow-xl dark:hover:shadow-indigo-950/40 focus:outline-none transition-shadow duration-300 cursor-pointer"
     >
       {storyItem.mediaType === "VIDEO" ? (

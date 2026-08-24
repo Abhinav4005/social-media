@@ -258,3 +258,15 @@ export const getSavedPosts = async (req, res, next) => {
         return next(error);
     }
 };
+
+export const getWatchFeed = async (req, res, next) => {
+    try {
+        const category = req.query.category || "all";
+        const posts = await defaultPostService.getWatchFeed(category);
+        return ApiResponse.success(res, { posts }, "Watch feed retrieved successfully", 200);
+    } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error("Error in fetching watch feed: ", error);
+        return next(error);
+    }
+};

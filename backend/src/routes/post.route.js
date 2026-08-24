@@ -1,6 +1,6 @@
 import express from "express";
 import authenticateToken from "../middleware/authenticateToken.js";
-import { changePostStatus, commentLike, commentOnPost, createPost, deleteComment, deletePost, getAllPosts, getCommentLikes, getPostById, getPostFeed, getPostsBySearch, getPostsByUser, reactOnPost, savePostBookmark, updateComment, updatePost, getPostLikes, getSavedPosts } from "../controllers/post.controller.js";
+import { changePostStatus, commentLike, commentOnPost, createPost, deleteComment, deletePost, getAllPosts, getCommentLikes, getPostById, getPostFeed, getPostsBySearch, getPostsByUser, reactOnPost, savePostBookmark, updateComment, updatePost, getPostLikes, getSavedPosts, getWatchFeed } from "../controllers/post.controller.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -13,6 +13,7 @@ router.put("/update", upload.fields([{ name: 'image' }, { name: 'video' }]), aut
 router.delete("/delete", authenticateToken, deletePost);
 
 router.get("/feed", authenticateToken, getPostFeed);
+router.get("/watch", authenticateToken, getWatchFeed);
 router.get("/all", authenticateToken, getAllPosts);
 router.get("/user", authenticateToken, getPostsByUser);
 router.get("/postByUser", authenticateToken, getPostsByUser);

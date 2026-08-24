@@ -94,11 +94,10 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
         whileHover={{ x: 2 }}
         whileTap={{ scale: 0.985 }}
         onClick={() => handleChatClick(chat.id)}
-        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
-          isActive
+        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${isActive
             ? "bg-white/15 shadow-sm"
             : "hover:bg-white/8"
-        }`}
+          }`}
       >
         {isActive && (
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full bg-white" />
@@ -190,6 +189,37 @@ const ChatSidebar = ({ activeChat, setActiveChat }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-3 scrollbar-hide">
+        {/* Pinned SocialHub AI Bot */}
+        <div className="mb-3">
+          <p className="px-3 pb-1.5 text-[10px] font-black text-indigo-300/60 uppercase tracking-[0.18em] flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-purple-400" />
+            AI Assistant
+          </p>
+          <motion.div
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={() => {
+              setActiveChat("ai-bot");
+              navigate(ROUTES.CHAT);
+            }}
+            className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${activeChat === "ai-bot"
+                ? "bg-gradient-to-r from-indigo-600/60 to-purple-600/60 border border-indigo-400/30 text-white shadow-sm"
+                : "bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/20 text-white/90"
+              }`}
+          >
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 flex-shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="text-[13px] font-black truncate leading-tight text-white">SocialHub AI Bot</p>
+                <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-indigo-500 text-white rounded-md">BOT</span>
+              </div>
+              <p className="text-[11px] truncate mt-0.5 font-semibold text-indigo-200/70">Always ready to chat & assist ✨</p>
+            </div>
+          </motion.div>
+        </div>
+
         <p className="px-3 pb-2 text-[10px] font-black text-white/30 uppercase tracking-[0.18em]">
           Conversations · {filteredChats.length}
         </p>

@@ -8,3 +8,11 @@ export const getNotifications = async () => {
     }
     return response.data.notifications || [];
 };
+
+export const markAllNotificationsAsRead = async () => {
+    const response = await apiClient.put("/notifications/read-all");
+    if (response.status !== 200) {
+        throw new Error("Failed to mark notifications as read");
+    }
+    return response.data;
+};

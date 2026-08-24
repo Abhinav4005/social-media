@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { commentOnPost, deletePost, getPostById, likePost } from "../../../api";
+import { commentOnPost, deletePost, getPostById, likePost, summarizeAIPost, generateAISmartReply } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import Button from '../../../components/UI/Button';
 import Navbar from '../../../pages/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import { Pencil, Trash2, Heart, MessageCircle, Send, MoreHorizontal, ArrowLeft } from 'lucide-react';
+import { Pencil, Trash2, Heart, MessageCircle, Send, MoreHorizontal, ArrowLeft, Sparkles, Bot, Check, Loader2 } from 'lucide-react';
 import DeleteModal from '../modals/DeleteModal';
 import { useNavigate } from 'react-router-dom';
 import CreatePostModal from '../modals/CreatePostModal';
 import { formatTime } from '../../../utils/formatTime';
+import AIUpgradeModal from '../../../components/Common/AIUpgradeModal';
 
 const PostDetail = () => {
   const navigate = useNavigate();
@@ -23,6 +24,13 @@ const PostDetail = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedPost, setEditedPost] = useState({});
+  const [aiSummaryModal, setAiSummaryModal] = useState(false);
+  const [aiSummaryData, setAiSummaryData] = useState(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [smartReplies, setSmartReplies] = useState([]);
+  const [isGeneratingReplies, setIsGeneratingReplies] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
   const { user } = useSelector((state) => state.auth);
 
   const { data: post, isLoading, isError } = useQuery({
@@ -82,6 +90,46 @@ const PostDetail = () => {
       setDeletePopup(false);
     }
   });
+
+  const handleSummarizeThread = async () => {
+    setIsSummarizing(true);
+    setAiSummaryModal(true);
+    try {
+      const res = await summarizeAIPost({
+        title: post?.title,
+        description: post?.description,
+        comments: post?.comments || [],
+      });
+      setAiSummaryData(res);
+    } catch (err) {
+      setAiSummaryModal(false);
+      const msg = err.response?.data?.message || err.message;
+      if (err.response?.status === 403 || err.response?.data?.upgradeRequired) {
+        setUpgradeMessage(msg);
+        setShowUpgradeModal(true);
+      }
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleGenerateSmartReplies = async () => {
+    setIsGeneratingReplies(true);
+    try {
+      const res = await generateAISmartReply({
+        context: post?.description || post?.title || "Great post",
+      });
+      setSmartReplies(res?.replies || []);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message;
+      if (err.response?.status === 403 || err.response?.data?.upgradeRequired) {
+        setUpgradeMessage(msg);
+        setShowUpgradeModal(true);
+      }
+    } finally {
+      setIsGeneratingReplies(false);
+    }
+  };
 
   const handleDelete = () => {
     deletePostUser.mutate();
@@ -255,8 +303,8 @@ const PostDetail = () => {
             {/* Action Buttons */}
             <div className="flex items-center gap-3 mb-6">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => likeMutation.mutate()}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer font-semibold transition-all ${userLiked
                   ? "bg-red-50 text-red-600"
@@ -277,14 +325,46 @@ const PostDetail = () => {
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleGenerateSmartReplies}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border border-indigo-100"
               >
-                <MessageCircle className="w-5 h-5" />
-                <span>Comment</span>
+                <Sparkles className="w-5 h-5 text-indigo-600" />
+                <span>AI Smart Reply</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSummarizeThread}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all"
+              >
+                <Bot className="w-5 h-5" />
+                <span>Summarize</span>
               </motion.button>
             </div>
+
+            {/* Smart Reply Suggestion Chips */}
+            {smartReplies.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mb-4 p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl">
+                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-indigo-700">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>✨ AI Suggested Replies (Click to auto-fill)</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {smartReplies.map((replyText, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setNewComment(replyText)}
+                      className="px-3 py-1.5 bg-white hover:bg-indigo-100 border border-indigo-200 text-xs font-medium text-indigo-900 rounded-xl transition cursor-pointer shadow-2xs"
+                    >
+                      {replyText}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Comments Section */}
             <div className="space-y-4">
@@ -439,6 +519,60 @@ const PostDetail = () => {
             editedPost={editedPost}
           />
         )}
+
+        {aiSummaryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-indigo-100">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">✨ AI Thread Summary</h3>
+                    <p className="text-xs text-gray-500">Gemini-powered insights</p>
+                  </div>
+                </div>
+                <button onClick={() => setAiSummaryModal(false)} className="text-gray-400 hover:text-gray-600 font-bold p-1 cursor-pointer">✕</button>
+              </div>
+
+              <div className="py-5 space-y-4">
+                {isSummarizing ? (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                    <p className="text-xs font-semibold text-gray-500 animate-pulse">Analyzing post & comments...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-extrabold rounded-full border border-emerald-200">
+                      Overall Sentiment: {aiSummaryData?.sentiment || "Positive"}
+                    </div>
+                    <div className="space-y-2">
+                      {aiSummaryData?.summary?.map((bullet, idx) => (
+                        <div key={idx} className="p-3 bg-gray-50 rounded-2xl text-xs font-medium text-gray-800 border border-gray-100 leading-relaxed">
+                          {bullet}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => setAiSummaryModal(false)}
+                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+              >
+                Close Summary
+              </button>
+            </motion.div>
+          </div>
+        )}
+
+        <AIUpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          message={upgradeMessage}
+        />
       </div>
     </>
   );
