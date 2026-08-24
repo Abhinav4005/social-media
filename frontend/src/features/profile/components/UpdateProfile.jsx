@@ -16,13 +16,14 @@ import {
   Sparkles,
   FileText,
 } from "lucide-react";
-import { getUserProfile, updateUserProfile } from "../../../api";
+import { getUserProfile, updateUserProfile, generateAIBio } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import UserAvatar from "../../../components/Common/UserAvatar";
 import { useToast } from "../../../context/ToastContext";
 import { profileSchema } from "../../../schemas";
 import Navbar from "../../../pages/Navbar";
 import { BRAND_THEME } from "../../../constant/constant";
+import AIUpgradeModal from "../../../components/Common/AIUpgradeModal";
 
 const emptyForm = {
   name: "",
@@ -52,10 +53,34 @@ const textareaClass =
 export default function UpdateProfile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [form, setForm] = useState(emptyForm);
   const [profileImage, setProfileImage] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
+
+  const handleAIBioGenerate = async () => {
+    setIsGeneratingBio(true);
+    try {
+      const res = await generateAIBio({ role: form.name || "Creator", interests: form.bio || "SocialHub user" });
+      if (res?.bios?.[0]) {
+        setForm((prev) => ({ ...prev, bio: res.bios[0] }));
+        showSuccess("AI generated your bio! ✨");
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err.message;
+      if (err?.response?.status === 403 || err?.response?.data?.upgradeRequired) {
+        setUpgradeMessage(msg);
+        setShowUpgradeModal(true);
+      } else {
+        showError(msg || "Failed to generate bio");
+      }
+    } finally {
+      setIsGeneratingBio(false);
+    }
+  };
 
   const { data: user, isLoading, isError } = useQuery({
     queryKey: QUERY_KEYS.userProfile,
@@ -307,15 +332,34 @@ export default function UpdateProfile() {
                     </Field>
                   </div>
 
-                  <Field icon={<FileText className="h-4 w-4 text-indigo-500" />} label="Short Bio (Headline)">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                        <FileText className="h-4 w-4 text-indigo-500" />
+                        Short Bio (Headline)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAIBioGenerate}
+                        disabled={isGeneratingBio}
+                        className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:to-pink-500/20 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingBio ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        )}
+                        <span>AI Auto-Write Bio</span>
+                      </button>
+                    </div>
                     <textarea
                       name="bio"
                       value={form.bio}
                       onChange={handleChange}
                       className={textareaClass}
-                      placeholder="A short line about yourself (e.g. Software Engineer & Product Creator)"
+                      placeholder="A short line about yourself or click AI Auto-Write Bio..."
                     />
-                  </Field>
+                  </div>
 
                   <Field icon={<Info className="h-4 w-4 text-indigo-500" />} label="About Me (Detailed)">
                     <textarea
@@ -337,6 +381,12 @@ export default function UpdateProfile() {
             </div>
           </section>
         </form>
+
+        <AIUpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          message={upgradeMessage}
+        />
       </main>
     </>
   );

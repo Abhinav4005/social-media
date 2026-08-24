@@ -23,6 +23,15 @@ export const AI_PROMPTS = {
 
     SMART_REPLY: (context = "", tone = "supportive") =>
         `You are an AI Smart Reply generator for a social app. Generate 3 short, natural 1-sentence reply options for this post/comment: "${context}". Tone: ${tone}. Return JSON array of strings under key "replies".`,
+
+    BIO_GENERATOR: (role = "Tech Enthusiast", interests = "coding, AI") =>
+        `You are an AI bio writer for a social media platform. Create 3 captivating, punchy 1-2 sentence profile bio options for a user with role "${role}" and interests "${interests}". Return JSON format with key "bios" (array of 3 strings). Do not wrap in markdown.`,
+
+    EVENT_GENERATOR: (title = "Community Meetup", category = "Tech") =>
+        `You are an AI event planning assistant. Write an attractive event description and brief agenda for an event named "${title}" in category "${category}". Return JSON with exact keys "description", "agenda" (array of 3 items), and "suggestedTags" (array of strings).`,
+
+    GROUP_GENERATOR: (name = "Tech Innovators", category = "Technology") =>
+        `You are an AI community manager assistant. Write a community group overview for a group named "${name}" in category "${category}". Return JSON with exact keys "description", "rules" (array of 3 strings), and "welcomeMessage".`,
 };
 
 export const AI_FALLBACKS = {
@@ -98,5 +107,33 @@ export const AI_FALLBACKS = {
             "Totally agree with your points here! Great insights. 💡",
             "Awesome update! Looking forward to seeing more. ✨",
         ],
+    }),
+
+    BIO_GENERATOR: (role, interests) => ({
+        bios: [
+            `🚀 ${role || "Creator"} passionate about ${interests || "tech & innovation"}. Building cool things & connecting with awesome people! ✨`,
+            `💡 Exploring the intersection of ${interests || "creativity & code"}. Always learning, growing, and sharing insights. 🌐`,
+            `✨ ${role || "Social Enthusiast"} | Lover of ${interests || "ideas & community"}. Drop a message or let's connect! 🙌`,
+        ],
+    }),
+
+    EVENT_GENERATOR: (title, category) => ({
+        description: `Join us for "${title || "Community Event"}", an exciting gathering in the ${category || "General"} space! Network, share ideas, and connect with like-minded creators.`,
+        agenda: [
+            "1. Welcome & Introduction",
+            "2. Interactive Topic Discussion",
+            "3. Q&A & Open Networking",
+        ],
+        suggestedTags: ["#Event", `#${(category || "Meetup").replace(/\s+/g, "")}`, "#SocialHub"],
+    }),
+
+    GROUP_GENERATOR: (name, category) => ({
+        description: `Welcome to ${name || "Community Group"}! A welcoming space dedicated to all things ${category || "Interests"}. Share updates, start discussions, and collaborate!`,
+        rules: [
+            "1. Be respectful and supportive of all members.",
+            "2. Keep posts relevant to group topics.",
+            "3. No spam or self-promotional flooding.",
+        ],
+        welcomeMessage: `Welcome to ${name || "our group"}! Introduce yourself in the comments below! 🎉`,
     }),
 };
