@@ -78,9 +78,50 @@ const ChatMessages = ({ roomId }) => {
         return [...old, msg];
       });
     };
+
+    const handleMessageReaction = ({ messageId, emoji, userId }) => {
+      queryClient.setQueryData(["messages", roomId], (old = []) =>
+        old.map((msg) => {
+          if (msg.id !== messageId) return msg;
+          const reactions = msg.reactions || [];
+          const existingIdx = reactions.findIndex((r) => r.emoji === emoji);
+          let updatedReactions;
+          if (existingIdx !== -1) {
+            updatedReactions = reactions.map((r, idx) =>
+              idx === existingIdx ? { ...r, count: r.count + 1 } : r
+            );
+          } else {
+            updatedReactions = [...reactions, { emoji, count: 1 }];
+          }
+          return { ...msg, reactions: updatedReactions };
+        })
+      );
+    };
+
+    const handleMessageEdited = ({ messageId, text }) => {
+      queryClient.setQueryData(["messages", roomId], (old = []) =>
+        old.map((msg) => (msg.id === messageId ? { ...msg, text, isEdited: true } : msg))
+      );
+    };
+
+    const handleMessageDeleted = ({ messageId }) => {
+      queryClient.setQueryData(["messages", roomId], (old = []) =>
+        old.filter((msg) => msg.id !== messageId)
+      );
+    };
+
     socket.on("newMessage", handleNewMessage);
-    return () => socket.off("newMessage", handleNewMessage);
-  }, [roomId]);
+    socket.on("messageReaction", handleMessageReaction);
+    socket.on("messageEdited", handleMessageEdited);
+    socket.on("messageDeleted", handleMessageDeleted);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+      socket.off("messageReaction", handleMessageReaction);
+      socket.off("messageEdited", handleMessageEdited);
+      socket.off("messageDeleted", handleMessageDeleted);
+    };
+  }, [roomId, queryClient]);
 
   const handleMessageRead = ({ messageId, userId, roomId }) => {
     const current = queryClient.getQueryData(["messages", roomId]);
@@ -196,10 +237,18 @@ const ChatMessages = ({ roomId }) => {
                     currentUserId={user?.id}
                     roomMembers={otherMembers}
                     handleMessageRead={handleMessageRead}
-                    onDelete={(m) => deleteMutation.mutate(m.id)}
+                    onDelete={(m) => {
+                      deleteMutation.mutate(m.id);
+                      socket.emit("deleteMessage", { messageId: m.id, roomId });
+                    }}
                     onReply={() => { }}
-                    onReact={() => { }}
-                    onEdit={() => { }}
+                    onReact={(m, emoji) => socket.emit("reactMessage", { messageId: m.id, emoji, roomId })}
+                    onEdit={(m) => {
+                      const newText = window.prompt("Edit message:", m.text);
+                      if (newText && newText !== m.text) {
+                        socket.emit("editMessage", { messageId: m.id, text: newText, roomId });
+                      }
+                    }}
                   />
                 </motion.div>
               );

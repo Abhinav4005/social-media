@@ -3,6 +3,7 @@ import ChatSidebar from "../components/ChatSidebar";
 import ChatHeader from "../components/ChatHeader";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
+import AIChatView from "../components/AIChatView";
 import { useParams } from "react-router-dom";
 import { socket } from "../../../socket";
 import { useSelector } from "react-redux";
@@ -15,14 +16,14 @@ const ChatPage = () => {
   const { roomId } = useParams();
   const [activeChat, setActiveChat] = useState(roomId || null);
 
-  const {data: roomsData, isLoading, error} = useQuery({
+  const { data: roomsData, isLoading, error } = useQuery({
     queryKey: QUERY_KEYS.rooms,
     queryFn: getRooms,
     enabled: !!user?.id,
   })
-    
+
   useEffect(() => {
-    if (roomId) {
+    if (roomId && roomId !== "ai-bot") {
       setActiveChat(roomId);
 
       socket.emit("joinRoom", { roomId: parseInt(roomId), userId: user?.id });
@@ -39,7 +40,9 @@ const ChatPage = () => {
 
       {/* Right Chat Window */}
       <div className="flex flex-col flex-1 min-w-0">
-        {activeChat ? (
+        {activeChat === "ai-bot" ? (
+          <AIChatView />
+        ) : activeChat ? (
           <>
             <ChatHeader roomId={activeChat} data={roomsData} isLoading={isLoading} isError={error} />
             <ChatMessages roomId={activeChat} />

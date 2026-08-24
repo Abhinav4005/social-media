@@ -103,6 +103,13 @@ export class ChatRepository {
         });
     }
 
+    async editMessage(messageId, userId, text) {
+        return await this.db.message.update({
+            where: { id: parseInt(messageId, 10), senderId: userId },
+            data: { text, isEdited: true }
+        });
+    }
+
     async createSocketMessage(senderId, data) {
         const { text, replyTo, attachments, roomId } = data;
         return await this.db.message.create({

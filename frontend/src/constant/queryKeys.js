@@ -26,4 +26,5 @@ export const QUERY_KEYS = {
   marketplaceListings: (category, search) => ["marketplaceListings", category, search],
   myMarketplaceListings: ["myMarketplaceListings"],
   marketplaceListing: (id) => ["marketplaceListing", id],
+  watchFeed: (category) => ["watchFeed", category],
 };

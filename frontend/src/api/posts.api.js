@@ -116,3 +116,13 @@ export const getSavedPosts = async () => {
     }
     return response.data?.posts || response.data?.data?.posts || [];
 };
+
+export const getWatchFeed = async (category = "all") => {
+    const response = await apiClient.get(API_ENDPOINTS.POSTS.WATCH, {
+        params: { category }
+    });
+    if (response.status !== 200) {
+        throw new Error("Failed to fetch watch feed");
+    }
+    return response.data?.posts || response.data?.data?.posts || [];
+};

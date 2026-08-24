@@ -35,13 +35,37 @@ const registerChatHandler = (socket) => {
     });
 
     socket.on("messageReadByUser", async ({ messageId, userId, roomId }) => {
-        const readMessage = messageRead(messageId, userId, roomId);
-        io.to(roomId).emit("messageRead", {
-            messageId,
-            userId,
-            roomId,
-            readAt: readMessage.readAt
-        });
+        const readMessage = await messageRead(messageId, userId, roomId);
+        io.to(String(roomId)).emit("messageRead", { messageId, userId, roomId, readAt: readMessage?.readAt });
+        io.to(parseInt(roomId, 10)).emit("messageRead", { messageId, userId, roomId, readAt: readMessage?.readAt });
+    });
+
+    socket.on("editMessage", async ({ messageId, text, roomId }) => {
+        const userId = socket.userId;
+        try {
+            const updated = await defaultChatRepository.editMessage(messageId, userId, text);
+            io.to(String(roomId)).emit("messageEdited", { messageId: updated.id, text: updated.text, roomId });
+            io.to(parseInt(roomId, 10)).emit("messageEdited", { messageId: updated.id, text: updated.text, roomId });
+        } catch (err) {
+            console.error("editMessage error:", err);
+        }
+    });
+
+    socket.on("deleteMessage", async ({ messageId, roomId }) => {
+        const userId = socket.userId;
+        try {
+            await defaultChatRepository.deleteMessage(messageId, userId);
+            io.to(String(roomId)).emit("messageDeleted", { messageId, roomId });
+            io.to(parseInt(roomId, 10)).emit("messageDeleted", { messageId, roomId });
+        } catch (err) {
+            console.error("deleteMessage error:", err);
+        }
+    });
+
+    socket.on("reactMessage", async ({ messageId, emoji, roomId }) => {
+        const userId = socket.userId;
+        io.to(String(roomId)).emit("messageReaction", { messageId, emoji, userId, roomId });
+        io.to(parseInt(roomId, 10)).emit("messageReaction", { messageId, emoji, userId, roomId });
     });
 }
 

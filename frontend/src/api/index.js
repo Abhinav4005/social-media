@@ -10,3 +10,4 @@ export * from "./subscriptions.api";
 export * from "./groups.api";
 export * from "./events.api";
 export * from "./marketplace.api";
+export * from "./ai.api";

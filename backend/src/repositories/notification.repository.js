@@ -28,6 +28,13 @@ export class NotificationRepository {
             data: { read: true }
         });
     }
+
+    async markAllAsRead(userId) {
+        return await this.db.notification.updateMany({
+            where: { receiverId: userId, read: false },
+            data: { read: true }
+        });
+    }
 }
 
 export const defaultNotificationRepository = new NotificationRepository();

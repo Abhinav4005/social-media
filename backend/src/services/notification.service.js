@@ -19,6 +19,11 @@ export class NotificationService {
         if (!userId || !notificationId) throw { status: 400, message: "User ID and Notification ID are required" };
         return await this.notificationRepository.markAsRead(notificationId, userId);
     }
+
+    async markAllAsRead(userId) {
+        if (!userId) throw { status: 400, message: "User ID is required" };
+        return await this.notificationRepository.markAllAsRead(userId);
+    }
 }
 
 export const defaultNotificationService = new NotificationService();

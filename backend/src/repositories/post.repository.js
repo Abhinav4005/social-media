@@ -302,6 +302,21 @@ export class PostRepository {
         });
         return savedRecords.map(r => r.post).filter(Boolean);
     }
+
+    async getWatchFeed(category = "all") {
+        const videoPosts = await this.db.post.findMany({
+            where: {
+                video: { not: "" }
+            },
+            include: {
+                comments: COMMENTS_WITH_AUTHOR_AND_REPLIES,
+                post_likes: true,
+                user: { select: USER_BASIC_SELECT },
+            },
+            orderBy: { createdAt: "desc" }
+        });
+        return videoPosts;
+    }
 }
 
 export const defaultPostRepository = new PostRepository();

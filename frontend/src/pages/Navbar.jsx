@@ -4,13 +4,14 @@ import { useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFriendRequests, globalSearch } from "../api";
+import { getFriendRequests, getNotifications, globalSearch } from "../api";
 import useDebounce from "../utils/useDebounce";
 import { BRAND_THEME } from "../constant/constant";
 import { useTheme } from "../context/ThemeContext";
 import UserAvatar from "../components/Common/UserAvatar";
 import { QUERY_KEYS } from "../constant/queryKeys";
 import { ROUTES } from "../constant/routes";
+import { socket } from "../socket";
 
 /**
  * Modern Streamlined Navbar presentational component.
@@ -44,6 +45,26 @@ export default function Navbar() {
   const pendingRequestsCount = Array.isArray(friendRequests)
     ? friendRequests.filter((r) => r.status === "PENDING").length
     : (friendRequests?.requests || []).filter((r) => r.status === "PENDING").length;
+
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery({
+    queryKey: QUERY_KEYS.notifications,
+    queryFn: getNotifications,
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    const handleNewNotification = () => refetchNotifications();
+    socket.on("newNotification", handleNewNotification);
+    socket.on("notification", handleNewNotification);
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+      socket.off("notification", handleNewNotification);
+    };
+  }, [refetchNotifications]);
+
+  const unreadNotificationsCount = Array.isArray(notifications)
+    ? notifications.filter((n) => !n.read && !n.isRead).length
+    : 0;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -85,11 +106,10 @@ export default function Navbar() {
         {/* ── Center Search Bar ──────────────────────────────────── */}
         <div className="flex-1 max-w-md mx-2 sm:mx-6">
           <div ref={searchRef} className="relative w-full">
-            <div className={`flex h-10 w-full items-center gap-2.5 rounded-2xl border px-3.5 transition-all duration-200 ${
-              searchFocused
-                ? "border-primary-400 dark:border-primary-500 bg-white dark:bg-slate-800 shadow-md shadow-primary-100/50 dark:shadow-none"
-                : "border-gray-200/80 dark:border-slate-700/70 bg-gray-50/90 dark:bg-slate-800/50 hover:bg-gray-100/70 dark:hover:bg-slate-800"
-            }`}>
+            <div className={`flex h-10 w-full items-center gap-2.5 rounded-2xl border px-3.5 transition-all duration-200 ${searchFocused
+              ? "border-primary-400 dark:border-primary-500 bg-white dark:bg-slate-800 shadow-md shadow-primary-100/50 dark:shadow-none"
+              : "border-gray-200/80 dark:border-slate-700/70 bg-gray-50/90 dark:bg-slate-800/50 hover:bg-gray-100/70 dark:hover:bg-slate-800"
+              }`}>
               <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
               <input
                 type="text"
@@ -171,16 +191,15 @@ export default function Navbar() {
 
         {/* ── Right Navigation & Actions ─────────────────────────── */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          
+
           {/* Home Link */}
           <Link
             to={ROUTES.HOME}
             title="Home"
-            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              isActive(ROUTES.HOME)
-                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
-            }`}
+            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${isActive(ROUTES.HOME)
+              ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
+              }`}
           >
             <Home className="h-4.5 w-4.5" />
             {isActive(ROUTES.HOME) && (
@@ -195,11 +214,10 @@ export default function Navbar() {
           <Link
             to={ROUTES.FRIEND_REQUESTS}
             title="Friend Requests"
-            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              isActive(ROUTES.FRIEND_REQUESTS)
-                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
-            }`}
+            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${isActive(ROUTES.FRIEND_REQUESTS)
+              ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
+              }`}
           >
             <UsersRound className="h-4.5 w-4.5" />
             {pendingRequestsCount > 0 && (
@@ -219,11 +237,10 @@ export default function Navbar() {
           <Link
             to={ROUTES.CHAT}
             title="Messages"
-            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              location.pathname.startsWith(ROUTES.CHAT)
-                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
-            }`}
+            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${location.pathname.startsWith(ROUTES.CHAT)
+              ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
+              }`}
           >
             <MessagesSquare className="h-4.5 w-4.5" />
             {location.pathname.startsWith(ROUTES.CHAT) && (
@@ -238,13 +255,17 @@ export default function Navbar() {
           <Link
             to={ROUTES.NOTIFICATIONS}
             title="Notifications"
-            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${
-              isActive(ROUTES.NOTIFICATIONS)
-                ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
-            }`}
+            className={`relative flex h-9.5 w-9.5 items-center justify-center rounded-2xl transition-all duration-200 ${isActive(ROUTES.NOTIFICATIONS)
+              ? "bg-primary-50 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 font-bold"
+              : "text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
+              }`}
           >
             <Bell className="h-4.5 w-4.5" />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                {unreadNotificationsCount}
+              </span>
+            )}
             {isActive(ROUTES.NOTIFICATIONS) && (
               <motion.span
                 layoutId="active-nav-dot"

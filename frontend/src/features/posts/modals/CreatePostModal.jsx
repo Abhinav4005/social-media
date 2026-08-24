@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, Image as ImageIcon, MapPin, Smile, MoreHorizontal, Globe, Users, Lock, Sparkles, Film, Trash2 } from "lucide-react";
+import { X, Image as ImageIcon, MapPin, Smile, MoreHorizontal, Globe, Users, Lock, Sparkles, Film, Trash2, Wand2, Loader2 } from "lucide-react";
 import { useToast } from "../../../context/ToastContext";
 import { postSchema } from "../../../schemas";
 import { useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPost, updatePost } from "../../../api";
+import { createPost, updatePost, generateAIPost } from "../../../api";
 import { motion, AnimatePresence } from "framer-motion";
 
 const QUICK_EMOJIS = ["😊", "🔥", "❤️", "🚀", "🎉", "✨", "😍", "👍"];
@@ -26,6 +26,35 @@ export default function CreatePostModal({ isOpen, onClose, isEditing = false, ed
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showPrivacyDropdown, setShowPrivacyDropdown] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+  const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [isAIGenerating, setIsAIGenerating] = useState(false);
+
+  const handleAIGenerate = async (e) => {
+    e.preventDefault();
+    if (!aiTopic.trim()) {
+      showError("Please enter a topic for AI generation");
+      return;
+    }
+    try {
+      setIsAIGenerating(true);
+      const res = await generateAIPost({ topic: aiTopic.trim() });
+      if (res) {
+        setFormData((prev) => ({
+          ...prev,
+          title: res.title || prev.title,
+          description: `${res.description || ""}\n\n${(res.hashtags || []).join(" ")}`.trim(),
+        }));
+        showSuccess("AI content generated!");
+        setShowAIPrompt(false);
+        setAiTopic("");
+      }
+    } catch (err) {
+      showError("Failed to generate AI content");
+    } finally {
+      setIsAIGenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (isEditing) {
@@ -228,6 +257,57 @@ export default function CreatePostModal({ isOpen, onClose, isEditing = false, ed
 
               {/* Form Input Section */}
               <div className="space-y-4">
+                {/* AI Magic Writer Trigger / Banner */}
+                <div className="p-3 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-slate-900 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                      <Wand2 className="w-4 h-4 text-purple-600 dark:text-purple-400 animate-pulse" />
+                      <span>AI Magic Writer</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAIPrompt((prev) => !prev)}
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      {showAIPrompt ? "Close" : "✨ Write with AI"}
+                    </button>
+                  </div>
+
+                  {showAIPrompt && (
+                    <motion.form
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onSubmit={handleAIGenerate}
+                      className="flex items-center gap-2 pt-1"
+                    >
+                      <input
+                        type="text"
+                        placeholder="e.g., Weekend hiking trip in the mountains..."
+                        value={aiTopic}
+                        onChange={(e) => setAiTopic(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isAIGenerating}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isAIGenerating ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Generate</span>
+                          </>
+                        )}
+                      </button>
+                    </motion.form>
+                  )}
+                </div>
+
                 <input
                   type="text"
                   placeholder="Post Title (Optional)"

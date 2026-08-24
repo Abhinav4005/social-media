@@ -7,10 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getStories } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import CreateStoryModal from "../modals/CreateStoryModal";
+import StoryViewerModal from "../modals/StoryViewerModal";
 
 const StoryTray = () => {
   const { user } = useSelector((state) => state.auth);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedStory, setSelectedStory] = useState(null);
 
   const { data: storiesFeed = [] } = useQuery({
     queryKey: QUERY_KEYS.stories,
@@ -56,12 +58,17 @@ const StoryTray = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 + index * 0.1 }}
           >
-            <StoryCircle story={story} />
+            <StoryCircle story={story} onClick={() => setSelectedStory(story)} />
           </motion.div>
         ))}
       </div>
 
       <CreateStoryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <StoryViewerModal
+        story={selectedStory}
+        isOpen={!!selectedStory}
+        onClose={() => setSelectedStory(null)}
+      />
     </motion.section>
   );
 };

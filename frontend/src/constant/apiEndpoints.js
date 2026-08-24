@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
   },
   POSTS: {
     FEED: "/post/feed",
+    WATCH: "/post/watch",
     CREATE: "/post/create",
     BY_ID: "/post/postById",
     BY_USER: "/post/postByUser",
@@ -84,5 +85,10 @@ export const API_ENDPOINTS = {
     MY_LISTINGS: "/marketplace/user",
     BY_ID: (id) => `/marketplace/${id}`,
     DELETE: (id) => `/marketplace/${id}`,
+  },
+  AI: {
+    GENERATE_POST: "/ai/generate-post",
+    GENERATE_LISTING: "/ai/generate-listing",
+    CHAT: "/ai/chat",
   },
 };
