@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { sendAIChatMessage } from "../../../api";
 import { useSelector } from "react-redux";
 import { useToast } from "../../../context/ToastContext";
+import AIUpgradeModal from "../../../components/Common/AIUpgradeModal";
 
 const QUICK_SUGGESTIONS = [
     "✨ Help me write an engaging post",
@@ -15,6 +16,8 @@ const QUICK_SUGGESTIONS = [
 export default function AIChatView() {
     const { user } = useSelector((state) => state.auth);
     const { showError } = useToast();
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeMessage, setUpgradeMessage] = useState("");
     const [messages, setMessages] = useState([
         {
             id: "welcome",
@@ -56,7 +59,13 @@ export default function AIChatView() {
             };
             setMessages((prev) => [...prev, aiMsg]);
         } catch (err) {
-            showError("Failed to get AI response");
+            const msg = err.response?.data?.message || err.message;
+            if (err.response?.status === 403 || err.response?.data?.upgradeRequired) {
+                setUpgradeMessage(msg);
+                setShowUpgradeModal(true);
+            } else {
+                showError(msg || "Failed to get AI response");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -126,8 +135,8 @@ export default function AIChatView() {
                             <div className={`max-w-[78%] space-y-1 ${isAI ? "items-start" : "items-end"}`}>
                                 <div
                                     className={`px-4 py-3 rounded-2xl text-xs font-medium leading-relaxed shadow-xs ${isAI
-                                            ? "bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 text-gray-800 dark:text-gray-200 rounded-tl-xs"
-                                            : "bg-indigo-600 text-white rounded-tr-xs"
+                                        ? "bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 text-gray-800 dark:text-gray-200 rounded-tl-xs"
+                                        : "bg-indigo-600 text-white rounded-tr-xs"
                                         }`}
                                 >
                                     {msg.text}
@@ -198,6 +207,12 @@ export default function AIChatView() {
                     </button>
                 </form>
             </div>
+
+            <AIUpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                message={upgradeMessage}
+            />
         </div>
     );
 }
