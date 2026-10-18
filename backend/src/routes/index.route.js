@@ -14,6 +14,8 @@ import groupRoutes from "./group.route.js";
 import eventRoutes from "./event.route.js";
 import marketplaceRoutes from "./marketplace.route.js";
 import aiRoutes from "./ai.route.js";
+import discoveryRoutes from "./discovery.route.js";
+import moderationRoutes from "./moderation.route.js";
 
 const router = express.Router();
 
@@ -32,6 +34,7 @@ router.use(["/groups", "/group"], groupRoutes);
 router.use(["/events", "/event"], eventRoutes);
 router.use(["/marketplace", "/marketplaces"], marketplaceRoutes);
 router.use("/ai", aiRoutes);
-
+router.use("/discovery", discoveryRoutes);
+router.use(["/moderation", "/safety"], moderationRoutes);
 
 export default router;

@@ -28,6 +28,7 @@ const FriendsDetail = lazy(() => import('./features/friends').then(m => ({ defau
 const FriendRequests = lazy(() => import('./features/friends').then(m => ({ default: m.FriendRequests })));
 const Settings = lazy(() => import('./features/settings').then(m => ({ default: m.Setting })));
 const SearchPage = lazy(() => import('./features/search').then(m => ({ default: m.SearchPage })));
+const ExplorePage = lazy(() => import('./pages/ExplorePage'));
 const GroupsPage = lazy(() => import('./features/groups').then(m => ({ default: m.GroupsPage })));
 const GroupDetailPage = lazy(() => import('./features/groups').then(m => ({ default: m.GroupDetailPage })));
 const WatchPage = lazy(() => import('./features/watch').then(m => ({ default: m.WatchPage })));
@@ -43,6 +44,8 @@ const HelpCenterPage = lazy(() => import('./pages/HelpCenterPage'));
 const GuidelinesPage = lazy(() => import('./pages/GuidelinesPage'));
 const SafetyCenterPage = lazy(() => import('./pages/SafetyCenterPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
+const CommunityGuidelines = lazy(() => import('./pages/CommunityGuidelines'));
+const AdminModerationDashboard = lazy(() => import('./pages/admin/AdminModerationDashboard'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const AppLayout = ({ children }) => {
@@ -200,6 +203,16 @@ const App = () => {
                     }
                   />
                   <Route
+                    path={ROUTES.EXPLORE}
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Discovery page error">
+                          <ExplorePage />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
                     path="/user/:userId"
                     element={
                       <PrivateRoute>
@@ -343,6 +356,17 @@ const App = () => {
                   <Route path={ROUTES.GUIDELINES} element={<GuidelinesPage />} />
                   <Route path={ROUTES.SAFETY} element={<SafetyCenterPage />} />
                   <Route path={ROUTES.BLOG} element={<BlogPage />} />
+                  <Route path="/community-guidelines" element={<CommunityGuidelines />} />
+                  <Route
+                    path="/admin/moderation"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary compact title="Admin moderation error">
+                          <AdminModerationDashboard />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
 
                   {/* Catch-all 404 Route */}
                   <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />

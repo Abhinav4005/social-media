@@ -2,6 +2,7 @@ import React from "react";
 import {
   Bookmark,
   CalendarDays,
+  Compass,
   Home,
   MessageSquare,
   Settings,
@@ -49,6 +50,7 @@ export const BRAND_THEME = {
 
 export const mainItems = [
   { icon: <Home size={18} />, label: "Home", path: ROUTES.HOME },
+  { icon: <Compass size={18} />, label: "Explore & Discovery", path: ROUTES.EXPLORE },
   { icon: <UsersRound size={18} />, label: "Friends", path: ROUTES.FRIEND_REQUESTS },
   { icon: <UsersRound size={18} />, label: "Groups", path: ROUTES.GROUPS },
   { icon: <Store size={18} />, label: "Marketplace", path: ROUTES.MARKETPLACE },

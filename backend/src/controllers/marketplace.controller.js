@@ -71,3 +71,17 @@ export const deleteListing = async (req, res, next) => {
         return next(error);
     }
 };
+
+export const updateListingStatus = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const listingId = parseInt(req.params.id, 10);
+        const { isSold } = req.body;
+        const listing = await defaultMarketplaceService.toggleListingStatus(userId, listingId, isSold);
+        return ApiResponse.success(res, listing, "Listing status updated successfully");
+    } catch (error) {
+        if (error.status) return ApiResponse.error(res, error.message, error.status);
+        console.error("Error updating listing status:", error);
+        return next(error);
+    }
+};

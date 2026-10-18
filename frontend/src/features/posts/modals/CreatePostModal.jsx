@@ -150,14 +150,14 @@ export default function CreatePostModal({ isOpen, onClose, isEditing = false, ed
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex justify-center items-center z-[100] px-4 py-6 overflow-y-auto"
+          className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm flex justify-center items-center z-[100] p-3 sm:p-6 overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.94, opacity: 0, y: 16 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.94, opacity: 0, y: 16 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-indigo-500/10 w-full max-w-[560px] overflow-hidden border border-gray-100 dark:border-slate-800 transition-colors duration-200"
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-indigo-500/10 w-full max-w-[560px] my-auto max-h-[90vh] flex flex-col overflow-hidden border border-gray-100 dark:border-slate-800 transition-colors duration-200"
           >
             {/* Modal Header */}
             <div className="relative px-6 py-4 border-b border-gray-100 dark:border-slate-800/80 flex items-center justify-between bg-gradient-to-r from-gray-50/50 via-white to-gray-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">

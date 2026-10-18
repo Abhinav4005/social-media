@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-    Moon, Sun, Lock, User, Bell, Shield,
+    Moon, Sun, Lock, User, Bell, Shield, ShieldAlert, UserCheck, Scale,
     ChevronRight, LogOut, CreditCard, Sparkles, Check,
     Camera, Mail, FileText, Zap, Star, Eye, EyeOff
 } from "lucide-react";
@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../../hooks/useAuth";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import PrivacySettingsModal from "../components/PrivacySettingsModal";
+import VerificationRequestModal from "../../../components/moderation/VerificationRequestModal";
+import AppealModal from "../../../components/moderation/AppealModal";
 import { createCheckoutSession, changePassword } from "../../../api";
 import { useToast } from "../../../context/ToastContext";
 import { useTheme } from "../../../context/ThemeContext";
@@ -114,6 +116,7 @@ const CATEGORIES = [
     { id: "security", name: "Security", icon: Lock, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20" },
     { id: "notifications", name: "Notifications", icon: Bell, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/20" },
     { id: "privacy", name: "Privacy & Blocks", icon: Shield, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-900/20" },
+    { id: "safety", name: "Safety & Appeals", icon: ShieldAlert, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20" },
     { id: "preferences", name: "Preferences", icon: Sun, color: "text-orange-400", bg: "bg-orange-50 dark:bg-orange-900/20" },
 ];
 
@@ -121,6 +124,8 @@ export default function Settings() {
     const [activeTab, setActiveTab] = useState("profile");
     const { isDark, toggleTheme } = useTheme();
     const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+    const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+    const [isAppealModalOpen, setIsAppealModalOpen] = useState(false);
     const [isSubscribing, setIsSubscribing] = useState(false);
     const { showSuccess, showError } = useToast();
     const [notifs, setNotifs] = useState({ email: true, push: true, sms: false });
@@ -492,6 +497,63 @@ export default function Settings() {
                                 </SectionCard>
                             )}
 
+                            {activeTab === "safety" && (
+                                <SectionCard key="safety"
+                                    title="Trust, Safety & Appeals Hub"
+                                    description="Apply for verified badge status, submit moderation appeals, or review community standards."
+                                    icon={ShieldAlert}
+                                    iconColor="from-red-500 to-rose-600"
+                                >
+                                    <div className="space-y-4">
+                                        <div className="rounded-2xl bg-red-50/60 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                                    <UserCheck className="w-4 h-4 text-blue-500" /> Identity Verification Application
+                                                </h4>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    Request a Blue Check mark, Creator badge, or Official ID badge for your account.
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setIsVerificationModalOpen(true)}
+                                                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer whitespace-nowrap"
+                                            >
+                                                Apply for Verification
+                                            </button>
+                                        </div>
+
+                                        <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-gray-200 dark:border-slate-700/60 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                                    <Scale className="w-4 h-4 text-amber-500" /> File a Moderation Appeal
+                                                </h4>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    If content was removed or your account was restricted, submit an appeal for human review.
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setIsAppealModalOpen(true)}
+                                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-700 dark:hover:bg-slate-600 font-bold text-xs rounded-xl shadow-md cursor-pointer whitespace-nowrap"
+                                            >
+                                                Submit Appeal
+                                            </button>
+                                        </div>
+
+                                        <div className="p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                SocialHub Community Safety Guidelines
+                                            </span>
+                                            <a
+                                                href="/community-guidelines"
+                                                className="text-xs font-bold text-red-500 hover:underline"
+                                            >
+                                                Read Guidelines &rarr;
+                                            </a>
+                                        </div>
+                                    </div>
+                                </SectionCard>
+                            )}
+
                             {activeTab === "preferences" && (
                                 <SectionCard key="preferences"
                                     title="App Preferences"
@@ -517,6 +579,14 @@ export default function Settings() {
             <PrivacySettingsModal
                 isOpen={isPrivacyModalOpen}
                 onClose={() => setIsPrivacyModalOpen(false)}
+            />
+            <VerificationRequestModal
+                isOpen={isVerificationModalOpen}
+                onClose={() => setIsVerificationModalOpen(false)}
+            />
+            <AppealModal
+                isOpen={isAppealModalOpen}
+                onClose={() => setIsAppealModalOpen(false)}
             />
         </div>
     );

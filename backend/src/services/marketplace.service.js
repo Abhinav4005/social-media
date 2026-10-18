@@ -60,6 +60,19 @@ export class MarketplaceService {
         await this.repo.deleteListing(listingId);
         return { message: "Listing deleted successfully" };
     }
+
+    async toggleListingStatus(userId, listingId, isSold) {
+        const listing = await this.repo.findListingById(listingId);
+        if (!listing) {
+            throw new ApiError(404, "Listing not found");
+        }
+
+        if (listing.sellerId !== userId) {
+            throw new ApiError(403, "You can only update your own listings");
+        }
+
+        return await this.repo.updateListing(listingId, { isSold: Boolean(isSold) });
+    }
 }
 
 export const defaultMarketplaceService = new MarketplaceService();

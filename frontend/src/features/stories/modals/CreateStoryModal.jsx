@@ -48,20 +48,20 @@ const CreateStoryModal = ({ isOpen, onClose }) => {
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="absolute inset-0 bg-black/70 backdrop-blur-[2px]"
+                    className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm"
                 />
 
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 30 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 30 }}
-                    className="relative w-full max-w-lg bg-white rounded-[44px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.25)] border border-gray-100/50 overflow-hidden"
+                    className="relative w-full max-w-lg my-auto max-h-[90vh] flex flex-col bg-white rounded-[44px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.25)] border border-gray-100/50 overflow-y-auto scrollbar-hide"
                 >
                     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
 

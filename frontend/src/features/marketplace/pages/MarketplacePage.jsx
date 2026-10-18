@@ -12,6 +12,7 @@ import { getMarketplaceListings, deleteMarketplaceListing } from "../../../api";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import { useToast } from "../../../context/ToastContext";
 import CreateListingModal from "../modals/CreateListingModal";
+import ListingDetailModal from "../modals/ListingDetailModal";
 
 const CATEGORIES = [
   { id: "all", label: "All Items", icon: ShoppingBag },
@@ -26,6 +27,7 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedItemForDetail, setSelectedItemForDetail] = useState(null);
 
   const currentUser = useSelector((state) => state.auth?.user);
   const queryClient = useQueryClient();
@@ -48,9 +50,10 @@ export default function MarketplacePage() {
     }
   });
 
-  const handleContactSeller = (sellerId) => {
-    if (!sellerId) return;
-    navigate(`/chats?userId=${sellerId}`);
+  const handleContactSeller = (item) => {
+    if (!item?.sellerId) return;
+    const initialMsg = encodeURIComponent(`Hi ${item.seller?.name || "there"}, I'm interested in your listing "${item.title}" listed for $${item.price.toLocaleString()}. Is it still available?`);
+    navigate(`/chats?userId=${item.sellerId}&initialMsg=${initialMsg}`);
   };
 
   return (
@@ -100,8 +103,8 @@ export default function MarketplacePage() {
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.id)}
                       className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${isActive
-                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                          : "bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800"
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                        : "bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800"
                         }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -138,15 +141,22 @@ export default function MarketplacePage() {
                         key={item.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="group bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                        className="group bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
                       >
-                        <div>
+                        <div onClick={() => setSelectedItemForDetail(item)}>
                           <div className="aspect-square w-full overflow-hidden relative bg-gray-100 dark:bg-slate-800">
                             <img
                               src={displayImage}
                               alt={item.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
+                            {item.isSold && (
+                              <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+                                <span className="px-3 py-1 bg-rose-600 text-white font-black text-xs rounded-lg uppercase tracking-wider shadow-md">
+                                  SOLD
+                                </span>
+                              </div>
+                            )}
                             {item.location && (
                               <span className="absolute bottom-2 left-2 flex items-center gap-1 text-[10px] font-bold text-white bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-full">
                                 <MapPin className="w-3 h-3 text-indigo-400" />
@@ -184,7 +194,10 @@ export default function MarketplacePage() {
 
                           {isOwner ? (
                             <button
-                              onClick={() => deleteMutation.mutate(item.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteMutation.mutate(item.id);
+                              }}
                               disabled={deleteMutation.isPending}
                               className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
                               title="Delete listing"
@@ -193,11 +206,15 @@ export default function MarketplacePage() {
                             </button>
                           ) : (
                             <button
-                              onClick={() => handleContactSeller(item.sellerId)}
-                              className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleContactSeller(item);
+                              }}
+                              disabled={item.isSold}
+                              className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 px-2 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-40"
                             >
                               <MessageCircle className="w-3 h-3" />
-                              Chat
+                              {item.isSold ? "Sold" : "Chat"}
                             </button>
                           )}
                         </div>
@@ -220,6 +237,13 @@ export default function MarketplacePage() {
       <CreateListingModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <ListingDetailModal
+        item={selectedItemForDetail}
+        currentUser={currentUser}
+        isOpen={!!selectedItemForDetail}
+        onClose={() => setSelectedItemForDetail(null)}
       />
     </>
   );

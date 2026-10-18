@@ -7,10 +7,6 @@ import { eventBus, DOMAIN_EVENTS } from "../events/eventBus.js";
 import { nestComments } from "../helper/formatComment.js";
 import { ApiError } from "../utils/apiError.js";
 
-/**
- * Post Service handling Post domain business logic.
- * Adheres to SRP, DIP, and Security validation rules.
- */
 export class PostService {
     constructor(postRepository = defaultPostRepository, storageAdapter = defaultStorageAdapter) {
         this.postRepository = postRepository;
@@ -177,10 +173,18 @@ export class PostService {
         return await this.postRepository.getPostLikes(cleanPostId);
     }
 
-    async getPostFeed({ limit = 10, page = 1 }) {
-        const feedData = await this.postRepository.getPostFeed(limit, page);
+    async getPostFeed({ userId = null, limit = 10, page = 1 }) {
+        const excludedUserIds = userId
+            ? await this.postRepository.getUserBlockedAndMutedIds(userId)
+            : [];
+
+        const feedData = await this.postRepository.getPostFeed(limit, page, excludedUserIds);
+
         feedData.posts.forEach(post => {
             if (post.comments) {
+                if (excludedUserIds.length > 0) {
+                    post.comments = post.comments.filter(c => !excludedUserIds.includes(c.userId));
+                }
                 post.comments = nestComments(post.comments);
             }
         });

@@ -107,7 +107,7 @@ const CreateGroupModal = ({ isOpen, onClose, chatList }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center px-4"
+                className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
                 onClick={(e) => e.target === e.currentTarget && onClose()}
             >
                 <motion.div
@@ -115,8 +115,7 @@ const CreateGroupModal = ({ isOpen, onClose, chatList }) => {
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.94, opacity: 0, y: 24 }}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-white/60 dark:border-slate-700/50 rounded-[28px] shadow-2xl overflow-hidden flex flex-col"
-                    style={{ maxHeight: "90vh" }}
+                    className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-white/60 dark:border-slate-700/50 rounded-[28px] shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]"
                 >
                     <div className="h-1 w-full bg-gradient-to-r from-primary-500 via-secondary-400 to-primary-600 animate-gradient-x" />
 

@@ -238,11 +238,29 @@ export class PostRepository {
         });
     }
 
-    async getPostFeed(limit = 10, page = 1) {
+    async getUserBlockedAndMutedIds(userId) {
+        if (!userId) return [];
+        const numericUserId = Number(userId);
+        const [blocked, muted] = await Promise.all([
+            this.db.userBlock.findMany({ where: { userId: numericUserId }, select: { blockedUserId: true } }).catch(() => []),
+            this.db.userMute.findMany({ where: { muterId: numericUserId }, select: { mutedUserId: true } }).catch(() => [])
+        ]);
+        return [
+            ...blocked.map(b => b.blockedUserId),
+            ...muted.map(m => m.mutedUserId)
+        ];
+    }
+
+    async getPostFeed(limit = 10, page = 1, excludedUserIds = []) {
         const take = Number(limit);
         const skip = (Number(page) - 1) * take;
 
+        const whereCondition = excludedUserIds.length > 0
+            ? { userId: { notIn: excludedUserIds } }
+            : {};
+
         const posts = await this.db.post.findMany({
+            where: whereCondition,
             take,
             skip,
             include: {
@@ -254,7 +272,7 @@ export class PostRepository {
             orderBy: { createdAt: 'desc' }
         });
 
-        const totalPosts = await this.db.post.count();
+        const totalPosts = await this.db.post.count({ where: whereCondition });
         const hasMore = skip + posts.length < totalPosts;
 
         return { posts, totalPosts, hasMore, page: Number(page) };

@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import CreatePostModal from '../modals/CreatePostModal';
 import { formatTime } from '../../../utils/formatTime';
 import AIUpgradeModal from '../../../components/Common/AIUpgradeModal';
+import PostSafetyMenu from '../../../components/moderation/PostSafetyMenu';
 
 const PostDetail = () => {
   const navigate = useNavigate();
@@ -219,7 +220,16 @@ const PostDetail = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons - for posts by other users, show Safety Menu */}
+              {user?.id !== post?.userId && (
+                <PostSafetyMenu
+                  targetType="POST"
+                  targetId={post?.id}
+                  authorId={post?.userId}
+                  authorName={post?.user?.name || "User"}
+                />
+              )}
+              {/* Owner actions */}
               {user?.id === post?.userId && (
                 <div className="flex gap-2">
                   <motion.button
@@ -428,16 +438,24 @@ const PostDetail = () => {
                         className="flex gap-3 items-start"
                       >
                         <div className="relative flex-shrink-0">
-                          <img
-                            src={`https://ui-avatars.com/api/?name=User${comment.userId}&background=random`}
-                            alt="User"
-                            className="w-10 h-10 rounded-full border-2 border-gray-200"
-                          />
+                          {comment.user?.profileImage ? (
+                            <img
+                              src={comment.user.profileImage}
+                              alt={comment.user.name}
+                              className="w-10 h-10 rounded-full object-cover ring-2 ring-primary-100"
+                            />
+                          ) : (
+                            <img
+                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.name || 'User')}&background=random`}
+                              alt={comment.user?.name || 'User'}
+                              className="w-10 h-10 rounded-full border-2 border-gray-200"
+                            />
+                          )}
                         </div>
                         <div className="flex-1">
                           <div className="bg-gray-50 rounded-2xl px-4 py-3">
                             <p className="font-semibold text-gray-900 text-sm mb-1">
-                              User {comment.userId}
+                              {comment.user?.name || `User ${comment.userId}`}
                             </p>
                             <p className="text-gray-700 text-sm leading-relaxed">
                               {comment.content}

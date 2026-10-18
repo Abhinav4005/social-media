@@ -27,8 +27,11 @@ export class MarketplaceRepository {
         });
     }
 
-    async findAllListings({ category, search, location, isSold = false, limit = 20, offset = 0 } = {}) {
-        const where = { isSold };
+    async findAllListings({ category, search, location, includeSold = true, limit = 20, offset = 0 } = {}) {
+        const where = {};
+        if (!includeSold) {
+            where.isSold = false;
+        }
 
         if (category && category !== "ALL" && category !== "all") {
             where.category = category.toUpperCase();
