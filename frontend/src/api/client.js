@@ -3,7 +3,10 @@ import { getApiErrorMessage } from "../utils/apiResponse";
 import store from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
+// In development, use a relative URL so requests go through the Vite proxy
+// (same origin → browser stores HttpOnly cookies correctly).
+// In production, VITE_API_URL points to the deployed backend.
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 const publicAuthPaths = ["/signin", "/signup", "/forgot-password", "/reset-password"];
 
@@ -11,6 +14,9 @@ const apiClient = axios.create({
     baseURL: API_BASE_URL,
     withCredentials: true,
     timeout: 15000,
+    headers: {
+        "X-Requested-With": "XMLHttpRequest",
+    },
 });
 
 let isRefreshing = false;

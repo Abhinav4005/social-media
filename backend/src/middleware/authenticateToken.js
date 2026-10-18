@@ -13,8 +13,10 @@ export const AUTH_COOKIE_NAME = "token";
  */
 export const AUTH_COOKIE_OPTIONS = {
     httpOnly: true,
+    // Cross-origin (Vercel → Render) requires Secure + SameSite=None.
+    // In dev, Secure=false and SameSite=Lax works via Vite proxy (same origin).
     secure: IS_PROD,
-    sameSite: IS_PROD ? "Strict" : "Lax",
+    sameSite: IS_PROD ? "None" : "Lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
 };
