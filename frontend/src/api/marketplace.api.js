@@ -28,3 +28,8 @@ export const deleteMarketplaceListing = async (id) => {
     const res = await apiClient.delete(API_ENDPOINTS.MARKETPLACE.DELETE(id));
     return res.data?.data || res.data;
 };
+
+export const updateMarketplaceListingStatus = async ({ id, isSold }) => {
+    const res = await apiClient.patch(API_ENDPOINTS.MARKETPLACE.UPDATE_STATUS(id), { isSold });
+    return res.data?.data || res.data;
+};

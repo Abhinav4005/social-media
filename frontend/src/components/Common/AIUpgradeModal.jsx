@@ -14,12 +14,12 @@ export default function AIUpgradeModal({ isOpen, onClose, message }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-sm overflow-y-auto">
             <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-indigo-100 dark:border-slate-800 overflow-hidden"
+                className="relative bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full my-auto max-h-[90vh] flex flex-col p-6 shadow-2xl border border-indigo-100 dark:border-slate-800 overflow-y-auto scrollbar-hide"
             >
                 {/* Decorative Ambient Glow */}
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full blur-3xl opacity-30 pointer-events-none" />

@@ -13,6 +13,8 @@ import UserAvatar from "../../../components/Common/UserAvatar";
 import SanitizedText from "../../../components/Common/SanitizedText";
 import { QUERY_KEYS } from "../../../constant/queryKeys";
 import { ROUTES } from "../../../constant/routes";
+import PostSafetyMenu from "../../../components/moderation/PostSafetyMenu";
+import VerifiedBadge from "../../../components/Common/VerifiedBadge";
 
 export default function PostCard({ post_likes = [], comments = [], ...post }) {
   const navigate = useNavigate();
@@ -98,13 +100,18 @@ export default function PostCard({ post_likes = [], comments = [], ...post }) {
             ring="ring-2 ring-white dark:ring-slate-800"
           />
           <div className="min-w-0">
-            <button
-              type="button"
-              onClick={() => post?.user?.id && navigate(ROUTES.USER_PROFILE(post.user.id))}
-              className="block truncate text-left text-[14px] font-bold text-gray-950 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-            >
-              {post?.user?.name || "Unknown user"}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => post?.user?.id && navigate(ROUTES.USER_PROFILE(post.user.id))}
+                className="block truncate text-left text-[14px] font-bold text-gray-950 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              >
+                {post?.user?.name || "Unknown user"}
+              </button>
+              {post?.user?.verificationBadgeType && (
+                <VerifiedBadge type={post.user.verificationBadgeType} className="w-4 h-4" />
+              )}
+            </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
               <span>{formatTime(post?.createdAt)}</span>
               <span>·</span>
@@ -113,49 +120,50 @@ export default function PostCard({ post_likes = [], comments = [], ...post }) {
           </div>
         </div>
 
-        <div className="relative">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+        <div className="flex items-center gap-1">
+          <button
             type="button"
-            onClick={() => setShowMenu((prev) => !prev)}
-            className="app-icon-button h-9 w-9 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
+            onClick={handleCopyLink}
+            title="Copy Link"
+            className="app-icon-button h-8 w-8 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 text-xs"
           >
-            <MoreHorizontal className="h-5 w-5" />
-          </motion.button>
+            🔗
+          </button>
 
-          {showMenu && (
+          {/* Safety menu - Report / Mute / Block for other users' posts */}
+          {user?.id !== post?.user?.id && (
+            <PostSafetyMenu
+              targetType="POST"
+              targetId={post.id}
+              authorId={post?.user?.id}
+              authorName={post?.user?.name || "User"}
+            />
+          )}
+
+          {/* Own post: delete button */}
+          {user?.id === post?.user?.id && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              type="button"
+              onClick={() => setShowMenu((prev) => !prev)}
+              className="app-icon-button h-9 w-9 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </motion.button>
+          )}
+          {showMenu && user?.id === post?.user?.id && (
             <div className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 py-2 z-30 animate-fadeIn text-sm font-medium">
               <button
                 type="button"
-                onClick={handleCopyLink}
-                className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-slate-800 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2"
+                onClick={() => {
+                  setShowMenu(false);
+                  showSuccess("Post deleted successfully");
+                }}
+                className="w-full px-4 py-2 text-left text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors flex items-center gap-2 font-bold"
               >
-                🔗 Copy Post Link
+                🗑️ Delete Post
               </button>
-
-              {user?.id !== post?.user?.id && (
-                <button
-                  type="button"
-                  onClick={handleBlockUser}
-                  className="w-full px-4 py-2 text-left text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors flex items-center gap-2 font-bold"
-                >
-                  🚫 Block {post?.user?.name || "User"}
-                </button>
-              )}
-
-              {user?.id === post?.user?.id && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenu(false);
-                    showSuccess("Post deleted successfully");
-                  }}
-                  className="w-full px-4 py-2 text-left text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors flex items-center gap-2 font-bold"
-                >
-                  🗑️ Delete Post
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -221,9 +229,8 @@ export default function PostCard({ post_likes = [], comments = [], ...post }) {
           whileTap={{ scale: 0.95 }}
           type="button"
           onClick={() => likeMutation.mutate(post.id)}
-          className={`flex h-10 items-center justify-center gap-2 rounded-xl text-[13px] font-semibold transition-all ${
-            liked ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 shadow-xs" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-          }`}
+          className={`flex h-10 items-center justify-center gap-2 rounded-xl text-[13px] font-semibold transition-all ${liked ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 shadow-xs" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+            }`}
         >
           <Heart className={`h-4 w-4 ${liked ? "fill-red-600 dark:fill-red-400" : ""}`} />
           Like

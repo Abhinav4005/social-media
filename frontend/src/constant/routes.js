@@ -24,6 +24,7 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   POST_DETAIL: (postId) => `/posts/${postId}`,
   VIDEO_CALL: (roomId) => `/video-call/${roomId}`,
+  EXPLORE: '/explore',
 
   // Informational pages
   ABOUT: '/about',

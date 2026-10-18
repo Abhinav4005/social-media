@@ -5,7 +5,8 @@ import {
     getListings,
     getListingById,
     getUserListings,
-    deleteListing
+    deleteListing,
+    updateListingStatus
 } from "../controllers/marketplace.controller.js";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.get("/", getListings);
 router.post("/", createListing);
 router.get("/user", getUserListings);
 router.get("/:id", getListingById);
+router.patch("/:id/status", updateListingStatus);
 router.delete("/:id", deleteListing);
 
 export default router;

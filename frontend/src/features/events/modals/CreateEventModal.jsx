@@ -87,14 +87,14 @@ export default function CreateEventModal({ isOpen, onClose }) {
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                    className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm"
                 />
 
                 {/* Modal Container */}
@@ -102,7 +102,7 @@ export default function CreateEventModal({ isOpen, onClose }) {
                     initial={{ scale: 0.95, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                    className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden z-10"
+                    className="relative w-full max-w-lg my-auto max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden z-10"
                 >
                     {/* Header Banner */}
                     <div className="relative h-24 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 p-6 flex items-end justify-between">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Camera, Loader2, Smile, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import FeedLayout from "../components/FeedLayout";
@@ -8,8 +8,9 @@ import { PostCard, CreatePostModal } from "../features/posts";
 import Sidebar from "./Sidebar";
 import { NotificationList } from "../features/notifications";
 import { StoryTray } from "../features/stories";
-import { getNotifications, getPostFeed } from "../api";
+import { getNotifications } from "../api";
 import { QUERY_KEYS } from "../constant/queryKeys";
+import { useFeedPosts } from "../hooks/usePosts";
 
 const PostShimmer = () => (
   <motion.div
@@ -97,18 +98,14 @@ export default function FeedPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
-    data: feedPosts,
+    posts,
     isLoading,
     isError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     refetch,
-  } = useInfiniteQuery({
-    queryKey: QUERY_KEYS.feed,
-    queryFn: ({ pageParam = 1 }) => getPostFeed(pageParam),
-    getNextPageParam: (lastPage) => (lastPage?.hasMore ? lastPage?.page + 1 : undefined),
-  });
+  } = useFeedPosts();
 
   const { data: notifications, isLoading: notifLoading, isError: notifError } = useQuery({
     queryKey: QUERY_KEYS.notifications,
@@ -187,10 +184,8 @@ export default function FeedPage() {
                 </>
               ) : isError ? (
                 <ErrorState refetch={refetch} />
-              ) : feedPosts?.pages?.some((page) => page?.posts?.length > 0) ? (
-                feedPosts.pages.flatMap((page) =>
-                  page?.posts?.map((post) => <PostCard key={post.id} {...post} />)
-                )
+              ) : posts.length > 0 ? (
+                posts.map((post) => <PostCard key={post.id} {...post} />)
               ) : (
                 <EmptyState onOpenModal={() => setIsModalOpen(true)} />
               )}

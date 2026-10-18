@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
@@ -18,6 +18,8 @@ import {
     Loader2,
     ArrowLeft,
     Trash2,
+    Search,
+    AlertTriangle,
 } from "lucide-react";
 import Navbar from "../../../pages/Navbar";
 import Sidebar from "../../../pages/Sidebar";
@@ -49,6 +51,11 @@ export default function GroupDetailPage() {
 
     const [activeTab, setActiveTab] = useState("posts");
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+    // Member search & filter state
+    const [memberSearchQuery, setMemberSearchQuery] = useState("");
+    const [memberRoleFilter, setMemberRoleFilter] = useState("ALL");
 
     // Post creation state
     const [postTitle, setPostTitle] = useState("");
@@ -78,6 +85,23 @@ export default function GroupDetailPage() {
     const currentMemberRecord = members.find((m) => m.userId === currentUser?.id);
     const isMember = Boolean(currentMemberRecord) || group?.members?.some((m) => m.userId === currentUser?.id);
     const isAdmin = currentMemberRecord?.role === "ADMIN" || group?.members?.some((m) => m.userId === currentUser?.id && m.role === "ADMIN");
+
+    // Filter members based on search and role filter
+    const filteredMembers = useMemo(() => {
+        return members.filter((member) => {
+            const matchesSearch =
+                (member.user?.name || "").toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                (member.user?.email || "").toLowerCase().includes(memberSearchQuery.toLowerCase());
+
+            if (memberRoleFilter === "ADMIN") {
+                return matchesSearch && member.role === "ADMIN";
+            }
+            if (memberRoleFilter === "MEMBER") {
+                return matchesSearch && member.role !== "ADMIN";
+            }
+            return matchesSearch;
+        });
+    }, [members, memberSearchQuery, memberRoleFilter]);
 
     // Mutations
     const joinMutation = useMutation({
@@ -263,13 +287,23 @@ export default function GroupDetailPage() {
                                     {/* Actions */}
                                     <div className="flex items-center gap-2">
                                         {isAdmin && (
-                                            <button
-                                                onClick={() => setIsEditModalOpen(true)}
-                                                className="p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-xl transition-all cursor-pointer"
-                                                title="Group Settings"
-                                            >
-                                                <Settings className="w-4 h-4" />
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => setIsEditModalOpen(true)}
+                                                    className="p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-xl transition-all cursor-pointer"
+                                                    title="Group Settings"
+                                                >
+                                                    <Settings className="w-4 h-4" />
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setIsDeleteConfirmOpen(true)}
+                                                    className="p-2.5 bg-red-500/30 hover:bg-red-600/80 backdrop-blur-md text-white rounded-xl transition-all cursor-pointer"
+                                                    title="Delete Group"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
                                         )}
 
                                         <button
@@ -395,15 +429,54 @@ export default function GroupDetailPage() {
                         {/* MEMBERS TAB */}
                         {activeTab === "members" && (
                             <div className="space-y-4">
+                                {/* Search & Role Filter Header */}
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xs">
+                                    {/* Member Search Bar */}
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search members by name or email..."
+                                            value={memberSearchQuery}
+                                            onChange={(e) => setMemberSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-medium text-gray-900 dark:text-gray-100 focus:outline-none focus:border-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Role Filter Pills */}
+                                    <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                                        {[
+                                            { id: "ALL", label: `All (${members.length})` },
+                                            { id: "ADMIN", label: `Admins (${members.filter((m) => m.role === "ADMIN").length})` },
+                                            { id: "MEMBER", label: `Members (${members.filter((m) => m.role !== "ADMIN").length})` },
+                                        ].map((filter) => (
+                                            <button
+                                                key={filter.id}
+                                                onClick={() => setMemberRoleFilter(filter.id)}
+                                                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${memberRoleFilter === filter.id
+                                                    ? "bg-indigo-600 text-white shadow-xs"
+                                                    : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                                    }`}
+                                            >
+                                                {filter.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 {loadingMembers ? (
                                     <div className="flex items-center justify-center py-12">
                                         <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
                                     </div>
-                                ) : members.length === 0 ? (
-                                    <EmptyState icon={Users} title="No members found" description="This group currently has no active members." />
+                                ) : filteredMembers.length === 0 ? (
+                                    <EmptyState
+                                        icon={Users}
+                                        title="No members found"
+                                        description={memberSearchQuery ? `No members matching "${memberSearchQuery}"` : "This group currently has no members."}
+                                    />
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {members.map((member) => {
+                                        {filteredMembers.map((member) => {
                                             const isTargetAdmin = member.role === "ADMIN";
                                             const isSelf = member.userId === currentUser?.id;
 
@@ -482,6 +555,46 @@ export default function GroupDetailPage() {
                     profileImage: group.coverImage,
                 }}
             />
+
+            {/* Delete Group Confirmation Modal */}
+            {isDeleteConfirmOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-2xl space-y-4"
+                    >
+                        <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                            <AlertTriangle className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Delete Group?</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                Are you sure you want to delete <span className="font-bold text-gray-900 dark:text-gray-100">"{group.name}"</span>? This action cannot be undone and all group posts will be permanently removed.
+                            </p>
+                        </div>
+                        <div className="flex items-center justify-end gap-2 pt-2">
+                            <button
+                                onClick={() => setIsDeleteConfirmOpen(false)}
+                                className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl hover:bg-gray-200 transition-all cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsDeleteConfirmOpen(false);
+                                    deleteGroupMutation.mutate();
+                                }}
+                                disabled={deleteGroupMutation.isPending}
+                                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                            >
+                                {deleteGroupMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                Delete Group
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </>
     );
 }

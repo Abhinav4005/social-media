@@ -36,15 +36,22 @@ const ChatPage = () => {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 transition-colors duration-200">
-      <ChatSidebar activeChat={activeChat} setActiveChat={setActiveChat} />
+      <div className={`${activeChat ? "hidden md:flex" : "flex w-full"} md:w-auto h-full flex-shrink-0`}>
+        <ChatSidebar activeChat={activeChat} setActiveChat={setActiveChat} />
+      </div>
 
-      {/* Right Chat Window */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className={`${activeChat ? "flex" : "hidden md:flex"} flex-col flex-1 min-w-0 h-full`}>
         {activeChat === "ai-bot" ? (
-          <AIChatView />
+          <AIChatView onBack={() => setActiveChat(null)} />
         ) : activeChat ? (
           <>
-            <ChatHeader roomId={activeChat} data={roomsData} isLoading={isLoading} isError={error} />
+            <ChatHeader
+              roomId={activeChat}
+              data={roomsData}
+              isLoading={isLoading}
+              isError={error}
+              onBack={() => setActiveChat(null)}
+            />
             <ChatMessages roomId={activeChat} />
             <ChatInput roomId={activeChat} />
           </>

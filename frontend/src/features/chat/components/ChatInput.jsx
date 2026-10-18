@@ -2,14 +2,16 @@ import { Send, Paperclip, X, Smile, Image as ImageIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { socket } from "../../../socket";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import uploadImageToKit from "../../../helper/uploadImage";
 
 const ChatInput = () => {
   const { user } = useSelector((state) => state.auth);
-  const [message, setMessage] = useState("");
+  const [searchParams] = useSearchParams();
+  const initialMsgParam = searchParams.get("initialMsg");
+  const [message, setMessage] = useState(initialMsgParam || "");
   const [attachments, setAttachments] = useState([]);
   const queryClient = useQueryClient();
   const { roomId } = useParams();
@@ -156,11 +158,10 @@ const ChatInput = () => {
           whileTap={canSend ? { scale: 0.93 } : {}}
           onClick={handleSend}
           disabled={!canSend}
-          className={`flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all cursor-pointer ${
-            canSend
-              ? "text-white shadow-md shadow-primary-200"
-              : "bg-gray-100 text-gray-300 cursor-not-allowed"
-          }`}
+          className={`flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all cursor-pointer ${canSend
+            ? "text-white shadow-md shadow-primary-200"
+            : "bg-gray-100 text-gray-300 cursor-not-allowed"
+            }`}
           style={canSend ? { background: "var(--gradient-primary)" } : {}}
         >
           <Send className="w-4 h-4" />

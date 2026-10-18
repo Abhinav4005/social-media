@@ -28,6 +28,8 @@ import UserAvatar from "../../../components/Common/UserAvatar";
 import TabBar from "../../../components/Common/TabBar";
 import EmptyState from "../../../components/Common/EmptyState";
 import { BRAND_THEME } from "../../../constant/constant";
+import { useToast } from "../../../context/ToastContext";
+import VerifiedBadge from "../../../components/Common/VerifiedBadge";
 
 const formatJoined = (date) => {
   if (!date) return "Recently";
@@ -38,6 +40,7 @@ const SearchedUserProfile = () => {
   const { user: currentUser } = useSelector((state) => state.auth);
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [requestSent, setRequestSent] = useState(false);
   const [isFriend, setIsFriend] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
@@ -234,13 +237,23 @@ const SearchedUserProfile = () => {
                   <button
                     type="button"
                     onClick={async () => {
+                      if (!window.confirm) {
+                        try {
+                          await privacyService.blockUser(user.id);
+                          showSuccess(`${user.name} has been blocked.`);
+                          navigate("/");
+                        } catch (err) {
+                          showError(err.message || "Failed to block user");
+                        }
+                        return;
+                      }
                       if (window.confirm(`Are you sure you want to block ${user.name}?`)) {
                         try {
                           await privacyService.blockUser(user.id);
-                          alert(`${user.name} has been blocked.`);
+                          showSuccess(`${user.name} has been blocked.`);
                           navigate("/");
                         } catch (err) {
-                          alert(err.message || "Failed to block user");
+                          showError(err.message || "Failed to block user");
                         }
                       }
                     }}
@@ -257,9 +270,13 @@ const SearchedUserProfile = () => {
                   <h1 className="font-black text-2xl sm:text-3xl text-gray-900 dark:text-gray-100 tracking-tight">
                     {user.name}
                   </h1>
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-xs">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                  </span>
+                  {user.verificationBadgeType ? (
+                    <VerifiedBadge type={user.verificationBadgeType} className="w-5 h-5" />
+                  ) : (
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-xs">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                   <span className="px-2.5 py-0.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase rounded-full">
                     Member
                   </span>
@@ -302,7 +319,7 @@ const SearchedUserProfile = () => {
           <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
 
             <aside className="space-y-5">
-              
+
               <section className="rounded-3xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors duration-200">
                 <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-4">Activity Overview</h3>
                 <div className="grid grid-cols-2 gap-3">

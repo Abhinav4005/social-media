@@ -105,6 +105,81 @@ enum MarketplaceCategory {
   OTHER
 }
 
+enum ReportTargetType {
+  POST
+  COMMENT
+  USER
+  MESSAGE
+  GROUP
+  MARKETPLACE
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  NUDITY
+  VIOLENCE
+  FALSE_INFO
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+  ACTIONED
+}
+
+enum ReportResolution {
+  NO_ACTION
+  WARNING
+  CONTENT_REMOVED
+  USER_RESTRICTED
+  USER_BANNED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum VerificationType {
+  BLUE_CHECK
+  GOV_ID
+  CREATOR
+}
+
+enum RestrictionType {
+  NO_POSTING
+  NO_COMMENTING
+  NO_MESSAGING
+  READ_ONLY
+  SUSPENDED
+}
+
+enum AppealStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AuditAction {
+  USER_BAN
+  USER_UNBAN
+  USER_RESTRICT
+  CONTENT_DELETE
+  REPORT_RESOLVE
+  VERIFICATION_APPROVE
+  VERIFICATION_REJECT
+  APPEAL_APPROVE
+  APPEAL_REJECT
+  POLICY_UPDATE
+}
+
 model User {
   id             Int       @id @default(autoincrement())
   name           String
@@ -164,6 +239,30 @@ model User {
   eventAttendees    EventAttendee[]
   createdEvents     Event[]
   marketplaceListings MarketplaceListing[]
+
+  interests        String[]          @default([])
+  city             String?
+  locationLat      Float?
+  locationLng      Float?
+  viewHistory      PostViewHistory[]
+
+  isBanned              Boolean                     @default(false)
+  bannedAt              DateTime?
+  banReason             String?
+  isRestricted          Boolean                     @default(false)
+  restrictionReason     String?
+  verificationStatus    VerificationStatus          @default(UNVERIFIED)
+  verificationBadgeType VerificationType?
+
+  reportsCreated       Report[]                     @relation("ReportedBy")
+  reportsReceived      Report[]                     @relation("ReportedUser")
+  mutesCreated         UserMute[]                   @relation("Muter")
+  mutesReceived        UserMute[]                   @relation("MutedUser")
+  restrictions         UserRestriction[]
+  verificationRequests AccountVerificationRequest[]
+  appeals              ModerationAppeal[]           @relation("UserAppeals")
+  reviewedAppeals      ModerationAppeal[]           @relation("ReviewedAppeals")
+  auditLogs            AuditLog[]                   @relation("UserAuditLogs")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -229,11 +328,30 @@ model Post {
   savedPost     SavedPost[]
   privacy       PostPrivacy?
   groupPosts    GroupPost[]
+  category      String?
+  tags          String[]       @default([])
+  locationName  String?
+  lat           Float?
+  lng           Float?
+  views         PostViewHistory[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
   @@index([userId, createdAt])
   @@index([createdAt])
+  @@index([category])
+}
+
+model PostViewHistory {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  viewedAt  DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@index([userId, viewedAt])
 }
 
 model Comment {
@@ -606,6 +724,7 @@ model GroupPost {
   groupId   Int
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int
+  isPinned  Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@unique([groupId, postId])
@@ -662,4 +781,150 @@ model MarketplaceListing {
   @@index([category])
   @@index([sellerId])
   @@index([createdAt])
+}
+
+model Report {
+  id               Int              @id @default(autoincrement())
+  reporter         User             @relation("ReportedBy", fields: [reporterId], references: [id])
+  reporterId       Int
+  targetType       ReportTargetType
+  targetId         Int
+  reportedUser     User?            @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedUserId   Int?
+  reason           ReportReason
+  description      String?
+  status           ReportStatus     @default(PENDING)
+  resolution       ReportResolution @default(NO_ACTION)
+  reviewedBy       Int?
+  reviewedAt       DateTime?
+  resolutionNotes  String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([reporterId])
+  @@index([reportedUserId])
+}
+
+model UserMute {
+  id          Int       @id @default(autoincrement())
+  muter       User      @relation("Muter", fields: [muterId], references: [id])
+  muterId     Int
+  mutedUser   User      @relation("MutedUser", fields: [mutedUserId], references: [id])
+  mutedUserId Int
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([muterId, mutedUserId])
+  @@index([muterId])
+  @@index([mutedUserId])
+}
+
+model UserRestriction {
+  id              Int             @id @default(autoincrement())
+  user            User            @relation(fields: [userId], references: [id])
+  userId          Int
+  restrictionType RestrictionType
+  reason          String?
+  expiresAt       DateTime?
+  createdBy       Int?
+  createdAt       DateTime        @default(now())
+
+  @@index([userId])
+}
+
+model ContentModerationLog {
+  id           Int      @id @default(autoincrement())
+  contentType  String
+  contentId    Int?
+  userId       Int?
+  flagReason   String
+  toxicityScore Float?
+  spamScore    Float?
+  actionTaken  String
+  createdAt    DateTime @default(now())
+
+  @@index([contentType, contentId])
+  @@index([userId])
+}
+
+model SuspiciousLoginLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  riskScore   Float    @default(0.0)
+  isFlagged   Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+  actionTaken String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isFlagged])
+}
+
+model AccountVerificationRequest {
+  id           Int                @id @default(autoincrement())
+  user         User               @relation(fields: [userId], references: [id])
+  userId       Int
+  type         VerificationType   @default(BLUE_CHECK)
+  documentType String?
+  documentUrl  String?
+  status       VerificationStatus @default(PENDING)
+  reviewerNotes String?
+  reviewedBy   Int?
+  reviewedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ModerationAppeal {
+  id            Int          @id @default(autoincrement())
+  user          User         @relation("UserAppeals", fields: [userId], references: [id])
+  userId        Int
+  reportId      Int?
+  reason        String
+  evidence      String?
+  status        AppealStatus @default(PENDING)
+  reviewerNotes String?
+  reviewer      User?        @relation("ReviewedAppeals", fields: [reviewedBy], references: [id])
+  reviewedBy    Int?
+  reviewedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  user       User?       @relation("UserAuditLogs", fields: [userId], references: [id])
+  userId     Int?
+  action     AuditAction
+  entityType String
+  entityId   Int?
+  details    String?
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model CommunityGuidelines {
+  id        Int      @id @default(autoincrement())
+  title     String
+  category  String
+  content   String
+  version   String   @default("1.0")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

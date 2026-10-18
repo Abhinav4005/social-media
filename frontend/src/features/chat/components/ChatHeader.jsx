@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { useEffect, useState, useRef } from "react";
-import { Video, MoreVertical, Phone } from "lucide-react";
+import { Video, MoreVertical, Phone, ArrowLeft } from "lucide-react";
 import { formatLastSeen } from "../../../utils/formatTime";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +26,7 @@ const ChatHeaderShimmer = () => (
   </div>
 );
 
-const ChatHeader = ({ roomId, data, isLoading, isError }) => {
+const ChatHeader = ({ roomId, data, isLoading, isError, onBack }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { onlineUsers, lastSeen } = useSelector((state) => state.presence);
@@ -105,10 +105,20 @@ const ChatHeader = ({ roomId, data, isLoading, isError }) => {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800 transition-colors duration-200"
+      className="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800 transition-colors duration-200"
     >
       {/* Left — Avatar & Status */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
+
         <div
           className="relative flex-shrink-0 cursor-pointer"
           onClick={() => otherMember?.user?.id && navigate(ROUTES.USER_PROFILE(otherMember.user.id))}
@@ -193,9 +203,8 @@ const ChatHeader = ({ roomId, data, isLoading, isError }) => {
                       item.action();
                       setIsMenuOpen(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left text-xs font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 ${
-                      item.className || "text-gray-700 dark:text-gray-200"
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left text-xs font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 ${item.className || "text-gray-700 dark:text-gray-200"
+                      }`}
                   >
                     {item.label}
                   </button>

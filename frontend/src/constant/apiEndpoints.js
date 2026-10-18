@@ -84,6 +84,7 @@ export const API_ENDPOINTS = {
     CREATE: "/marketplace",
     MY_LISTINGS: "/marketplace/user",
     BY_ID: (id) => `/marketplace/${id}`,
+    UPDATE_STATUS: (id) => `/marketplace/${id}/status`,
     DELETE: (id) => `/marketplace/${id}`,
   },
   AI: {
