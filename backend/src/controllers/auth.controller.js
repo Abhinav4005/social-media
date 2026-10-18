@@ -82,12 +82,7 @@ export const changePassword = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
     try {
-        res.clearCookie(AUTH_COOKIE_NAME, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
-            path: "/",
-        });
+        res.clearCookie(AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS);
         return ApiResponse.success(res, null, "Logout successful", 200);
     } catch (error) {
         console.error("Error during logout:", error);
